@@ -1,3 +1,8 @@
+use crate::app::run;
+
+pub mod app;
+pub mod state;
+
 fn main() {
-    println!("Hello, Zuku!");
+    run().unwrap();
 }
