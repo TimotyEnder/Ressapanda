@@ -1,6 +1,7 @@
 use crate::app::run;
 
 pub mod app;
+pub mod camera;
 pub mod state;
 pub mod vertex;
 
