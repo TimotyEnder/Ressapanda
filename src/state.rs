@@ -1,19 +1,19 @@
-use std::{iter, sync::Arc};
-
+use crate::{
+    camera::{Camera, CameraUniform},
+    color::VoxelColor,
+    depth_texture::{self, DepthTexture},
+    vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
+    voxel_instance::{RawVoxelInstance, VoxelInstance},
+};
 use anyhow::Ok;
+use cgmath::prelude::*;
+use std::{iter, sync::Arc};
 use wgpu::{util::DeviceExt, wgt::instance};
 use winit::{
     dpi::PhysicalPosition, event::MouseButton, event_loop::ActiveEventLoop, keyboard::KeyCode,
     window::Window,
 };
-
-use crate::{
-    camera::{Camera, CameraUniform},
-    color::VoxelColor,
-    vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
-    voxel_instance::{RawVoxelInstance, VoxelInstance},
-};
-use cgmath::prelude::*;
+pub const TEXTURE_DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
 
 pub struct State {
     window: Arc<Window>,
@@ -31,6 +31,7 @@ pub struct State {
     camera_bind_group: wgpu::BindGroup,
     voxel_instances: Vec<VoxelInstance>,
     voxel_instance_buffer: wgpu::Buffer,
+    depth_texture: DepthTexture,
 }
 impl State {
     pub async fn new(window: Arc<Window>) -> anyhow::Result<State> {
@@ -175,6 +176,8 @@ impl State {
             contents: bytemuck::cast_slice(&instance_data),
             usage: wgpu::BufferUsages::VERTEX,
         });
+        let depth_texture = DepthTexture::create_depth_texture(&device, &config, "depth_texture");
+
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layour"),
@@ -199,7 +202,13 @@ impl State {
                 polygon_mode: wgpu::PolygonMode::Fill,
                 conservative: false,
             },
-            depth_stencil: None,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: TEXTURE_DEPTH_FORMAT,
+                depth_write_enabled: Some(true),
+                depth_compare: Some(wgpu::CompareFunction::Less),
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -237,6 +246,7 @@ impl State {
             camera_bind_group,
             voxel_instance_buffer,
             voxel_instances,
+            depth_texture,
         })
     }
     pub fn window(&self) -> &Window {
@@ -311,7 +321,14 @@ impl State {
                     },
                     depth_slice: None,
                 })],
-                depth_stencil_attachment: None,
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.depth_texture.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }),
                 occlusion_query_set: None,
                 timestamp_writes: None,
                 multiview_mask: None,
@@ -344,6 +361,8 @@ impl State {
                 0,
                 bytemuck::cast_slice(&[self.camera_uniform]),
             );
+            self.depth_texture =
+                DepthTexture::create_depth_texture(&self.device, &self.config, "depth_texture");
         }
     }
 }
