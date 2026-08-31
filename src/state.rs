@@ -1,18 +1,24 @@
 use std::{iter, sync::Arc};
 
 use anyhow::Ok;
+use wgpu::util::DeviceExt;
 use winit::{
     dpi::PhysicalPosition, event::MouseButton, event_loop::ActiveEventLoop, keyboard::KeyCode,
     window::Window,
 };
+
+use crate::vertex::{CUBE_INDICES, CUBE_VERTICES, INDICES, VERTICES, Vertex};
 
 pub struct State {
     window: Arc<Window>,
     surface: wgpu::Surface<'static>,
     device: wgpu::Device,
     queue: wgpu::Queue,
+    render_pipeline: wgpu::RenderPipeline,
     config: wgpu::SurfaceConfiguration,
     is_surface_configured: bool,
+    vertex_buffer: wgpu::Buffer,
+    index_buffer: wgpu::Buffer,
 }
 impl State {
     pub async fn new(window: Arc<Window>) -> anyhow::Result<State> {
@@ -73,6 +79,66 @@ impl State {
             desired_maximum_frame_latency: 2,
             color_space: wgpu::SurfaceColorSpace::Auto,
         };
+        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("Shader"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
+        });
+        let render_pipeline_layout =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Render Pipeline Layour"),
+                bind_group_layouts: &[],
+                immediate_size: 0,
+            });
+        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("Render Pipeline"),
+            layout: Some(&render_pipeline_layout),
+            vertex: wgpu::VertexState {
+                module: &shader,
+                entry_point: Some("vs_main"),
+                compilation_options: Default::default(),
+                buffers: &[Some(Vertex::desc())],
+            },
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw,
+                cull_mode: /*Some(wgpu::Face::Back)*/ None,
+                unclipped_depth: false,
+                polygon_mode: wgpu::PolygonMode::Fill,
+                conservative: false,
+            },
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &shader,
+                entry_point: Some("fs_main"),
+                compilation_options: Default::default(),
+                targets: &[Some(wgpu::ColorTargetState {
+                    format: config.format,
+                    blend: Some(wgpu::BlendState {
+                        color: wgpu::BlendComponent::REPLACE,
+                        alpha: wgpu::BlendComponent::REPLACE,
+                    }),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+            }),
+            multiview_mask: None,
+            cache: None,
+        });
+        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Vertex Buffer"),
+            contents: bytemuck::cast_slice(CUBE_VERTICES),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
+        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Index Buffer"),
+            contents: bytemuck::cast_slice(CUBE_INDICES),
+            usage: wgpu::BufferUsages::INDEX,
+        });
         Ok(Self {
             window,
             surface,
@@ -80,6 +146,9 @@ impl State {
             queue,
             config,
             is_surface_configured: false,
+            vertex_buffer,
+            index_buffer,
+            render_pipeline,
         })
     }
     pub fn window(&self) -> &Window {
@@ -159,6 +228,10 @@ impl State {
                 timestamp_writes: None,
                 multiview_mask: None,
             });
+            render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.draw_indexed(0..CUBE_INDICES.len() as u32, 0, 0..1);
         }
         self.queue.submit(iter::once(encoder.finish()));
         self.queue.present(output);

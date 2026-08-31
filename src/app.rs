@@ -82,7 +82,7 @@ impl ApplicationHandler<State> for App {
 pub fn run() -> anyhow::Result<()> {
     env_logger::init();
     let event_loop = EventLoop::with_user_event().build()?;
-    let mut App = App::new();
-    event_loop.run_app(&mut App)?;
+    let mut app = App::new();
+    event_loop.run_app(&mut app)?;
     Ok(())
 }
