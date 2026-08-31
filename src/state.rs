@@ -1,7 +1,7 @@
 use std::{iter, sync::Arc};
 
 use anyhow::Ok;
-use wgpu::util::DeviceExt;
+use wgpu::{util::DeviceExt, wgt::instance};
 use winit::{
     dpi::PhysicalPosition, event::MouseButton, event_loop::ActiveEventLoop, keyboard::KeyCode,
     window::Window,
@@ -9,8 +9,11 @@ use winit::{
 
 use crate::{
     camera::{Camera, CameraUniform},
+    color::VoxelColor,
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
+    voxel_instance::{RawVoxelInstance, VoxelInstance},
 };
+use cgmath::prelude::*;
 
 pub struct State {
     window: Arc<Window>,
@@ -26,6 +29,8 @@ pub struct State {
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
+    voxel_instances: Vec<VoxelInstance>,
+    voxel_instance_buffer: wgpu::Buffer,
 }
 impl State {
     pub async fn new(window: Arc<Window>) -> anyhow::Result<State> {
@@ -140,6 +145,36 @@ impl State {
             }],
             label: Some("camera_bind_group"),
         });
+
+        let voxel_instances = vec![
+            VoxelInstance::new(
+                cgmath::Vector3 {
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                },
+                cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(0.0)),
+                VoxelColor::new(1.0, 0.0, 0.0, 1.0),
+            ),
+            VoxelInstance::new(
+                cgmath::Vector3 {
+                    x: 1.0,
+                    y: 0.0,
+                    z: 0.0,
+                },
+                cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(0.0)),
+                VoxelColor::new(0.0, 1.0, 0.0, 1.0),
+            ),
+        ];
+        let instance_data = voxel_instances
+            .iter()
+            .map(VoxelInstance::to_raw)
+            .collect::<Vec<_>>();
+        let voxel_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Instance Buffer"),
+            contents: bytemuck::cast_slice(&instance_data),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layour"),
@@ -153,7 +188,7 @@ impl State {
                 module: &shader,
                 entry_point: Some("vs_main"),
                 compilation_options: Default::default(),
-                buffers: &[Some(Vertex::desc())],
+                buffers: &[Some(Vertex::desc()), Some(RawVoxelInstance::desc())],
             },
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
@@ -200,6 +235,8 @@ impl State {
             camera_buffer,
             camera_uniform,
             camera_bind_group,
+            voxel_instance_buffer,
+            voxel_instances,
         })
     }
     pub fn window(&self) -> &Window {
@@ -279,11 +316,16 @@ impl State {
                 timestamp_writes: None,
                 multiview_mask: None,
             });
+            render_pass.set_vertex_buffer(1, self.voxel_instance_buffer.slice(..));
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
-            render_pass.draw_indexed(0..CUBE_INDICES.len() as u32, 0, 0..1);
+            render_pass.draw_indexed(
+                0..CUBE_INDICES.len() as u32,
+                0,
+                0..self.voxel_instances.len() as u32,
+            );
         }
         self.queue.submit(iter::once(encoder.finish()));
         self.queue.present(output);
