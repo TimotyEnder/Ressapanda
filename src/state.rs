@@ -155,7 +155,7 @@ impl State {
                     z: 0.0,
                 },
                 cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(0.0)),
-                VoxelColor::new(1.0, 0.0, 0.0, 1.0),
+                VoxelColor::from_hex("#96584B").unwrap(),
             ),
             VoxelInstance::new(
                 cgmath::Vector3 {
