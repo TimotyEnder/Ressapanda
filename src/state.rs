@@ -118,7 +118,7 @@ impl State {
             0.1,
             100.0,
         );
-        let camera_controller = CameraController::new(0.0002, &camera);
+        let camera_controller = CameraController::new(0.01, &camera);
         let mut camera_uniform = CameraUniform::new();
         camera_uniform.update_view_proj(&camera);
         let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {

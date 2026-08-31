@@ -51,6 +51,7 @@ impl CameraController {
             self.pitch = self
                 .pitch
                 .clamp(-f64::consts::PI / 2.0 + 0.01, f64::consts::PI / 2.0 - 0.01);
+            self.rotate_last_position = Some(current);
         } else {
             self.rotate_last_position = Some(current);
         }
