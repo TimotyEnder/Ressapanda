@@ -33,6 +33,12 @@ impl Camera {
             zfar,
         }
     }
+    pub fn get_eye_position(&self) -> cgmath::Point3<f32> {
+        self.eye
+    }
+    pub fn set_eye_position(&mut self, eye: cgmath::Point3<f32>) {
+        self.eye = eye;
+    }
     pub fn update_aspect(&mut self, width: f32, height: f32) {
         self.aspect = width / height;
     }

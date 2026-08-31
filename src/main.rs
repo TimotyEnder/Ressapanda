@@ -2,7 +2,9 @@ use crate::app::run;
 
 pub mod app;
 pub mod camera;
+pub mod camera_controller;
 pub mod color;
+pub mod conversion_utils;
 pub mod depth_texture;
 pub mod state;
 pub mod vertex;

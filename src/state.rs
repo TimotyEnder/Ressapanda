@@ -1,5 +1,6 @@
 use crate::{
     camera::{Camera, CameraUniform},
+    camera_controller::{self, CameraController},
     color::VoxelColor,
     depth_texture::{self, DepthTexture},
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
@@ -32,6 +33,7 @@ pub struct State {
     voxel_instances: Vec<VoxelInstance>,
     voxel_instance_buffer: wgpu::Buffer,
     depth_texture: DepthTexture,
+    camera_controller: CameraController,
 }
 impl State {
     pub async fn new(window: Arc<Window>) -> anyhow::Result<State> {
@@ -116,6 +118,7 @@ impl State {
             0.1,
             100.0,
         );
+        let camera_controller = CameraController::new(0.0002, &camera);
         let mut camera_uniform = CameraUniform::new();
         camera_uniform.update_view_proj(&camera);
         let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -247,6 +250,7 @@ impl State {
             voxel_instance_buffer,
             voxel_instances,
             depth_texture,
+            camera_controller,
         })
     }
     pub fn window(&self) -> &Window {
@@ -263,12 +267,14 @@ impl State {
         button: MouseButton,
         pressed: bool,
     ) {
+        self.camera_controller.handle_mouse_button(button, pressed);
     }
     pub fn handle_mouse_input(&mut self, pos: PhysicalPosition<f64>) {
-        //
+        self.camera_controller.handle_mouse_position(pos.x, pos.y);
     }
     pub fn update(&mut self) {
-        //
+        self.camera_controller.update_camera(&mut self.camera);
+        self.update_camera();
     }
     pub fn render(&mut self) -> anyhow::Result<()> {
         self.window.request_redraw();
@@ -355,14 +361,17 @@ impl State {
             self.config.height = height;
             self.surface.configure(&self.device, &self.config);
             self.camera.update_aspect(width as f32, height as f32);
-            self.camera_uniform.update_view_proj(&self.camera);
-            self.queue.write_buffer(
-                &self.camera_buffer,
-                0,
-                bytemuck::cast_slice(&[self.camera_uniform]),
-            );
+            self.update_camera();
             self.depth_texture =
                 DepthTexture::create_depth_texture(&self.device, &self.config, "depth_texture");
         }
+    }
+    fn update_camera(&mut self) {
+        self.camera_uniform.update_view_proj(&self.camera);
+        self.queue.write_buffer(
+            &self.camera_buffer,
+            0,
+            bytemuck::cast_slice(&[self.camera_uniform]),
+        );
     }
 }
