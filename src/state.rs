@@ -8,7 +8,7 @@ use crate::{
     voxel_scene::VoxelScene,
 };
 use anyhow::Ok;
-use cgmath::prelude::*;
+use cgmath::{Vector3, prelude::*};
 use std::{iter, sync::Arc};
 use wgpu::{util::DeviceExt, wgt::instance};
 use winit::{
@@ -158,7 +158,7 @@ impl State {
         let voxel_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Instance Buffer"),
             contents: bytemuck::cast_slice(voxel_scene.prepare_buffer_contents()),
-            usage: wgpu::BufferUsages::VERTEX,
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         });
         let depth_texture = DepthTexture::create_depth_texture(&device, &config, "depth_texture");
 
@@ -240,6 +240,15 @@ impl State {
     pub fn handle_key(&mut self, event_loop: &ActiveEventLoop, key: KeyCode, pressed: bool) {
         if key == KeyCode::Escape && pressed {
             event_loop.exit();
+        }
+        if key == KeyCode::KeyW && pressed {
+            self.voxel_scene.add_voxel(
+                Vector3::new(1.0, 0.0, 0.0),
+                VoxelColor::from_hex("#5a01e0").unwrap_or_default(),
+            );
+        }
+        if key == KeyCode::KeyS && pressed {
+            self.voxel_scene.remove_voxel(Vector3::new(1.0, 0.0, 0.0));
         }
     }
     pub fn handle_mouse_button(
@@ -365,12 +374,21 @@ impl State {
         );
     }
     fn update_voxel_buffers(&mut self) {
-        if self.voxel_scene.is_voxel_scene_changed() {
-            self.queue.write_buffer(
-                &self.voxel_instance_buffer,
-                0,
-                bytemuck::cast_slice(&self.voxel_scene.prepare_buffer_contents()),
-            );
+        if !self.voxel_scene.is_voxel_scene_changed() {
+            return;
+        }
+        let bytes = bytemuck::cast_slice(self.voxel_scene.prepare_buffer_contents());
+        if bytes.len() as u64 > self.voxel_instance_buffer.size() {
+            self.voxel_instance_buffer =
+                self.device
+                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                        label: Some("Instance Buffer"),
+                        contents: bytes,
+                        usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                    });
+        } else {
+            self.queue
+                .write_buffer(&self.voxel_instance_buffer, 0, bytes);
         }
     }
 }
