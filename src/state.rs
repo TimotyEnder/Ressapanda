@@ -276,7 +276,12 @@ impl State {
         self.camera_controller.handle_mouse_wheel(delta, phase);
     }
     pub fn handle_mouse_input(&mut self, pos: PhysicalPosition<f64>) {
-        self.camera_controller.handle_mouse_position(pos.x, pos.y);
+        self.camera_controller.handle_mouse_position(
+            pos.x,
+            pos.y,
+            self.config.height as f32,
+            &self.camera,
+        );
     }
     pub fn update(&mut self) {
         self.camera_controller.update_camera(&mut self.camera);

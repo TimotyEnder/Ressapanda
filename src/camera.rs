@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use cgmath::prelude::*;
+use cgmath::{Point3, Vector2, Vector3, prelude::*};
 use winit::window::Window;
 
 use crate::state::State;
@@ -36,8 +36,21 @@ impl Camera {
     pub fn get_eye_position(&self) -> cgmath::Point3<f32> {
         self.eye
     }
-    pub fn set_eye_position(&mut self, eye: cgmath::Point3<f32>) {
+    pub fn set_position(&mut self, target: Point3<f32>, eye: Point3<f32>) {
+        self.target = target;
         self.eye = eye;
+    }
+    pub fn right(&self) -> Vector3<f32> {
+        (self.target - self.eye)
+            .normalize()
+            .cross(self.up)
+            .normalize()
+    }
+    pub fn up_local(&self) -> Vector3<f32> {
+        self.right().cross((self.target - self.eye).normalize())
+    }
+    pub fn fovy(&self) -> f32 {
+        self.fovy
     }
     pub fn update_aspect(&mut self, width: f32, height: f32) {
         self.aspect = width / height;
