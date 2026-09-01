@@ -1,4 +1,4 @@
-use cgmath::prelude::*;
+use cgmath::{Point3, Vector3, prelude::*};
 
 use crate::color::VoxelColor;
 pub struct VoxelInstance {
@@ -25,6 +25,49 @@ impl VoxelInstance {
             .into(),
             color: self.color.to_vector_4().into(),
         }
+    }
+    pub fn vector3_on_voxel_grid_closest_to_point(
+        &self,
+        comparison_point: Point3<f32>,
+    ) -> Point3<f32> {
+        let mut points = vec![
+            Point3 {
+                x: self.position.x,
+                y: self.position.y + 1.0,
+                z: self.position.z,
+            },
+            Point3 {
+                x: self.position.x,
+                y: self.position.y - 1.0,
+                z: self.position.z,
+            },
+            Point3 {
+                x: self.position.x + 1.0,
+                y: self.position.y,
+                z: self.position.z,
+            },
+            Point3 {
+                x: self.position.x - 1.0,
+                y: self.position.y,
+                z: self.position.z,
+            },
+            Point3 {
+                x: self.position.x,
+                y: self.position.y,
+                z: self.position.z + 1.0,
+            },
+            Point3 {
+                x: self.position.x,
+                y: self.position.y,
+                z: self.position.z - 1.0,
+            },
+        ];
+        points.sort_by(|x, y| {
+            (*y - comparison_point)
+                .magnitude()
+                .total_cmp(&(*x - comparison_point).magnitude())
+        });
+        points[0]
     }
 }
 #[repr(C)]

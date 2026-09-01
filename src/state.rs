@@ -5,6 +5,7 @@ use crate::{
     depth_texture::{self, DepthTexture},
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
     voxel_instance::{RawVoxelInstance, VoxelInstance},
+    voxel_scene::VoxelScene,
 };
 use anyhow::Ok;
 use cgmath::prelude::*;
@@ -33,7 +34,7 @@ pub struct State {
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
-    voxel_instances: Vec<VoxelInstance>,
+    voxel_scene: VoxelScene,
     voxel_instance_buffer: wgpu::Buffer,
     depth_texture: DepthTexture,
     camera_controller: CameraController,
@@ -153,33 +154,10 @@ impl State {
             label: Some("camera_bind_group"),
         });
 
-        let voxel_instances = vec![
-            VoxelInstance::new(
-                cgmath::Vector3 {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                },
-                cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(0.0)),
-                VoxelColor::from_hex("#96584B").unwrap(),
-            ),
-            VoxelInstance::new(
-                cgmath::Vector3 {
-                    x: 1.0,
-                    y: 0.0,
-                    z: 0.0,
-                },
-                cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(0.0)),
-                VoxelColor::new(0.0, 1.0, 0.0, 1.0),
-            ),
-        ];
-        let instance_data = voxel_instances
-            .iter()
-            .map(VoxelInstance::to_raw)
-            .collect::<Vec<_>>();
+        let mut voxel_scene = VoxelScene::new();
         let voxel_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Instance Buffer"),
-            contents: bytemuck::cast_slice(&instance_data),
+            contents: bytemuck::cast_slice(voxel_scene.prepare_buffer_contents()),
             usage: wgpu::BufferUsages::VERTEX,
         });
         let depth_texture = DepthTexture::create_depth_texture(&device, &config, "depth_texture");
@@ -251,7 +229,7 @@ impl State {
             camera_uniform,
             camera_bind_group,
             voxel_instance_buffer,
-            voxel_instances,
+            voxel_scene,
             depth_texture,
             camera_controller,
         })
@@ -286,6 +264,7 @@ impl State {
     pub fn update(&mut self) {
         self.camera_controller.update_camera(&mut self.camera);
         self.update_camera();
+        self.update_voxel_buffers();
     }
     pub fn render(&mut self) -> anyhow::Result<()> {
         self.window.request_redraw();
@@ -358,7 +337,7 @@ impl State {
             render_pass.draw_indexed(
                 0..CUBE_INDICES.len() as u32,
                 0,
-                0..self.voxel_instances.len() as u32,
+                0..self.voxel_scene.get_voxel_instance_count() as u32,
             );
         }
         self.queue.submit(iter::once(encoder.finish()));
@@ -384,5 +363,14 @@ impl State {
             0,
             bytemuck::cast_slice(&[self.camera_uniform]),
         );
+    }
+    fn update_voxel_buffers(&mut self) {
+        if self.voxel_scene.is_voxel_scene_changed() {
+            self.queue.write_buffer(
+                &self.voxel_instance_buffer,
+                0,
+                bytemuck::cast_slice(&self.voxel_scene.prepare_buffer_contents()),
+            );
+        }
     }
 }

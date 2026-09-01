@@ -1,8 +1,7 @@
-use pollster::block_on;
 use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
-    event::{KeyEvent, MouseButton, WindowEvent},
+    event::{KeyEvent, WindowEvent},
     event_loop::EventLoop,
     keyboard::PhysicalKey,
     window::WindowAttributes,
