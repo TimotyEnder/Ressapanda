@@ -11,7 +11,10 @@ use cgmath::prelude::*;
 use std::{iter, sync::Arc};
 use wgpu::{util::DeviceExt, wgt::instance};
 use winit::{
-    dpi::PhysicalPosition, event::MouseButton, event_loop::ActiveEventLoop, keyboard::KeyCode,
+    dpi::PhysicalPosition,
+    event::{MouseButton, MouseScrollDelta, TouchPhase},
+    event_loop::ActiveEventLoop,
+    keyboard::KeyCode,
     window::Window,
 };
 pub const TEXTURE_DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
@@ -116,7 +119,7 @@ impl State {
             config.width as f32 / config.height as f32,
             45.0,
             0.1,
-            100.0,
+            200.0,
         );
         let camera_controller = CameraController::new(0.01, &camera);
         let mut camera_uniform = CameraUniform::new();
@@ -268,6 +271,9 @@ impl State {
         pressed: bool,
     ) {
         self.camera_controller.handle_mouse_button(button, pressed);
+    }
+    pub fn handle_mouse_wheel(&mut self, delta: MouseScrollDelta, phase: TouchPhase) {
+        self.camera_controller.handle_mouse_wheel(delta, phase);
     }
     pub fn handle_mouse_input(&mut self, pos: PhysicalPosition<f64>) {
         self.camera_controller.handle_mouse_position(pos.x, pos.y);

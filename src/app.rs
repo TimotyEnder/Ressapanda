@@ -51,6 +51,13 @@ impl ApplicationHandler<State> for App {
                     }
                 }
             }
+            WindowEvent::MouseWheel {
+                device_id: _,
+                delta,
+                phase,
+            } => {
+                state.handle_mouse_wheel(delta, phase);
+            }
             WindowEvent::MouseInput {
                 state: mouse_button_state,
                 button,

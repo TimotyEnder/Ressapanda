@@ -1,7 +1,11 @@
 use std::f64;
 
 use cgmath::Vector2;
-use winit::{event::MouseButton, keyboard::KeyCode};
+use log::log;
+use winit::{
+    event::{MouseButton, MouseScrollDelta, TouchPhase},
+    keyboard::KeyCode,
+};
 
 use crate::{camera::Camera, conversion_utils::spherical_to_cartesian};
 
@@ -55,6 +59,15 @@ impl CameraController {
         } else {
             self.rotate_last_position = Some(current);
         }
+    }
+    pub fn handle_mouse_wheel(&mut self, delta: MouseScrollDelta, _phase: TouchPhase) {
+        let scroll_y = match delta {
+            MouseScrollDelta::LineDelta(_, y) => y as f64 * 2.0,
+            MouseScrollDelta::PixelDelta(pos) => pos.y,
+        };
+        self.radius -= scroll_y;
+        self.radius = self.radius.clamp(3.0, 200.0);
+        log::info!("camera radius: {}", self.radius);
     }
     pub fn update_camera(&self, camera: &mut Camera) {
         let eye = spherical_to_cartesian(self.radius, self.yaw, self.pitch);
