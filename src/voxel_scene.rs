@@ -22,7 +22,7 @@ impl VoxelScene {
                 z: 0.0,
             },
             cgmath::Quaternion::from_axis_angle(Vector3::unit_z(), cgmath::Deg(0.0)),
-            VoxelColor::new(1.0, 0.0, 0.0, 1.0),
+            VoxelColor::default(),
         );
         let voxels = vec![init_cube];
         let mut voxel_map = BTreeMap::new();
@@ -51,16 +51,13 @@ impl VoxelScene {
     pub fn get_voxel_instance_count(&self) -> usize {
         self.voxel_instance_list.len()
     }
-    pub fn add_voxel(&mut self, position: Vector3<f32>, color: VoxelColor) -> bool {
+    pub fn add_voxel(&mut self, position: Vector3<f32>, color: VoxelColor) {
         let voxel_scene_position = VoxelScenePosition {
             x: position.x as i32,
             y: position.y as i32,
             z: position.z as i32,
         };
-        /*if !self
-            .position_to_voxel_instance_index
-            .contains_key(&voxel_scene_position)
-        {*/
+
         let voxel_to_add =
             VoxelInstance::new(position, Quaternion::from_angle_y(cgmath::Deg(0.0)), color);
         self.voxels_changed = true;
@@ -69,9 +66,6 @@ impl VoxelScene {
             voxel_scene_position,
             self.voxel_instance_list.len() as isize - 1,
         );
-        return true;
-        /* }*/
-        //return false;
     }
     pub fn remove_voxel(&mut self, position: Vector3<f32>) -> bool {
         let voxel_scene_position = VoxelScenePosition {
