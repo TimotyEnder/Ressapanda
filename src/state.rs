@@ -3,7 +3,7 @@ use crate::{
     camera_controller::{self, CameraController},
     color::VoxelColor,
     depth_texture::{self, DepthTexture},
-    reycast::voxel_click_temporary,
+    raycast::voxel_click_temporary,
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
     voxel_instance::{RawVoxelInstance, VoxelInstance},
     voxel_scene::VoxelScene,

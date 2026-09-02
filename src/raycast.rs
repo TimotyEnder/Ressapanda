@@ -10,7 +10,7 @@ pub struct Ray {
     pub origin: Point3<f32>,
     pub direction: Vector3<f32>,
 }
-pub fn reycast_compute_from_mouse_position(
+pub fn raycast_compute_from_mouse_position(
     camera: &Camera,
     mouse_x: f64,
     mouse_y: f64,
@@ -74,7 +74,7 @@ pub fn voxel_click_temporary(
     view_port_height: u32,
     voxel_scene: &mut VoxelScene,
 ) {
-    let ray = reycast_compute_from_mouse_position(
+    let ray = raycast_compute_from_mouse_position(
         camera,
         mouse_x,
         mouse_y,
