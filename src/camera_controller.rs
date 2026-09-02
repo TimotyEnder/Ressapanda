@@ -84,7 +84,7 @@ impl CameraController {
         if let Some(last_pos) = self.pan_last_position {
             let delta = current - last_pos;
             let radius = self.radius as f32;
-            let fovy = camera.fovy();
+            let fovy = camera.get_fovy();
             let scale = (2.0 * radius * (fovy / 2.0).to_radians().tan()) / viewport_height;
             let dx = -delta.x as f32;
             let dy = -delta.y as f32;

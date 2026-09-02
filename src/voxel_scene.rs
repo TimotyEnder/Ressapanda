@@ -57,21 +57,21 @@ impl VoxelScene {
             y: position.y as i32,
             z: position.z as i32,
         };
-        if !self
+        /*if !self
             .position_to_voxel_instance_index
             .contains_key(&voxel_scene_position)
-        {
-            let voxel_to_add =
-                VoxelInstance::new(position, Quaternion::from_angle_y(cgmath::Deg(0.0)), color);
-            self.voxels_changed = true;
-            self.voxel_instance_list.push(voxel_to_add);
-            self.position_to_voxel_instance_index.insert(
-                voxel_scene_position,
-                self.voxel_instance_list.len() as isize - 1,
-            );
-            return true;
-        }
-        return false;
+        {*/
+        let voxel_to_add =
+            VoxelInstance::new(position, Quaternion::from_angle_y(cgmath::Deg(0.0)), color);
+        self.voxels_changed = true;
+        self.voxel_instance_list.push(voxel_to_add);
+        self.position_to_voxel_instance_index.insert(
+            voxel_scene_position,
+            self.voxel_instance_list.len() as isize - 1,
+        );
+        return true;
+        /* }*/
+        //return false;
     }
     pub fn remove_voxel(&mut self, position: Vector3<f32>) -> bool {
         let voxel_scene_position = VoxelScenePosition {
@@ -96,6 +96,9 @@ impl VoxelScene {
             return false;
         }
         return false;
+    }
+    pub fn get_voxels(&self) -> &Vec<VoxelInstance> {
+        &self.voxel_instance_list
     }
 }
 #[derive(Eq, PartialEq, PartialOrd, Ord)]

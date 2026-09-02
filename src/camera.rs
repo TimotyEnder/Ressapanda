@@ -49,8 +49,17 @@ impl Camera {
     pub fn up_local(&self) -> Vector3<f32> {
         self.right().cross((self.target - self.eye).normalize())
     }
-    pub fn fovy(&self) -> f32 {
+    pub fn get_fovy(&self) -> f32 {
         self.fovy
+    }
+    pub fn get_aspect(&self) -> f32 {
+        self.aspect
+    }
+    pub fn get_z_near(&self) -> f32 {
+        self.znear
+    }
+    pub fn get_z_far(&self) -> f32 {
+        self.zfar
     }
     pub fn update_aspect(&mut self, width: f32, height: f32) {
         self.aspect = width / height;

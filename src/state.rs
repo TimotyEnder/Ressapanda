@@ -3,6 +3,7 @@ use crate::{
     camera_controller::{self, CameraController},
     color::VoxelColor,
     depth_texture::{self, DepthTexture},
+    reycast::voxel_click_temporary,
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
     voxel_instance::{RawVoxelInstance, VoxelInstance},
     voxel_scene::VoxelScene,
@@ -38,6 +39,8 @@ pub struct State {
     voxel_instance_buffer: wgpu::Buffer,
     depth_texture: DepthTexture,
     camera_controller: CameraController,
+    voxel_click_flag: bool,
+    mouse_left_flag: bool,
 }
 impl State {
     pub async fn new(window: Arc<Window>) -> anyhow::Result<State> {
@@ -232,6 +235,8 @@ impl State {
             voxel_scene,
             depth_texture,
             camera_controller,
+            voxel_click_flag: false,
+            mouse_left_flag: false,
         })
     }
     pub fn window(&self) -> &Window {
@@ -241,15 +246,6 @@ impl State {
         if key == KeyCode::Escape && pressed {
             event_loop.exit();
         }
-        if key == KeyCode::KeyW && pressed {
-            self.voxel_scene.add_voxel(
-                Vector3::new(1.0, 0.0, 0.0),
-                VoxelColor::from_hex("#5a01e0").unwrap_or_default(),
-            );
-        }
-        if key == KeyCode::KeyS && pressed {
-            self.voxel_scene.remove_voxel(Vector3::new(1.0, 0.0, 0.0));
-        }
     }
     pub fn handle_mouse_button(
         &mut self,
@@ -258,6 +254,12 @@ impl State {
         pressed: bool,
     ) {
         self.camera_controller.handle_mouse_button(button, pressed);
+        if button == MouseButton::Left && pressed && !self.mouse_left_flag {
+            self.voxel_click_flag = true;
+            self.mouse_left_flag = true;
+        } else if button == MouseButton::Left && !pressed {
+            self.mouse_left_flag = false;
+        }
     }
     pub fn handle_mouse_wheel(&mut self, delta: MouseScrollDelta, phase: TouchPhase) {
         self.camera_controller.handle_mouse_wheel(delta, phase);
@@ -269,6 +271,17 @@ impl State {
             self.config.height as f32,
             &self.camera,
         );
+        if self.voxel_click_flag {
+            self.voxel_click_flag = false;
+            voxel_click_temporary(
+                &self.camera,
+                pos.x,
+                pos.y,
+                self.config.width,
+                self.config.height,
+                &mut self.voxel_scene,
+            );
+        }
     }
     pub fn update(&mut self) {
         self.camera_controller.update_camera(&mut self.camera);

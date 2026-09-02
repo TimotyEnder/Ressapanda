@@ -1,4 +1,4 @@
-use cgmath::{Point3, Vector3, prelude::*};
+use cgmath::{Point3, Quaternion, Vector3, prelude::*};
 
 use crate::color::VoxelColor;
 pub struct VoxelInstance {
@@ -26,7 +26,7 @@ impl VoxelInstance {
             color: self.color.to_vector_4().into(),
         }
     }
-    pub fn vector3_on_voxel_grid_closest_to_point(
+    pub fn point_on_voxel_grid_closest_to_point(
         &self,
         comparison_point: Point3<f32>,
     ) -> Point3<f32> {
@@ -67,7 +67,13 @@ impl VoxelInstance {
                 .magnitude()
                 .total_cmp(&(*x - comparison_point).magnitude())
         });
-        points[0]
+        points[points.len() - 1]
+    }
+    pub fn get_position(&self) -> Vector3<f32> {
+        self.position
+    }
+    pub fn get_rotation(&self) -> Quaternion<f32> {
+        self.rotation
     }
 }
 #[repr(C)]
