@@ -66,17 +66,21 @@ impl Camera {
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct CameraUniform {
     view_proj: [[f32; 4]; 4],
+    eye: [f32; 4],
 }
 
 impl CameraUniform {
     pub fn new() -> Self {
         Self {
             view_proj: cgmath::Matrix4::identity().into(),
+            eye: [0.0, 0.0, 0.0, 0.0],
         }
     }
 
     pub fn update_view_proj(&mut self, camera: &Camera) {
+        let eye_pos = camera.get_eye_position();
         self.view_proj = (OPENGL_TO_WGPU_MATRIX * camera.build_view_projection_matrix()).into();
+        self.eye = [eye_pos.x, eye_pos.y, eye_pos.z, 0.0];
     }
 }
 #[rustfmt::skip]
