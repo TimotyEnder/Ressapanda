@@ -3,7 +3,7 @@ use crate::{
     camera_controller::{self, CameraController},
     color::VoxelColor,
     depth_texture::{self, DepthTexture},
-    raycast::{raycast_click_to_tool, voxel_click_temporary},
+    raycast::raycast_click_to_tool,
     tools::{add::Add, tool::Tool, tool_selector::ToolSelector},
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
     voxel_instance::{RawVoxelInstance, VoxelInstance},
@@ -293,14 +293,6 @@ impl State {
         );
         if self.voxel_click_flag {
             self.voxel_click_flag = false;
-            // voxel_click_temporary(
-            //     &self.camera,
-            //     pos.x,
-            //     pos.y,
-            //     self.config.width,
-            //     self.config.height,
-            //     &mut self.voxel_scene,
-            // );
             raycast_click_to_tool(self, pos.x, pos.y);
         }
     }

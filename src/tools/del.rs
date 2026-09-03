@@ -13,4 +13,8 @@ impl Tool for Del {
     ) {
         scene.remove_voxel(voxel_position);
     }
+
+    fn name(&self) -> &'static str {
+        "Del"
+    }
 }

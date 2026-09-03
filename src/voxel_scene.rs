@@ -53,9 +53,9 @@ impl VoxelScene {
         position: Vector3<f32>,
     ) -> Option<&mut VoxelInstance> {
         let voxel_scene_position = VoxelScenePosition {
-            x: position.x as i32,
-            y: position.y as i32,
-            z: position.z as i32,
+            x: position.x.round() as i32,
+            y: position.y.round() as i32,
+            z: position.z.round() as i32,
         };
         if let Some(voxel) = self.position_to_voxel.get_mut(&voxel_scene_position) {
             return Some(voxel);
@@ -64,9 +64,9 @@ impl VoxelScene {
     }
     pub fn add_voxel(&mut self, position: Vector3<f32>, color: VoxelColor) {
         let voxel_scene_position = VoxelScenePosition {
-            x: position.x as i32,
-            y: position.y as i32,
-            z: position.z as i32,
+            x: position.x.round() as i32,
+            y: position.y.round() as i32,
+            z: position.z.round() as i32,
         };
 
         let voxel_to_add =
@@ -77,11 +77,12 @@ impl VoxelScene {
     }
     pub fn remove_voxel(&mut self, position: Vector3<f32>) -> bool {
         let voxel_scene_position = VoxelScenePosition {
-            x: position.x as i32,
-            y: position.y as i32,
-            z: position.z as i32,
+            x: position.x.round() as i32,
+            y: position.y.round() as i32,
+            z: position.z.round() as i32,
         };
         if self.position_to_voxel.contains_key(&voxel_scene_position) {
+            self.voxels_changed = true;
             self.position_to_voxel.remove(&voxel_scene_position);
         }
         return false;

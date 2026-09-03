@@ -7,6 +7,7 @@ pub mod color;
 pub mod conversion_utils;
 pub mod depth_texture;
 pub mod raycast;
+pub mod select_mode;
 pub mod state;
 pub mod tools;
 pub mod vertex;

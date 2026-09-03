@@ -67,54 +67,6 @@ pub fn t_min_for_voxel_ray_overlap(ray: &Ray, voxel: &VoxelInstance) -> Option<f
     }
     Some(if t_min > 0.0 { t_min } else { t_max })
 }
-pub fn voxel_click_temporary(
-    camera: &Camera,
-    mouse_x: f64,
-    mouse_y: f64,
-    view_port_width: u32,
-    view_port_height: u32,
-    voxel_scene: &mut VoxelScene,
-) {
-    let ray = raycast_compute_from_mouse_position(
-        camera,
-        mouse_x,
-        mouse_y,
-        view_port_width as f64,
-        view_port_height as f64,
-    );
-    let mut spawn_point = None;
-    let mut min_t_min: Option<f32> = None;
-    let mut min_tmin_voxel = None;
-    for voxel in voxel_scene.get_voxels() {
-        if let Some(t_min) = t_min_for_voxel_ray_overlap(&ray, voxel) {
-            if let Some(min_t_min) = min_t_min.as_mut() {
-                *min_t_min = (*min_t_min).min(t_min);
-                if *min_t_min == t_min {
-                    min_tmin_voxel = Some(voxel);
-                }
-            } else {
-                min_t_min = Some(t_min);
-                min_tmin_voxel = Some(voxel);
-            }
-        }
-    }
-    if let Some(min_t_min) = min_t_min
-        && let Some(voxel) = min_tmin_voxel
-    {
-        let intersect_point = ray.origin + (ray.direction * min_t_min);
-        spawn_point = Some(voxel.point_on_voxel_grid_closest_to_point(intersect_point));
-    }
-    if let Some(spawn_point) = spawn_point {
-        voxel_scene.add_voxel(
-            Vector3 {
-                x: spawn_point.x,
-                y: spawn_point.y,
-                z: spawn_point.z,
-            },
-            VoxelColor::default(),
-        );
-    }
-}
 pub fn find_first_voxel_to_intersect_ray(
     ray: Ray,
     voxel_scene: &VoxelScene,

@@ -19,4 +19,8 @@ impl Tool for Add {
             );
         }
     }
+
+    fn name(&self) -> &'static str {
+        "Add"
+    }
 }

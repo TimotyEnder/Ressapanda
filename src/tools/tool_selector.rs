@@ -21,6 +21,8 @@ impl ToolSelector {
         ret.keycode_to_flag.insert(KeyCode::KeyA, false);
         ret.keycode_to_tool_type.insert(KeyCode::KeyD, "Del");
         ret.keycode_to_flag.insert(KeyCode::KeyD, false);
+        ret.keycode_to_tool_type.insert(KeyCode::KeyS, "Subs");
+        ret.keycode_to_flag.insert(KeyCode::KeyS, false);
         ret
     }
     pub fn tool_selection_inputs(&mut self, key: KeyCode, pressed: bool) -> Option<Box<dyn Tool>> {
