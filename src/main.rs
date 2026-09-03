@@ -8,6 +8,7 @@ pub mod conversion_utils;
 pub mod depth_texture;
 pub mod raycast;
 pub mod state;
+pub mod tools;
 pub mod vertex;
 pub mod voxel_instance;
 pub mod voxel_scene;

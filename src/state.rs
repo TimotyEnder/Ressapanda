@@ -3,13 +3,14 @@ use crate::{
     camera_controller::{self, CameraController},
     color::VoxelColor,
     depth_texture::{self, DepthTexture},
-    raycast::voxel_click_temporary,
+    raycast::{raycast_click_to_tool, voxel_click_temporary},
+    tools::{add::Add, tool::Tool, tool_selector::ToolSelector},
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
     voxel_instance::{RawVoxelInstance, VoxelInstance},
     voxel_scene::VoxelScene,
 };
 use anyhow::Ok;
-use cgmath::{Vector3, prelude::*};
+use cgmath::{Point3, Vector3, prelude::*};
 use std::{iter, sync::Arc};
 use wgpu::{util::DeviceExt, wgt::instance};
 use winit::{
@@ -27,20 +28,22 @@ pub struct State {
     device: wgpu::Device,
     queue: wgpu::Queue,
     render_pipeline: wgpu::RenderPipeline,
-    config: wgpu::SurfaceConfiguration,
+    pub config: wgpu::SurfaceConfiguration,
     is_surface_configured: bool,
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
-    camera: Camera,
+    pub camera: Camera,
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
-    voxel_scene: VoxelScene,
+    pub voxel_scene: VoxelScene,
     voxel_instance_buffer: wgpu::Buffer,
     depth_texture: DepthTexture,
     camera_controller: CameraController,
     voxel_click_flag: bool,
     mouse_left_flag: bool,
+    tool_selector: ToolSelector,
+    current_tool: Box<dyn Tool>,
 }
 impl State {
     pub async fn new(window: Arc<Window>) -> anyhow::Result<State> {
@@ -217,6 +220,8 @@ impl State {
             multiview_mask: None,
             cache: None,
         });
+        let tool_selector = ToolSelector::new();
+        let current_tool = Box::new(Add {});
         Ok(Self {
             window,
             surface,
@@ -237,6 +242,8 @@ impl State {
             camera_controller,
             voxel_click_flag: false,
             mouse_left_flag: false,
+            tool_selector,
+            current_tool,
         })
     }
     pub fn window(&self) -> &Window {
@@ -246,6 +253,19 @@ impl State {
         if key == KeyCode::Escape && pressed {
             event_loop.exit();
         }
+        if let Some(tool) = self.tool_selector.tool_selection_inputs(key, pressed) {
+            self.current_tool = tool;
+        }
+    }
+    pub fn set_tool(&mut self, tool: Box<dyn Tool>) {
+        self.current_tool = tool;
+    }
+    pub fn run_tool(&mut self, voxel_position: Vector3<f32>, intersect_position: Point3<f32>) {
+        self.current_tool.operate_with_voxel_and_intersect(
+            voxel_position,
+            intersect_position,
+            &mut self.voxel_scene,
+        );
     }
     pub fn handle_mouse_button(
         &mut self,
@@ -273,14 +293,15 @@ impl State {
         );
         if self.voxel_click_flag {
             self.voxel_click_flag = false;
-            voxel_click_temporary(
-                &self.camera,
-                pos.x,
-                pos.y,
-                self.config.width,
-                self.config.height,
-                &mut self.voxel_scene,
-            );
+            // voxel_click_temporary(
+            //     &self.camera,
+            //     pos.x,
+            //     pos.y,
+            //     self.config.width,
+            //     self.config.height,
+            //     &mut self.voxel_scene,
+            // );
+            raycast_click_to_tool(self, pos.x, pos.y);
         }
     }
     pub fn update(&mut self) {
