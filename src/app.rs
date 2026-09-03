@@ -70,7 +70,7 @@ impl ApplicationHandler<State> for App {
                 device_id: _,
                 position,
             } => {
-                state.handle_mouse_input(position);
+                state.handle_cursor_moved(position);
             }
             WindowEvent::KeyboardInput {
                 event:

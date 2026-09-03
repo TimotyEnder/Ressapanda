@@ -1,6 +1,7 @@
 use crate::app::run;
 
 pub mod app;
+pub mod brushes;
 pub mod camera;
 pub mod camera_controller;
 pub mod color;

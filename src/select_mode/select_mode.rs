@@ -1,4 +1,5 @@
 use crate::{
+    brushes::brush::Brush,
     camera::Camera,
     select_mode::{area_select_mode::AreaSelectMode, single_select_mode::SingleSelectMode},
     tools::tool::Tool,
@@ -14,6 +15,7 @@ pub trait SelectMode {
         scene: &mut VoxelScene,
         config: &wgpu::SurfaceConfiguration,
         tool: &mut Box<dyn Tool>,
+        brush: &Brush,
     );
     fn mouse_up(
         &mut self,
@@ -23,6 +25,7 @@ pub trait SelectMode {
         scene: &mut VoxelScene,
         config: &wgpu::SurfaceConfiguration,
         tool: &mut Box<dyn Tool>,
+        brush: &Brush,
     );
     fn temp_draw_on_mouse_hover(
         &mut self,
@@ -32,6 +35,7 @@ pub trait SelectMode {
         scene: &mut VoxelScene,
         config: &wgpu::SurfaceConfiguration,
         tool: &mut Box<dyn Tool>,
+        brush: &Brush,
     );
 }
 

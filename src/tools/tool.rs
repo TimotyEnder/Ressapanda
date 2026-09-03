@@ -1,6 +1,7 @@
 use cgmath::{Point3, Vector3};
 
 use crate::{
+    brushes::brush::Brush,
     tools::{add::Add, del::Del, subs::Subs},
     voxel_scene::VoxelScene,
 };
@@ -10,6 +11,13 @@ pub trait Tool {
         &mut self,
         operating_position: Vector3<f32>,
         scene: &mut VoxelScene,
+        brush: &Brush,
+    );
+    fn temp_operate_with_voxel_and_intersect(
+        &mut self,
+        operating_position: Vector3<f32>,
+        scene: &mut VoxelScene,
+        brush: &Brush,
     );
     fn name(&self) -> &'static str;
 }

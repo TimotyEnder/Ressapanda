@@ -9,6 +9,7 @@ use crate::{
 
 pub struct VoxelScene {
     position_to_voxel: BTreeMap<VoxelScenePosition, VoxelInstance>,
+    temporary_voxels: Vec<VoxelInstance>,
     raw_voxel_instance_list: Vec<RawVoxelInstance>,
     voxels_changed: bool,
 }
@@ -29,6 +30,7 @@ impl VoxelScene {
             position_to_voxel: voxel_map,
             raw_voxel_instance_list: Vec::new(),
             voxels_changed: true,
+            temporary_voxels: Vec::new(),
         }
     }
     pub fn prepare_buffer_contents(&mut self) -> &Vec<RawVoxelInstance> {
@@ -38,15 +40,17 @@ impl VoxelScene {
                 .position_to_voxel
                 .values()
                 .map(|voxel| voxel.to_raw())
+                .chain(self.temporary_voxels.iter().map(|voxel| voxel.to_raw()))
                 .collect();
         }
+        self.temporary_voxels.clear();
         &self.raw_voxel_instance_list
     }
     pub fn is_voxel_scene_changed(&self) -> bool {
         self.voxels_changed
     }
     pub fn get_voxel_instance_count(&self) -> usize {
-        self.position_to_voxel.len()
+        self.position_to_voxel.len() + self.temporary_voxels.len()
     }
     pub fn get_voxel_from_position(
         &mut self,
@@ -62,15 +66,34 @@ impl VoxelScene {
         }
         return None;
     }
-    pub fn add_voxel(&mut self, position: Vector3<f32>, color: VoxelColor) {
+    pub fn add_temporary_voxels(&mut self, positions: Vec<Vector3<f32>>, color: &VoxelColor) {
+        for pos in positions {
+            let voxel_to_add = VoxelInstance::new(
+                pos,
+                Quaternion::from_angle_y(cgmath::Deg(0.0)),
+                VoxelColor::new(color.r, color.g, color.b, color.a),
+            );
+            self.voxels_changed = true;
+            self.temporary_voxels.push(voxel_to_add);
+        }
+    }
+    pub fn add_voxel(&mut self, position: Vector3<f32>, color: &VoxelColor) {
         let voxel_scene_position = VoxelScenePosition {
             x: position.x.round() as i32,
             y: position.y.round() as i32,
             z: position.z.round() as i32,
         };
 
-        let voxel_to_add =
-            VoxelInstance::new(position, Quaternion::from_angle_y(cgmath::Deg(0.0)), color);
+        let voxel_to_add = VoxelInstance::new(
+            position,
+            Quaternion::from_angle_y(cgmath::Deg(0.0)),
+            VoxelColor {
+                r: color.r,
+                g: color.g,
+                b: color.b,
+                a: color.a,
+            },
+        );
         self.voxels_changed = true;
         self.position_to_voxel
             .insert(voxel_scene_position, voxel_to_add);

@@ -1,4 +1,5 @@
 use crate::{
+    brushes::brush::Brush,
     camera::{Camera, CameraUniform},
     camera_controller::{self, CameraController},
     color::VoxelColor,
@@ -47,6 +48,8 @@ pub struct State {
     current_tool: Box<dyn Tool>,
     current_select_mode: Box<dyn SelectMode>,
     last_mouse_position_recorded: PhysicalPosition<f64>,
+    next_frame_instance_count: usize,
+    current_brush: Brush,
 }
 impl State {
     pub async fn new(window: Arc<Window>) -> anyhow::Result<State> {
@@ -169,6 +172,7 @@ impl State {
             contents: bytemuck::cast_slice(voxel_scene.prepare_buffer_contents()),
             usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         });
+        let next_frame_instance_count = voxel_scene.get_voxel_instance_count();
         let depth_texture = DepthTexture::create_depth_texture(&device, &config, "depth_texture");
 
         let render_pipeline_layout =
@@ -214,7 +218,11 @@ impl State {
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
                     blend: Some(wgpu::BlendState {
-                        color: wgpu::BlendComponent::REPLACE,
+                        color: wgpu::BlendComponent {
+                            src_factor: wgpu::BlendFactor::SrcAlpha,
+                            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+                            operation: wgpu::BlendOperation::Add,
+                        },
                         alpha: wgpu::BlendComponent::REPLACE,
                     }),
                     write_mask: wgpu::ColorWrites::ALL,
@@ -226,6 +234,9 @@ impl State {
         let tool_selector = KeyInputManager::new();
         let current_tool = Box::new(Add {});
         let current_select_mode = Box::new(SingleSelectMode::new());
+        let current_brush = Brush {
+            color: VoxelColor::default(),
+        };
         Ok(Self {
             window,
             surface,
@@ -251,6 +262,8 @@ impl State {
             current_tool,
             current_select_mode,
             last_mouse_position_recorded: PhysicalPosition { x: 0.0, y: 0.0 },
+            next_frame_instance_count,
+            current_brush,
         })
     }
     pub fn window(&self) -> &Window {
@@ -288,6 +301,7 @@ impl State {
                 &mut self.voxel_scene,
                 &self.config,
                 &mut self.current_tool,
+                &self.current_brush,
             );
         } else if button == MouseButton::Left && !pressed {
             self.current_select_mode.mouse_up(
@@ -297,13 +311,14 @@ impl State {
                 &mut self.voxel_scene,
                 &self.config,
                 &mut self.current_tool,
+                &self.current_brush,
             );
         }
     }
     pub fn handle_mouse_wheel(&mut self, delta: MouseScrollDelta, phase: TouchPhase) {
         self.camera_controller.handle_mouse_wheel(delta, phase);
     }
-    pub fn handle_mouse_input(&mut self, pos: PhysicalPosition<f64>) {
+    pub fn handle_cursor_moved(&mut self, pos: PhysicalPosition<f64>) {
         self.camera_controller.handle_mouse_position(
             pos.x,
             pos.y,
@@ -311,6 +326,15 @@ impl State {
             &self.camera,
         );
         self.last_mouse_position_recorded = pos;
+        self.current_select_mode.temp_draw_on_mouse_hover(
+            pos.x,
+            pos.y,
+            &self.camera,
+            &mut self.voxel_scene,
+            &self.config,
+            &mut self.current_tool,
+            &self.current_brush,
+        );
     }
     pub fn update(&mut self) {
         self.camera_controller.update_camera(&mut self.camera);
@@ -388,7 +412,7 @@ impl State {
             render_pass.draw_indexed(
                 0..CUBE_INDICES.len() as u32,
                 0,
-                0..self.voxel_scene.get_voxel_instance_count() as u32,
+                0..self.next_frame_instance_count as u32,
             );
         }
         self.queue.submit(iter::once(encoder.finish()));
@@ -419,6 +443,7 @@ impl State {
         if !self.voxel_scene.is_voxel_scene_changed() {
             return;
         }
+        self.next_frame_instance_count = self.voxel_scene.get_voxel_instance_count();
         let bytes = bytemuck::cast_slice(self.voxel_scene.prepare_buffer_contents());
         if bytes.len() as u64 > self.voxel_instance_buffer.size() {
             self.voxel_instance_buffer =
