@@ -4,6 +4,7 @@ use crate::{
     color::VoxelColor,
     depth_texture::{self, DepthTexture},
     raycast::raycast_click_to_tool,
+    select_mode::{select_mode::SelectMode, single_select_mode::SingleSelectMode},
     tools::{add::Add, tool::Tool, tool_selector::ToolSelector},
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
     voxel_instance::{RawVoxelInstance, VoxelInstance},
@@ -40,10 +41,13 @@ pub struct State {
     voxel_instance_buffer: wgpu::Buffer,
     depth_texture: DepthTexture,
     camera_controller: CameraController,
-    voxel_click_flag: bool,
+    select_mouse_down_flag: bool,
+    select_mouse_up_flag: bool,
     mouse_left_flag: bool,
     tool_selector: ToolSelector,
     current_tool: Box<dyn Tool>,
+    current_select_mode: Box<dyn SelectMode>,
+    last_mouse_position_recorded: PhysicalPosition<f64>,
 }
 impl State {
     pub async fn new(window: Arc<Window>) -> anyhow::Result<State> {
@@ -222,6 +226,7 @@ impl State {
         });
         let tool_selector = ToolSelector::new();
         let current_tool = Box::new(Add {});
+        let current_select_mode = Box::new(SingleSelectMode::new());
         Ok(Self {
             window,
             surface,
@@ -240,10 +245,13 @@ impl State {
             voxel_scene,
             depth_texture,
             camera_controller,
-            voxel_click_flag: false,
+            select_mouse_down_flag: false,
+            select_mouse_up_flag: false,
             mouse_left_flag: false,
             tool_selector,
             current_tool,
+            current_select_mode,
+            last_mouse_position_recorded: PhysicalPosition { x: 0.0, y: 0.0 },
         })
     }
     pub fn window(&self) -> &Window {
@@ -274,11 +282,24 @@ impl State {
         pressed: bool,
     ) {
         self.camera_controller.handle_mouse_button(button, pressed);
-        if button == MouseButton::Left && pressed && !self.mouse_left_flag {
-            self.voxel_click_flag = true;
-            self.mouse_left_flag = true;
+        if button == MouseButton::Left && pressed {
+            self.current_select_mode.mouse_down(
+                self.last_mouse_position_recorded.x,
+                self.last_mouse_position_recorded.y,
+                &self.camera,
+                &mut self.voxel_scene,
+                &self.config,
+                &mut self.current_tool,
+            );
         } else if button == MouseButton::Left && !pressed {
-            self.mouse_left_flag = false;
+            self.current_select_mode.mouse_up(
+                self.last_mouse_position_recorded.x,
+                self.last_mouse_position_recorded.y,
+                &self.camera,
+                &mut self.voxel_scene,
+                &self.config,
+                &mut self.current_tool,
+            );
         }
     }
     pub fn handle_mouse_wheel(&mut self, delta: MouseScrollDelta, phase: TouchPhase) {
@@ -291,10 +312,7 @@ impl State {
             self.config.height as f32,
             &self.camera,
         );
-        if self.voxel_click_flag {
-            self.voxel_click_flag = false;
-            raycast_click_to_tool(self, pos.x, pos.y);
-        }
+        self.last_mouse_position_recorded = pos;
     }
     pub fn update(&mut self) {
         self.camera_controller.update_camera(&mut self.camera);
