@@ -29,7 +29,7 @@ impl VoxelInstance {
     pub fn point_on_voxel_grid_closest_to_point(
         &self,
         comparison_point: Point3<f32>,
-    ) -> Point3<f32> {
+    ) -> Vector3<f32> {
         let mut points = vec![
             Point3 {
                 x: self.position.x,
@@ -67,7 +67,11 @@ impl VoxelInstance {
                 .magnitude()
                 .total_cmp(&(*x - comparison_point).magnitude())
         });
-        points[points.len() - 1]
+        Vector3::new(
+            points[points.len() - 1].x,
+            points[points.len() - 1].y,
+            points[points.len() - 1].z,
+        )
     }
     pub fn get_position(&self) -> Vector3<f32> {
         self.position

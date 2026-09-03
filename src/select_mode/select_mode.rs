@@ -1,4 +1,9 @@
-use crate::{camera::Camera, tools::tool::Tool, voxel_scene::VoxelScene};
+use crate::{
+    camera::Camera,
+    select_mode::{area_select_mode::AreaSelectMode, single_select_mode::SingleSelectMode},
+    tools::tool::Tool,
+    voxel_scene::VoxelScene,
+};
 
 pub trait SelectMode {
     fn mouse_down(
@@ -28,4 +33,12 @@ pub trait SelectMode {
         config: &wgpu::SurfaceConfiguration,
         tool: &mut Box<dyn Tool>,
     );
+}
+
+pub fn select_mode_from_name(name: &'static str) -> Option<Box<dyn SelectMode>> {
+    match name {
+        "Single" => return Some(Box::new(SingleSelectMode::new())),
+        "Area" => return Some(Box::new(AreaSelectMode::new())),
+        _ => return None,
+    };
 }

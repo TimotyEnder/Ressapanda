@@ -1,0 +1,101 @@
+use cgmath::{Point3, Vector3};
+
+use crate::{
+    filler::voxel_and_intersect_positions_from_a_to_b,
+    raycast::{find_first_voxel_to_intersect_ray, raycast_compute_from_mouse_position},
+    select_mode::select_mode::SelectMode,
+};
+
+pub struct AreaSelectMode {
+    press_flag: bool,
+    previous_hit: Option<(Point3<f32>, Vector3<f32>)>,
+}
+impl AreaSelectMode {
+    pub fn new() -> Self {
+        Self {
+            press_flag: false,
+            previous_hit: None,
+        }
+    }
+}
+impl SelectMode for AreaSelectMode {
+    fn mouse_down(
+        &mut self,
+        mouse_x: f64,
+        mouse_y: f64,
+        camera: &crate::camera::Camera,
+        scene: &mut crate::voxel_scene::VoxelScene,
+        config: &wgpu::SurfaceConfiguration,
+        tool: &mut Box<dyn crate::tools::tool::Tool>,
+    ) {
+        let ray = raycast_compute_from_mouse_position(
+            camera,
+            mouse_x,
+            mouse_y,
+            config.width as f64,
+            config.height as f64,
+        );
+        self.previous_hit = find_first_voxel_to_intersect_ray(ray, scene);
+    }
+
+    fn mouse_up(
+        &mut self,
+        mouse_x: f64,
+        mouse_y: f64,
+        camera: &crate::camera::Camera,
+        scene: &mut crate::voxel_scene::VoxelScene,
+        config: &wgpu::SurfaceConfiguration,
+        tool: &mut Box<dyn crate::tools::tool::Tool>,
+    ) {
+        let ray = raycast_compute_from_mouse_position(
+            camera,
+            mouse_x,
+            mouse_y,
+            config.width as f64,
+            config.height as f64,
+        );
+        if let Some((prev_intersect_position, prev_voxel_position)) = self.previous_hit {
+            if let Some((intersect_position, voxel_position)) =
+                find_first_voxel_to_intersect_ray(ray, scene)
+            {
+                let mut prev_operating_point = prev_voxel_position;
+                let mut operating_point = voxel_position;
+                if tool.name().contains("Add") {
+                    if let Some(prev_voxel) = scene.get_voxel_from_position(prev_voxel_position) {
+                        prev_operating_point = prev_voxel
+                            .point_on_voxel_grid_closest_to_point(prev_intersect_position);
+
+                        tool.operate_with_voxel_and_intersect(prev_operating_point, scene);
+                    }
+                    if let Some(voxel) = scene.get_voxel_from_position(voxel_position) {
+                        operating_point =
+                            voxel.point_on_voxel_grid_closest_to_point(intersect_position);
+                        tool.operate_with_voxel_and_intersect(
+                            Vector3::new(operating_point.x, operating_point.y, operating_point.z),
+                            scene,
+                        );
+                    }
+                }
+                for list_voxel in voxel_and_intersect_positions_from_a_to_b(
+                    prev_operating_point,
+                    Vector3::new(operating_point.x, operating_point.y, operating_point.z),
+                ) {
+                    tool.operate_with_voxel_and_intersect(list_voxel, scene);
+                }
+                self.previous_hit = None;
+            }
+        }
+    }
+
+    fn temp_draw_on_mouse_hover(
+        &mut self,
+        mouse_x: f64,
+        mouse_y: f64,
+        camera: &crate::camera::Camera,
+        scene: &mut crate::voxel_scene::VoxelScene,
+        config: &wgpu::SurfaceConfiguration,
+        tool: &mut Box<dyn crate::tools::tool::Tool>,
+    ) {
+        todo!()
+    }
+}

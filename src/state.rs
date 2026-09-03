@@ -3,9 +3,8 @@ use crate::{
     camera_controller::{self, CameraController},
     color::VoxelColor,
     depth_texture::{self, DepthTexture},
-    raycast::raycast_click_to_tool,
     select_mode::{select_mode::SelectMode, single_select_mode::SingleSelectMode},
-    tools::{add::Add, tool::Tool, tool_selector::ToolSelector},
+    tools::{add::Add, key_input_manager::KeyInputManager, tool::Tool},
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
     voxel_instance::{RawVoxelInstance, VoxelInstance},
     voxel_scene::VoxelScene,
@@ -44,7 +43,7 @@ pub struct State {
     select_mouse_down_flag: bool,
     select_mouse_up_flag: bool,
     mouse_left_flag: bool,
-    tool_selector: ToolSelector,
+    key_input_manager: KeyInputManager,
     current_tool: Box<dyn Tool>,
     current_select_mode: Box<dyn SelectMode>,
     last_mouse_position_recorded: PhysicalPosition<f64>,
@@ -224,7 +223,7 @@ impl State {
             multiview_mask: None,
             cache: None,
         });
-        let tool_selector = ToolSelector::new();
+        let tool_selector = KeyInputManager::new();
         let current_tool = Box::new(Add {});
         let current_select_mode = Box::new(SingleSelectMode::new());
         Ok(Self {
@@ -248,7 +247,7 @@ impl State {
             select_mouse_down_flag: false,
             select_mouse_up_flag: false,
             mouse_left_flag: false,
-            tool_selector,
+            key_input_manager: tool_selector,
             current_tool,
             current_select_mode,
             last_mouse_position_recorded: PhysicalPosition { x: 0.0, y: 0.0 },
@@ -261,19 +260,18 @@ impl State {
         if key == KeyCode::Escape && pressed {
             event_loop.exit();
         }
-        if let Some(tool) = self.tool_selector.tool_selection_inputs(key, pressed) {
+        if let Some(tool) = self.key_input_manager.tool_selection_inputs(key, pressed) {
             self.current_tool = tool;
+        }
+        if let Some(selection_mode) = self
+            .key_input_manager
+            .select_mode_selection_inputs(key, pressed)
+        {
+            self.current_select_mode = selection_mode;
         }
     }
     pub fn set_tool(&mut self, tool: Box<dyn Tool>) {
         self.current_tool = tool;
-    }
-    pub fn run_tool(&mut self, voxel_position: Vector3<f32>, intersect_position: Point3<f32>) {
-        self.current_tool.operate_with_voxel_and_intersect(
-            voxel_position,
-            intersect_position,
-            &mut self.voxel_scene,
-        );
     }
     pub fn handle_mouse_button(
         &mut self,

@@ -1,7 +1,9 @@
+use cgmath::Vector3;
+
 use crate::{
     raycast::{find_first_voxel_to_intersect_ray, raycast_compute_from_mouse_position},
     select_mode::select_mode::SelectMode,
-    tools::tool::Tool,
+    tools::{add::Add, tool::Tool},
 };
 
 pub struct SingleSelectMode {
@@ -34,7 +36,19 @@ impl SelectMode for SingleSelectMode {
             let hit = find_first_voxel_to_intersect_ray(ray, scene);
 
             if let Some((intersect_position, voxel_position)) = hit {
-                tool.operate_with_voxel_and_intersect(voxel_position, intersect_position, scene);
+                match tool.name() {
+                    "Add" => {
+                        if let Some(voxel) = scene.get_voxel_from_position(voxel_position) {
+                            let point =
+                                voxel.point_on_voxel_grid_closest_to_point(intersect_position);
+                            tool.operate_with_voxel_and_intersect(
+                                Vector3::new(point.x, point.y, point.z),
+                                scene,
+                            );
+                        }
+                    }
+                    _ => tool.operate_with_voxel_and_intersect(voxel_position, scene),
+                }
             }
         }
     }

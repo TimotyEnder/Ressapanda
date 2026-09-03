@@ -96,17 +96,3 @@ pub fn find_first_voxel_to_intersect_ray(
     }
     return None;
 }
-pub fn raycast_click_to_tool(state: &mut State, mouse_x: f64, mouse_y: f64) {
-    let ray = raycast_compute_from_mouse_position(
-        &state.camera,
-        mouse_x,
-        mouse_y,
-        state.config.width as f64,
-        state.config.height as f64,
-    );
-    let hit = find_first_voxel_to_intersect_ray(ray, &state.voxel_scene);
-
-    if let Some((intersect_position, voxel_position)) = hit {
-        state.run_tool(voxel_position, intersect_position);
-    }
-}

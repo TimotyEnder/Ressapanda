@@ -8,8 +8,7 @@ use crate::{
 pub trait Tool {
     fn operate_with_voxel_and_intersect(
         &mut self,
-        voxel_positon: Vector3<f32>,
-        intersect_pos: Point3<f32>,
+        operating_position: Vector3<f32>,
         scene: &mut VoxelScene,
     );
     fn name(&self) -> &'static str;
