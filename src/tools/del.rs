@@ -24,6 +24,6 @@ impl Tool for Del {
         scene: &mut VoxelScene,
         brush: &Brush,
     ) {
-        todo!()
+        scene.select_voxel_at_position(operating_position);
     }
 }

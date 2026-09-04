@@ -150,7 +150,14 @@ impl SelectMode for AreaSelectMode {
                             tool.temp_operate_with_voxel_and_intersect(
                                 Vector3::new(point.x, point.y, point.z),
                                 scene,
-                                brush,
+                                &Brush {
+                                    color: crate::color::VoxelColor {
+                                        r: brush.color.r,
+                                        g: brush.color.g,
+                                        b: brush.color.b,
+                                        a: 0.5,
+                                    },
+                                },
                             );
                         }
                     }

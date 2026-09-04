@@ -44,6 +44,9 @@ impl VoxelScene {
                 .collect();
         }
         self.temporary_voxels.clear();
+        self.position_to_voxel
+            .values_mut()
+            .for_each(|voxel| voxel.unselect());
         &self.raw_voxel_instance_list
     }
     pub fn is_voxel_scene_changed(&self) -> bool {
@@ -51,6 +54,16 @@ impl VoxelScene {
     }
     pub fn get_voxel_instance_count(&self) -> usize {
         self.position_to_voxel.len() + self.temporary_voxels.len()
+    }
+    pub fn select_voxel_at_position(&mut self, position: Vector3<f32>) {
+        let voxel_scene_position = VoxelScenePosition {
+            x: position.x.round() as i32,
+            y: position.y.round() as i32,
+            z: position.z.round() as i32,
+        };
+        if let Some(voxel) = self.position_to_voxel.get_mut(&voxel_scene_position) {
+            voxel.select();
+        }
     }
     pub fn get_voxel_from_position(
         &mut self,

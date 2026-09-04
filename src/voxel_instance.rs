@@ -1,4 +1,4 @@
-use cgmath::{Point3, Quaternion, Vector3, prelude::*};
+use cgmath::{Point3, Quaternion, Vector3, Vector4, prelude::*};
 
 use crate::color::VoxelColor;
 pub struct VoxelInstance {
@@ -23,11 +23,18 @@ impl VoxelInstance {
         }
     }
     pub fn to_raw(&self) -> RawVoxelInstance {
+        let info_vec = Vector4::new(
+            { if self.selected { 1.0 } else { 0.0 } },
+            if self.grid_voxel { 1.0 } else { 0.0 },
+            0.0,
+            0.0,
+        );
         RawVoxelInstance {
             matrix: (cgmath::Matrix4::from_translation(self.position)
                 * cgmath::Matrix4::from(self.rotation))
             .into(),
             color: self.color.to_vector_4().into(),
+            info_vec: info_vec.into(),
         }
     }
     pub fn point_on_voxel_grid_closest_to_point(
@@ -86,12 +93,16 @@ impl VoxelInstance {
     pub fn select(&mut self) {
         self.selected = true;
     }
+    pub fn unselect(&mut self) {
+        self.selected = false;
+    }
 }
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct RawVoxelInstance {
     matrix: [[f32; 4]; 4],
     color: [f32; 4],
+    info_vec: [f32; 4], //x selected bool f32 / y grid voxel f32
 }
 impl RawVoxelInstance {
     pub fn desc() -> wgpu::VertexBufferLayout<'static> {
@@ -102,7 +113,6 @@ impl RawVoxelInstance {
             attributes: &[
                 wgpu::VertexAttribute {
                     offset: 0,
-
                     shader_location: 4,
                     format: wgpu::VertexFormat::Float32x4,
                 },
@@ -124,6 +134,11 @@ impl RawVoxelInstance {
                 wgpu::VertexAttribute {
                     offset: mem::size_of::<[f32; 16]>() as wgpu::BufferAddress,
                     shader_location: 8,
+                    format: wgpu::VertexFormat::Float32x4,
+                },
+                wgpu::VertexAttribute {
+                    offset: mem::size_of::<[f32; 20]>() as wgpu::BufferAddress,
+                    shader_location: 9,
                     format: wgpu::VertexFormat::Float32x4,
                 },
             ],

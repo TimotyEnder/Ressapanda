@@ -22,6 +22,6 @@ impl Tool for Subs {
         scene: &mut crate::voxel_scene::VoxelScene,
         brush: &Brush,
     ) {
-        todo!()
+        scene.select_voxel_at_position(operating_position);
     }
 }
