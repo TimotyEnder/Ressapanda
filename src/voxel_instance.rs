@@ -5,6 +5,8 @@ pub struct VoxelInstance {
     position: cgmath::Vector3<f32>,
     rotation: cgmath::Quaternion<f32>,
     color: VoxelColor,
+    selected: bool,
+    grid_voxel: bool,
 }
 impl VoxelInstance {
     pub fn new(
@@ -16,6 +18,8 @@ impl VoxelInstance {
             position,
             rotation,
             color,
+            selected: false,
+            grid_voxel: false,
         }
     }
     pub fn to_raw(&self) -> RawVoxelInstance {
@@ -78,6 +82,9 @@ impl VoxelInstance {
     }
     pub fn get_rotation(&self) -> Quaternion<f32> {
         self.rotation
+    }
+    pub fn select(&mut self) {
+        self.selected = true;
     }
 }
 #[repr(C)]
