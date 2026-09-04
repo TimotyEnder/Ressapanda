@@ -86,8 +86,10 @@ impl SelectMode for AreaSelectMode {
                 ) {
                     tool.operate_with_voxel_and_intersect(list_voxel, scene, brush);
                 }
-                self.previous_hit = None;
             }
+            self.previous_hit = None;
+        } else {
+            scene.force_voxel_scene_update();
         }
     }
 
@@ -164,6 +166,8 @@ impl SelectMode for AreaSelectMode {
                     _ => tool.temp_operate_with_voxel_and_intersect(voxel_position, scene, brush),
                 }
             }
+        } else {
+            scene.force_voxel_scene_update();
         }
     }
 }

@@ -109,6 +109,8 @@ impl SelectMode for SingleSelectMode {
                     &transparent_vers_off_brush,
                 ),
             }
+        } else {
+            scene.force_voxel_scene_update();
         }
     }
 }

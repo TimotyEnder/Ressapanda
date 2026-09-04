@@ -52,6 +52,9 @@ impl VoxelScene {
     pub fn is_voxel_scene_changed(&self) -> bool {
         self.voxels_changed
     }
+    pub fn force_voxel_scene_update(&mut self) {
+        self.voxels_changed = true;
+    }
     pub fn get_voxel_instance_count(&self) -> usize {
         self.position_to_voxel.len() + self.temporary_voxels.len()
     }
@@ -64,6 +67,7 @@ impl VoxelScene {
         if let Some(voxel) = self.position_to_voxel.get_mut(&voxel_scene_position) {
             voxel.select();
         }
+        self.voxels_changed = true;
     }
     pub fn get_voxel_from_position(
         &mut self,
