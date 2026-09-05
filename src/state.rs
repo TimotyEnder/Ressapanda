@@ -293,6 +293,7 @@ impl State {
         pressed: bool,
     ) {
         self.camera_controller.handle_mouse_button(button, pressed);
+
         if button == MouseButton::Left && pressed {
             self.current_select_mode.mouse_down(
                 self.last_mouse_position_recorded.x,
@@ -326,20 +327,23 @@ impl State {
             &self.camera,
         );
         self.last_mouse_position_recorded = pos;
+    }
+    pub fn update(&mut self) {
+        self.camera_controller.update_camera(&mut self.camera);
+        self.update_camera();
+        self.update_temporary_voxel_generation_on_hover();
+        self.update_voxel_buffers();
+    }
+    fn update_temporary_voxel_generation_on_hover(&mut self) {
         self.current_select_mode.temp_draw_on_mouse_hover(
-            pos.x,
-            pos.y,
+            self.last_mouse_position_recorded.x,
+            self.last_mouse_position_recorded.y,
             &self.camera,
             &mut self.voxel_scene,
             &self.config,
             &mut self.current_tool,
             &self.current_brush,
         );
-    }
-    pub fn update(&mut self) {
-        self.camera_controller.update_camera(&mut self.camera);
-        self.update_camera();
-        self.update_voxel_buffers();
     }
     pub fn render(&mut self) -> anyhow::Result<()> {
         self.window.request_redraw();

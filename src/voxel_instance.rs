@@ -22,6 +22,19 @@ impl VoxelInstance {
             grid_voxel: false,
         }
     }
+    pub fn new_grid_voxel(
+        position: cgmath::Vector3<f32>,
+        rotation: cgmath::Quaternion<f32>,
+        color: VoxelColor,
+    ) -> Self {
+        Self {
+            position,
+            rotation,
+            color,
+            selected: false,
+            grid_voxel: true,
+        }
+    }
     pub fn to_raw(&self) -> RawVoxelInstance {
         let info_vec = Vector4::new(
             { if self.selected { 1.0 } else { 0.0 } },
@@ -95,6 +108,9 @@ impl VoxelInstance {
     }
     pub fn unselect(&mut self) {
         self.selected = false;
+    }
+    pub fn is_grid(&self) -> bool {
+        self.grid_voxel
     }
 }
 #[repr(C)]
