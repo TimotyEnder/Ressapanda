@@ -1,11 +1,13 @@
 use std::{collections::HashMap, io::SeekFrom};
 
+use cgmath::Vector3;
 use winit::keyboard::KeyCode;
 
 use crate::{
     select_mode::select_mode::{SelectMode, select_mode_from_name},
     state::State,
     tools::tool::{Tool, tool_from_name},
+    voxel_scene::VoxelScene,
 };
 
 pub struct KeyInputManager {
@@ -64,5 +66,40 @@ impl KeyInputManager {
             }
         }
         return None;
+    }
+    pub fn move_commands_inputs(&mut self, key: KeyCode, pressed: bool, scene: &mut VoxelScene) {
+        match key {
+            KeyCode::ArrowUp => {
+                if pressed {
+                    scene.move_by_vector(Vector3::new(0.0, 0.0, 1.0));
+                }
+            }
+            KeyCode::ArrowDown => {
+                if pressed {
+                    scene.move_by_vector(Vector3::new(0.0, 0.0, -1.0));
+                }
+            }
+            KeyCode::ArrowLeft => {
+                if pressed {
+                    scene.move_by_vector(Vector3::new(-1.0, 0.0, 0.0));
+                }
+            }
+            KeyCode::ArrowRight => {
+                if pressed {
+                    scene.move_by_vector(Vector3::new(1.0, 0.0, 0.0));
+                }
+            }
+            KeyCode::Space => {
+                if pressed {
+                    scene.move_by_vector(Vector3::new(0.0, 1.0, 0.0));
+                }
+            }
+            KeyCode::ControlLeft => {
+                if pressed {
+                    scene.move_by_vector(Vector3::new(0.0, -1.0, 0.0));
+                }
+            }
+            _ => {}
+        };
     }
 }

@@ -294,6 +294,8 @@ impl State {
                 &self.current_tool,
             );
         }
+        self.key_input_manager
+            .move_commands_inputs(key, pressed, &mut self.voxel_scene);
     }
     pub fn set_tool(&mut self, tool: Box<dyn Tool>) {
         self.current_tool = tool;

@@ -38,11 +38,7 @@ impl VoxelScene {
                 z: 16.0,
             },
         ) {
-            let voxel_scene_position = VoxelScenePosition {
-                x: position.x.round() as i32,
-                y: position.y.round() as i32,
-                z: position.z.round() as i32,
-            };
+            let voxel_scene_position = VoxelScenePosition::from_voxel_position(position);
             let voxel = VoxelInstance::new_grid_voxel(
                 position,
                 Quaternion::from_angle_z(cgmath::Deg(0.0)),
@@ -78,11 +74,7 @@ impl VoxelScene {
         self.position_to_voxel.len() + self.temporary_voxels.len()
     }
     pub fn select_voxel_at_position(&mut self, position: Vector3<f32>) {
-        let voxel_scene_position = VoxelScenePosition {
-            x: position.x.round() as i32,
-            y: position.y.round() as i32,
-            z: position.z.round() as i32,
-        };
+        let voxel_scene_position = VoxelScenePosition::from_voxel_position(position);
         if let Some(voxel) = self.position_to_voxel.get_mut(&voxel_scene_position) {
             voxel.select();
         }
@@ -92,11 +84,7 @@ impl VoxelScene {
         &mut self,
         position: Vector3<f32>,
     ) -> Option<&mut VoxelInstance> {
-        let voxel_scene_position = VoxelScenePosition {
-            x: position.x.round() as i32,
-            y: position.y.round() as i32,
-            z: position.z.round() as i32,
-        };
+        let voxel_scene_position = VoxelScenePosition::from_voxel_position(position);
         if let Some(voxel) = self.position_to_voxel.get_mut(&voxel_scene_position) {
             return Some(voxel);
         }
@@ -114,11 +102,7 @@ impl VoxelScene {
         }
     }
     pub fn add_voxel(&mut self, position: Vector3<f32>, color: &VoxelColor) {
-        let voxel_scene_position = VoxelScenePosition {
-            x: position.x.round() as i32,
-            y: position.y.round() as i32,
-            z: position.z.round() as i32,
-        };
+        let voxel_scene_position = VoxelScenePosition::from_voxel_position(position);
 
         if !self.position_to_voxel.contains_key(&voxel_scene_position) {
             let voxel_to_add = VoxelInstance::new(
@@ -137,11 +121,7 @@ impl VoxelScene {
         }
     }
     pub fn remove_voxel(&mut self, position: Vector3<f32>) -> bool {
-        let voxel_scene_position = VoxelScenePosition {
-            x: position.x.round() as i32,
-            y: position.y.round() as i32,
-            z: position.z.round() as i32,
-        };
+        let voxel_scene_position = VoxelScenePosition::from_voxel_position(position);
         if let Some(voxel) = self.position_to_voxel.get(&voxel_scene_position) {
             if !voxel.is_grid() {
                 self.voxels_changed = true;
@@ -153,10 +133,67 @@ impl VoxelScene {
     pub fn get_voxels(&self) -> Vec<&VoxelInstance> {
         self.position_to_voxel.values().collect()
     }
+    pub fn move_by_vector(&mut self, move_vector: Vector3<f32>) {
+        let move_scene_vector = VoxelScenePosition::from_voxel_position(move_vector);
+        let move_overrides_grid = self
+            .position_to_voxel
+            .iter()
+            .filter(|(_, v)| !v.is_grid())
+            .any(|(pos, _)| {
+                let dest = VoxelScenePosition {
+                    x: pos.x + move_scene_vector.x,
+                    y: pos.y + move_scene_vector.y,
+                    z: pos.z + move_scene_vector.z,
+                };
+                self.position_to_voxel
+                    .get(&dest)
+                    .is_some_and(|v| v.is_grid())
+            });
+
+        if !move_overrides_grid {
+            let old_keys: Vec<VoxelScenePosition> = self
+                .position_to_voxel
+                .iter()
+                .filter_map(|(k, v)| (!v.is_grid()).then_some(*k))
+                .collect();
+
+            for voxel in self.position_to_voxel.values_mut() {
+                if !voxel.is_grid() {
+                    voxel.move_position_by_vector(move_vector);
+                }
+            }
+
+            let voxels: Vec<VoxelInstance> = old_keys
+                .iter()
+                .map(|k| self.position_to_voxel.remove(k).unwrap())
+                .collect();
+
+            for (old, voxel) in old_keys.into_iter().zip(voxels) {
+                self.position_to_voxel.insert(
+                    VoxelScenePosition {
+                        x: old.x + move_scene_vector.x,
+                        y: old.y + move_scene_vector.y,
+                        z: old.z + move_scene_vector.z,
+                    },
+                    voxel,
+                );
+            }
+            self.voxels_changed = true;
+        }
+    }
 }
-#[derive(Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]
 struct VoxelScenePosition {
     pub x: i32,
     pub y: i32,
     pub z: i32,
+}
+impl VoxelScenePosition {
+    fn from_voxel_position(position: Vector3<f32>) -> Self {
+        Self {
+            x: position.x.round() as i32,
+            y: position.y.round() as i32,
+            z: position.z.round() as i32,
+        }
+    }
 }
