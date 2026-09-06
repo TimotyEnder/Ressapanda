@@ -22,7 +22,7 @@ impl ApplicationHandler<State> for App {
         let mut window_attributes = WindowAttributes::default();
         window_attributes.title = String::from("Ressapanda!");
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
-        self.state = Some(pollster::block_on(State::new(window)).unwrap());
+        self.state = Some(pollster::block_on(State::new(window, event_loop)).unwrap());
     }
 
     fn window_event(

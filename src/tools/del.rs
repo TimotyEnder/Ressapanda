@@ -26,4 +26,7 @@ impl Tool for Del {
     ) {
         scene.select_voxel_at_position(operating_position);
     }
+    fn cursor_name(&self) -> &'static str {
+        "del"
+    }
 }

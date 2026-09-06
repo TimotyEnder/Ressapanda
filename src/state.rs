@@ -1,19 +1,19 @@
 use crate::{
     brushes::brush::Brush,
     camera::{Camera, CameraUniform},
-    camera_controller::{self, CameraController},
+    camera_controller::CameraController,
     color::VoxelColor,
-    depth_texture::{self, DepthTexture},
+    cursor_loader::{self, CursorLoader},
+    depth_texture::DepthTexture,
     select_mode::{select_mode::SelectMode, single_select_mode::SingleSelectMode},
     tools::{add::Add, key_input_manager::KeyInputManager, tool::Tool},
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
-    voxel_instance::{RawVoxelInstance, VoxelInstance},
+    voxel_instance::RawVoxelInstance,
     voxel_scene::VoxelScene,
 };
 use anyhow::Ok;
-use cgmath::{Point3, Vector3, prelude::*};
 use std::{iter, sync::Arc};
-use wgpu::{util::DeviceExt, wgt::instance};
+use wgpu::util::DeviceExt;
 use winit::{
     dpi::PhysicalPosition,
     event::{MouseButton, MouseScrollDelta, TouchPhase},
@@ -41,18 +41,19 @@ pub struct State {
     voxel_instance_buffer: wgpu::Buffer,
     depth_texture: DepthTexture,
     camera_controller: CameraController,
-    select_mouse_down_flag: bool,
-    select_mouse_up_flag: bool,
-    mouse_left_flag: bool,
     key_input_manager: KeyInputManager,
     current_tool: Box<dyn Tool>,
     current_select_mode: Box<dyn SelectMode>,
     last_mouse_position_recorded: PhysicalPosition<f64>,
     next_frame_instance_count: usize,
     current_brush: Brush,
+    cursor_loader: CursorLoader,
 }
 impl State {
-    pub async fn new(window: Arc<Window>) -> anyhow::Result<State> {
+    pub async fn new(
+        window: Arc<Window>,
+        event_loop: &winit::event_loop::ActiveEventLoop,
+    ) -> anyhow::Result<State> {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::PRIMARY,
             flags: Default::default(),
@@ -232,11 +233,14 @@ impl State {
             cache: None,
         });
         let tool_selector = KeyInputManager::new();
-        let current_tool = Box::new(Add {});
-        let current_select_mode = Box::new(SingleSelectMode::new());
+        let current_tool: Box<dyn Tool> = Box::new(Add {});
+        let current_select_mode: Box<dyn SelectMode> = Box::new(SingleSelectMode::new());
         let current_brush = Brush {
             color: VoxelColor::default(),
         };
+
+        let cursor_loader = CursorLoader::new(event_loop);
+        cursor_loader.change_cursor(window.clone(), &current_select_mode, &current_tool);
         Ok(Self {
             window,
             surface,
@@ -255,15 +259,13 @@ impl State {
             voxel_scene,
             depth_texture,
             camera_controller,
-            select_mouse_down_flag: false,
-            select_mouse_up_flag: false,
-            mouse_left_flag: false,
             key_input_manager: tool_selector,
             current_tool,
             current_select_mode,
             last_mouse_position_recorded: PhysicalPosition { x: 0.0, y: 0.0 },
             next_frame_instance_count,
             current_brush,
+            cursor_loader,
         })
     }
     pub fn window(&self) -> &Window {
@@ -275,12 +277,22 @@ impl State {
         }
         if let Some(tool) = self.key_input_manager.tool_selection_inputs(key, pressed) {
             self.current_tool = tool;
+            self.cursor_loader.change_cursor(
+                self.window.clone(),
+                &self.current_select_mode,
+                &self.current_tool,
+            );
         }
         if let Some(selection_mode) = self
             .key_input_manager
             .select_mode_selection_inputs(key, pressed)
         {
             self.current_select_mode = selection_mode;
+            self.cursor_loader.change_cursor(
+                self.window.clone(),
+                &self.current_select_mode,
+                &self.current_tool,
+            );
         }
     }
     pub fn set_tool(&mut self, tool: Box<dyn Tool>) {

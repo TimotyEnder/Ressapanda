@@ -26,7 +26,7 @@ impl VoxelScene {
     }
     fn axis_grid() -> BTreeMap<VoxelScenePosition, VoxelInstance> {
         let mut map = BTreeMap::new();
-        for (position) in voxel_and_intersect_positions_from_a_to_b(
+        for position in voxel_and_intersect_positions_from_a_to_b(
             Vector3 {
                 x: -16.0,
                 y: 0.0,
@@ -37,37 +37,6 @@ impl VoxelScene {
                 y: 0.0,
                 z: 16.0,
             },
-        )
-        .iter()
-        .chain(
-            voxel_and_intersect_positions_from_a_to_b(
-                Vector3 {
-                    x: -16.0,
-                    y: 0.0,
-                    z: -16.0,
-                },
-                Vector3 {
-                    x: 16.0,
-                    y: 32.0,
-                    z: -16.0,
-                },
-            )
-            .iter()
-            .chain(
-                voxel_and_intersect_positions_from_a_to_b(
-                    Vector3 {
-                        x: -16.0,
-                        y: 0.0,
-                        z: 16.0,
-                    },
-                    Vector3 {
-                        x: -16.0,
-                        y: 32.0,
-                        z: -16.0,
-                    },
-                )
-                .iter(),
-            ),
         ) {
             let voxel_scene_position = VoxelScenePosition {
                 x: position.x.round() as i32,
@@ -75,7 +44,7 @@ impl VoxelScene {
                 z: position.z.round() as i32,
             };
             let voxel = VoxelInstance::new_grid_voxel(
-                *position,
+                position,
                 Quaternion::from_angle_z(cgmath::Deg(0.0)),
                 VoxelColor::from_hex("#333333").unwrap_or_default(),
             );
@@ -151,19 +120,21 @@ impl VoxelScene {
             z: position.z.round() as i32,
         };
 
-        let voxel_to_add = VoxelInstance::new(
-            position,
-            Quaternion::from_angle_y(cgmath::Deg(0.0)),
-            VoxelColor {
-                r: color.r,
-                g: color.g,
-                b: color.b,
-                a: color.a,
-            },
-        );
-        self.voxels_changed = true;
-        self.position_to_voxel
-            .insert(voxel_scene_position, voxel_to_add);
+        if !self.position_to_voxel.contains_key(&voxel_scene_position) {
+            let voxel_to_add = VoxelInstance::new(
+                position,
+                Quaternion::from_angle_y(cgmath::Deg(0.0)),
+                VoxelColor {
+                    r: color.r,
+                    g: color.g,
+                    b: color.b,
+                    a: color.a,
+                },
+            );
+            self.voxels_changed = true;
+            self.position_to_voxel
+                .insert(voxel_scene_position, voxel_to_add);
+        }
     }
     pub fn remove_voxel(&mut self, position: Vector3<f32>) -> bool {
         let voxel_scene_position = VoxelScenePosition {

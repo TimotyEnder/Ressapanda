@@ -170,4 +170,7 @@ impl SelectMode for AreaSelectMode {
             scene.force_voxel_scene_update();
         }
     }
+    fn cursor_name(&self) -> &'static str {
+        "xn_"
+    }
 }

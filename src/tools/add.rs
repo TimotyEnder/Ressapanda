@@ -26,4 +26,8 @@ impl Tool for Add {
     ) {
         scene.add_temporary_voxels(vec![operating_position], &brush.color);
     }
+
+    fn cursor_name(&self) -> &'static str {
+        "add"
+    }
 }

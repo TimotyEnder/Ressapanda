@@ -24,4 +24,7 @@ impl Tool for Subs {
     ) {
         scene.select_voxel_at_position(operating_position);
     }
+    fn cursor_name(&self) -> &'static str {
+        "subs"
+    }
 }

@@ -6,6 +6,7 @@ pub mod camera;
 pub mod camera_controller;
 pub mod color;
 pub mod conversion_utils;
+pub mod cursor_loader;
 pub mod depth_texture;
 pub mod filler;
 pub mod raycast;
