@@ -71,12 +71,12 @@ impl KeyInputManager {
         match key {
             KeyCode::ArrowUp => {
                 if pressed {
-                    scene.move_by_vector(Vector3::new(0.0, 0.0, 1.0));
+                    scene.move_by_vector(Vector3::new(0.0, 0.0, -1.0));
                 }
             }
             KeyCode::ArrowDown => {
                 if pressed {
-                    scene.move_by_vector(Vector3::new(0.0, 0.0, -1.0));
+                    scene.move_by_vector(Vector3::new(0.0, 0.0, 1.0));
                 }
             }
             KeyCode::ArrowLeft => {
@@ -94,7 +94,7 @@ impl KeyInputManager {
                     scene.move_by_vector(Vector3::new(0.0, 1.0, 0.0));
                 }
             }
-            KeyCode::ControlLeft => {
+            KeyCode::AltLeft => {
                 if pressed {
                     scene.move_by_vector(Vector3::new(0.0, -1.0, 0.0));
                 }

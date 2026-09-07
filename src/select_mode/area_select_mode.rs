@@ -8,15 +8,11 @@ use crate::{
 };
 
 pub struct AreaSelectMode {
-    press_flag: bool,
     previous_hit: Option<(Point3<f32>, Vector3<f32>)>,
 }
 impl AreaSelectMode {
     pub fn new() -> Self {
-        Self {
-            press_flag: false,
-            previous_hit: None,
-        }
+        Self { previous_hit: None }
     }
 }
 impl SelectMode for AreaSelectMode {
