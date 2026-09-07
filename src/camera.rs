@@ -1,9 +1,5 @@
-use std::sync::Arc;
+use cgmath::{Point3, Vector3, prelude::*};
 
-use cgmath::{Point3, Vector2, Vector3, prelude::*};
-use winit::window::Window;
-
-use crate::state::State;
 pub struct Camera {
     eye: cgmath::Point3<f32>,
     target: cgmath::Point3<f32>,
@@ -45,6 +41,9 @@ impl Camera {
             .normalize()
             .cross(self.up)
             .normalize()
+    }
+    pub fn forward(&self) -> Vector3<f32> {
+        (self.target - self.eye).normalize()
     }
     pub fn up_local(&self) -> Vector3<f32> {
         self.right().cross((self.target - self.eye).normalize())

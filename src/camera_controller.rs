@@ -1,11 +1,7 @@
 use std::f64;
 
 use cgmath::{EuclideanSpace, Point3, Vector2, Vector3};
-use log::log;
-use winit::{
-    event::{MouseButton, MouseScrollDelta, TouchPhase},
-    keyboard::KeyCode,
-};
+use winit::event::{MouseButton, MouseScrollDelta, TouchPhase};
 
 use crate::{camera::Camera, conversion_utils::spherical_to_cartesian};
 

@@ -4,6 +4,8 @@ use cgmath::Vector3;
 use winit::keyboard::KeyCode;
 
 use crate::{
+    camera::Camera,
+    conversion_utils::snap_vector_to_flat_direction,
     select_mode::select_mode::{SelectMode, select_mode_from_name},
     state::State,
     tools::tool::{Tool, tool_from_name},
@@ -67,26 +69,32 @@ impl KeyInputManager {
         }
         return None;
     }
-    pub fn move_commands_inputs(&mut self, key: KeyCode, pressed: bool, scene: &mut VoxelScene) {
+    pub fn move_commands_inputs(
+        &mut self,
+        key: KeyCode,
+        pressed: bool,
+        scene: &mut VoxelScene,
+        camera: &Camera,
+    ) {
         match key {
             KeyCode::ArrowUp => {
                 if pressed {
-                    scene.move_by_vector(Vector3::new(0.0, 0.0, -1.0));
+                    scene.move_by_vector(snap_vector_to_flat_direction(camera.forward()));
                 }
             }
             KeyCode::ArrowDown => {
                 if pressed {
-                    scene.move_by_vector(Vector3::new(0.0, 0.0, 1.0));
+                    scene.move_by_vector(snap_vector_to_flat_direction(camera.forward()) * -1.0);
                 }
             }
             KeyCode::ArrowLeft => {
                 if pressed {
-                    scene.move_by_vector(Vector3::new(-1.0, 0.0, 0.0));
+                    scene.move_by_vector(snap_vector_to_flat_direction(camera.right()) * -1.0);
                 }
             }
             KeyCode::ArrowRight => {
                 if pressed {
-                    scene.move_by_vector(Vector3::new(1.0, 0.0, 0.0));
+                    scene.move_by_vector(snap_vector_to_flat_direction(camera.right()));
                 }
             }
             KeyCode::Space => {
@@ -97,6 +105,11 @@ impl KeyInputManager {
             KeyCode::AltLeft => {
                 if pressed {
                     scene.move_by_vector(Vector3::new(0.0, -1.0, 0.0));
+                }
+            }
+            KeyCode::KeyC => {
+                if pressed {
+                    scene.center();
                 }
             }
             _ => {}

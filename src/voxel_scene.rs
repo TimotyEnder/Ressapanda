@@ -1,5 +1,5 @@
-use cgmath::prelude::*;
 use cgmath::{Quaternion, Vector3};
+use cgmath::{prelude::*, vec3};
 use std::collections::{BTreeMap, HashMap};
 
 use crate::filler::voxel_and_intersect_positions_from_a_to_b;
@@ -133,7 +133,20 @@ impl VoxelScene {
     pub fn get_voxels(&self) -> Vec<&VoxelInstance> {
         self.position_to_voxel.values().collect()
     }
-    pub fn move_by_vector(&mut self, move_vector: Vector3<f32>) {
+    pub fn center(&mut self) {
+        let mut sum = vec3(0.0, 0.0, 0.0);
+        let mut n = 0.0;
+        for voxel in self.position_to_voxel.values() {
+            if !voxel.is_grid() {
+                sum += voxel.get_position();
+                n += 1.0;
+            }
+        }
+        let center = vec3(sum.x / n, sum.y / n, sum.z / n);
+        self.move_by_vector(vec3(-center.x, 0.0, -center.z));
+        while self.move_by_vector(vec3(0.0, -1.0, 0.0)) {}
+    }
+    pub fn move_by_vector(&mut self, move_vector: Vector3<f32>) -> bool {
         let move_scene_vector = VoxelScenePosition::from_voxel_position(move_vector);
         let move_overrides_grid = self
             .position_to_voxel
@@ -179,7 +192,9 @@ impl VoxelScene {
                 );
             }
             self.voxels_changed = true;
+            return true;
         }
+        return false;
     }
 }
 #[derive(Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]
