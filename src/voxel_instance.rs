@@ -97,6 +97,9 @@ impl VoxelInstance {
             points[points.len() - 1].z,
         )
     }
+    pub fn set_position(&mut self, position: cgmath::Vector3<f32>) {
+        self.position = position;
+    }
     pub fn move_position_by_vector(&mut self, vector: Vector3<f32>) {
         self.position += vector;
     }

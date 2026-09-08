@@ -15,12 +15,16 @@ use crate::{
 pub struct KeyInputManager {
     keycode_to_mapping: HashMap<KeyCode, &'static str>,
     keycode_to_flag: HashMap<KeyCode, bool>,
+    move_modifier: bool,
+    rotate_modifier: bool,
 }
 impl KeyInputManager {
     pub fn new() -> Self {
         let mut ret = Self {
             keycode_to_mapping: HashMap::new(),
             keycode_to_flag: HashMap::new(),
+            move_modifier: false,
+            rotate_modifier: false,
         };
         //Tools
         ret.keycode_to_mapping.insert(KeyCode::KeyA, "Add");
@@ -36,6 +40,17 @@ impl KeyInputManager {
         ret.keycode_to_mapping.insert(KeyCode::KeyW, "Area");
         ret.keycode_to_flag.insert(KeyCode::KeyW, false);
         ret
+    }
+    pub fn modifier_inputs(&mut self, key: KeyCode, pressed: bool) {
+        match key {
+            KeyCode::ControlLeft => {
+                self.rotate_modifier = pressed;
+            }
+            KeyCode::AltLeft => {
+                self.move_modifier = pressed;
+            }
+            _ => {}
+        };
     }
     pub fn tool_selection_inputs(&mut self, key: KeyCode, pressed: bool) -> Option<Box<dyn Tool>> {
         if let Some(name) = self.keycode_to_mapping.get(&key)
@@ -76,33 +91,46 @@ impl KeyInputManager {
         scene: &mut VoxelScene,
         camera: &Camera,
     ) {
+        if self.move_modifier {
+            self.move_inputs(key, pressed, scene, camera);
+        } else if self.rotate_modifier {
+            self.rotate_inputs(key, pressed, scene, camera);
+        }
+    }
+    fn move_inputs(
+        &mut self,
+        key: KeyCode,
+        pressed: bool,
+        scene: &mut VoxelScene,
+        camera: &Camera,
+    ) {
         match key {
-            KeyCode::ArrowUp => {
+            KeyCode::KeyW => {
                 if pressed {
                     scene.move_by_vector(snap_vector_to_flat_direction(camera.forward()));
                 }
             }
-            KeyCode::ArrowDown => {
+            KeyCode::KeyS => {
                 if pressed {
                     scene.move_by_vector(snap_vector_to_flat_direction(camera.forward()) * -1.0);
                 }
             }
-            KeyCode::ArrowLeft => {
+            KeyCode::KeyA => {
                 if pressed {
                     scene.move_by_vector(snap_vector_to_flat_direction(camera.right()) * -1.0);
                 }
             }
-            KeyCode::ArrowRight => {
+            KeyCode::KeyD => {
                 if pressed {
                     scene.move_by_vector(snap_vector_to_flat_direction(camera.right()));
                 }
             }
-            KeyCode::Space => {
+            KeyCode::KeyQ => {
                 if pressed {
                     scene.move_by_vector(Vector3::new(0.0, 1.0, 0.0));
                 }
             }
-            KeyCode::AltLeft => {
+            KeyCode::KeyE => {
                 if pressed {
                     scene.move_by_vector(Vector3::new(0.0, -1.0, 0.0));
                 }
@@ -110,6 +138,59 @@ impl KeyInputManager {
             KeyCode::KeyC => {
                 if pressed {
                     scene.center();
+                }
+            }
+            _ => {}
+        };
+    }
+    fn rotate_inputs(
+        &mut self,
+        key: KeyCode,
+        pressed: bool,
+        scene: &mut VoxelScene,
+        camera: &Camera,
+    ) {
+        match key {
+            KeyCode::KeyW => {
+                if pressed {
+                    scene.rotate_around_center(
+                        snap_vector_to_flat_direction(camera.right()),
+                        cgmath::Deg(90.0),
+                    );
+                }
+            }
+            KeyCode::KeyS => {
+                if pressed {
+                    scene.rotate_around_center(
+                        snap_vector_to_flat_direction(camera.right()),
+                        cgmath::Deg(-90.0),
+                    );
+                }
+            }
+            KeyCode::KeyA => {
+                if pressed {
+                    scene.rotate_around_center(Vector3::new(0.0, 1.0, 0.0), cgmath::Deg(90.0));
+                }
+            }
+            KeyCode::KeyD => {
+                if pressed {
+                    scene.rotate_around_center(Vector3::new(0.0, 1.0, 0.0), cgmath::Deg(-90.0));
+                }
+            }
+            KeyCode::KeyQ => {
+                if pressed {
+                    scene.rotate_around_center(
+                        snap_vector_to_flat_direction(camera.forward()),
+                        cgmath::Deg(90.0),
+                    );
+                }
+            }
+            KeyCode::KeyE => {
+                if pressed {
+                    scene.rotate_around_center(
+                        snap_vector_to_flat_direction(camera.forward()),
+                        cgmath::Deg(-90.0),
+                    );
                 }
             }
             _ => {}

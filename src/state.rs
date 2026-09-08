@@ -275,6 +275,7 @@ impl State {
         if key == KeyCode::Escape && pressed {
             event_loop.exit();
         }
+        self.key_input_manager.modifier_inputs(key, pressed);
         if let Some(tool) = self.key_input_manager.tool_selection_inputs(key, pressed) {
             self.current_tool = tool;
             self.cursor_loader.change_cursor(

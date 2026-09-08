@@ -1,3 +1,4 @@
+use cgmath::num_traits::real::Real;
 use cgmath::{Quaternion, Vector3};
 use cgmath::{prelude::*, vec3};
 use std::collections::{BTreeMap, HashMap};
@@ -133,7 +134,7 @@ impl VoxelScene {
     pub fn get_voxels(&self) -> Vec<&VoxelInstance> {
         self.position_to_voxel.values().collect()
     }
-    pub fn center(&mut self) {
+    fn find_center(&self) -> Vector3<f32> {
         let mut sum = vec3(0.0, 0.0, 0.0);
         let mut n = 0.0;
         for voxel in self.position_to_voxel.values() {
@@ -142,9 +143,65 @@ impl VoxelScene {
                 n += 1.0;
             }
         }
-        let center = vec3(sum.x / n, sum.y / n, sum.z / n);
+        if n == 0.0 {
+            return vec3(0.0, 0.0, 0.0);
+        }
+        vec3(
+            (sum.x / n).round(),
+            (sum.y / n).round(),
+            (sum.z / n).round(),
+        )
+    }
+    pub fn center(&mut self) {
+        let center = self.find_center();
         self.move_by_vector(vec3(-center.x, 0.0, -center.z));
         while self.move_by_vector(vec3(0.0, -1.0, 0.0)) {}
+    }
+    pub fn rotate_around_center(&mut self, axis: Vector3<f32>, deg: cgmath::Deg<f32>) -> bool {
+        let center = self.find_center();
+        let rotation = Quaternion::from_axis_angle(axis.normalize(), deg);
+        let old_keys: Vec<VoxelScenePosition> = self
+            .position_to_voxel
+            .iter()
+            .filter_map(|(k, v)| (!v.is_grid()).then_some(*k))
+            .collect();
+        let mut smallest_y = f32::INFINITY;
+        for voxel in self.position_to_voxel.values_mut() {
+            if !voxel.is_grid() {
+                let computed_float_pos = center + rotation * (voxel.get_position() - center);
+                smallest_y = smallest_y.min(computed_float_pos.y.round());
+                voxel.set_position(vec3(
+                    computed_float_pos.x.round(),
+                    computed_float_pos.y.round(),
+                    computed_float_pos.z.round(),
+                ));
+            }
+        }
+        let necessary_lift_overlap_prevention = (1.0 - smallest_y).max(0.0);
+        if smallest_y <= 0.0 {
+            for voxel in self.position_to_voxel.values_mut() {
+                if !voxel.is_grid() {
+                    voxel.move_position_by_vector(vec3(
+                        0.0,
+                        necessary_lift_overlap_prevention,
+                        0.0,
+                    ));
+                }
+            }
+        }
+        let voxels: Vec<VoxelInstance> = old_keys
+            .iter()
+            .map(|k| self.position_to_voxel.remove(k).unwrap())
+            .collect();
+
+        for (_, voxel) in old_keys.into_iter().zip(voxels) {
+            self.position_to_voxel.insert(
+                VoxelScenePosition::from_voxel_position(voxel.get_position()),
+                voxel,
+            );
+        }
+        self.voxels_changed = true;
+        return true;
     }
     pub fn move_by_vector(&mut self, move_vector: Vector3<f32>) -> bool {
         let move_scene_vector = VoxelScenePosition::from_voxel_position(move_vector);
