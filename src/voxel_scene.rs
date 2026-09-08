@@ -14,6 +14,7 @@ pub struct VoxelScene {
     temporary_voxels: Vec<VoxelInstance>,
     raw_voxel_instance_list: Vec<RawVoxelInstance>,
     voxels_changed: bool,
+    center: Vector3<f32>,
 }
 impl VoxelScene {
     pub fn new() -> Self {
@@ -23,6 +24,7 @@ impl VoxelScene {
             raw_voxel_instance_list: Vec::new(),
             voxels_changed: true,
             temporary_voxels: Vec::new(),
+            center: vec3(0.0, 0.0, 0.0),
         }
     }
     fn axis_grid() -> BTreeMap<VoxelScenePosition, VoxelInstance> {
@@ -119,6 +121,7 @@ impl VoxelScene {
             self.voxels_changed = true;
             self.position_to_voxel
                 .insert(voxel_scene_position, voxel_to_add);
+            self.center = self.find_center();
         }
     }
     pub fn remove_voxel(&mut self, position: Vector3<f32>) -> bool {
@@ -127,6 +130,7 @@ impl VoxelScene {
             if !voxel.is_grid() {
                 self.voxels_changed = true;
                 self.position_to_voxel.remove(&voxel_scene_position);
+                self.center = self.find_center()
             }
         }
         return false;
@@ -152,13 +156,13 @@ impl VoxelScene {
             (sum.z / n).round(),
         )
     }
-    pub fn center(&mut self) {
+    pub fn reposition_to_calculated_center(&mut self) {
         let center = self.find_center();
         self.move_by_vector(vec3(-center.x, 0.0, -center.z));
         while self.move_by_vector(vec3(0.0, -1.0, 0.0)) {}
     }
     pub fn rotate_around_center(&mut self, axis: Vector3<f32>, deg: cgmath::Deg<f32>) -> bool {
-        let center = self.find_center();
+        let center = self.center;
         let rotation = Quaternion::from_axis_angle(axis.normalize(), deg);
         let old_keys: Vec<VoxelScenePosition> = self
             .position_to_voxel

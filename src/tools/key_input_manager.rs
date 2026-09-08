@@ -56,6 +56,8 @@ impl KeyInputManager {
     pub fn tool_selection_inputs(&mut self, key: KeyCode, pressed: bool) -> Option<Box<dyn Tool>> {
         if let Some(name) = self.keycode_to_mapping.get(&key)
             && let Some(flag) = self.keycode_to_flag.get_mut(&key)
+            && !self.move_modifier
+            && !self.rotate_modifier
         {
             if !*flag && pressed {
                 if let Some(tool) = tool_from_name(name) {
@@ -74,6 +76,8 @@ impl KeyInputManager {
     ) -> Option<Box<dyn SelectMode>> {
         if let Some(name) = self.keycode_to_mapping.get(&key)
             && let Some(flag) = self.keycode_to_flag.get_mut(&key)
+            && !self.move_modifier
+            && !self.rotate_modifier
         {
             if !*flag && pressed {
                 if let Some(select_mode) = select_mode_from_name(name) {
@@ -182,7 +186,7 @@ impl KeyInputManager {
             }
             KeyCode::KeyC => {
                 if pressed {
-                    scene.center();
+                    scene.reposition_to_calculated_center();
                 }
             }
             _ => {}
