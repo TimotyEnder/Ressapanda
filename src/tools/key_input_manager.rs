@@ -43,7 +43,7 @@ impl KeyInputManager {
     }
     pub fn modifier_inputs(&mut self, key: KeyCode, pressed: bool) {
         match key {
-            KeyCode::ControlLeft => {
+            KeyCode::ShiftLeft => {
                 self.rotate_modifier = pressed;
             }
             KeyCode::AltLeft => {
