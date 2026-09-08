@@ -1,10 +1,11 @@
 use std::{collections::HashMap, io::SeekFrom};
 
-use cgmath::Vector3;
+use cgmath::{EuclideanSpace, InnerSpace, Point3, Vector3};
 use winit::keyboard::KeyCode;
 
 use crate::{
     camera::Camera,
+    camera_controller::CameraController,
     conversion_utils::snap_vector_to_flat_direction,
     select_mode::select_mode::{SelectMode, select_mode_from_name},
     state::State,
@@ -83,6 +84,50 @@ impl KeyInputManager {
             }
         }
         return None;
+    }
+    pub fn camera_preset_positions_inputs(
+        &mut self,
+        key: KeyCode,
+        pressed: bool,
+        camera: &mut Camera,
+        camera_controller: &mut CameraController,
+    ) {
+        if pressed {
+            let target = Point3::new(0.0, 0.0, 0.0);
+            match key {
+                KeyCode::Digit1 => {
+                    // x (view along +X)
+                    let eye = Vector3::new(1.0, 0.0, 0.0);
+                    camera_controller.set_preset_orbit(eye);
+                    camera.set_position(target, target + eye);
+                }
+                KeyCode::Digit2 => {
+                    // z (view along +Z)
+                    let eye = Vector3::new(0.0, 0.0, 1.0);
+                    camera_controller.set_preset_orbit(eye);
+                    camera.set_position(target, target + eye);
+                }
+                KeyCode::Digit3 => {
+                    // x backwards (view along -X)
+                    let eye = Vector3::new(-1.0, 0.0, 0.0);
+                    camera_controller.set_preset_orbit(eye);
+                    camera.set_position(target, target + eye);
+                }
+                KeyCode::Digit4 => {
+                    // z backwards (view along -Z)
+                    let eye = Vector3::new(0.0, 0.0, -1.0);
+                    camera_controller.set_preset_orbit(eye);
+                    camera.set_position(target, target + eye);
+                }
+                KeyCode::Digit5 => {
+                    // straight up (view straight down)
+                    let eye = Vector3::new(0.0, 1.0, 0.0);
+                    camera_controller.set_preset_orbit(eye);
+                    camera.set_position(target, target + eye);
+                }
+                _ => {}
+            };
+        }
     }
     pub fn move_commands_inputs(
         &mut self,

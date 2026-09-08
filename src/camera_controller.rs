@@ -1,6 +1,6 @@
 use std::f64;
 
-use cgmath::{EuclideanSpace, Point3, Vector2, Vector3};
+use cgmath::{EuclideanSpace, InnerSpace, Point3, Vector2, Vector3};
 use winit::event::{MouseButton, MouseScrollDelta, TouchPhase};
 
 use crate::{camera::Camera, conversion_utils::spherical_to_cartesian};
@@ -11,10 +11,10 @@ pub struct CameraController {
     pan_started: bool,
     rotate_last_position: Option<Vector2<f64>>,
     pan_last_position: Option<Vector2<f64>>,
-    yaw: f64,
-    pitch: f64,
-    radius: f64,
-    pan_offset: Vector3<f32>,
+    pub yaw: f64,
+    pub pitch: f64,
+    pub radius: f64,
+    pub pan_offset: Vector3<f32>,
 }
 impl CameraController {
     pub fn new(rotation_sensitivity: f32, camera: &Camera) -> Self {
@@ -33,6 +33,12 @@ impl CameraController {
             radius: radius as f64,
             pan_offset: Vector3::new(0.0, 0.0, 0.0),
         }
+    }
+    pub fn set_preset_orbit(&mut self, eye: Vector3<f32>) {
+        let mag = eye.magnitude();
+        self.pitch = (eye.y / mag).clamp(-1.0, 1.0).asin() as f64;
+        self.yaw = (eye.x as f64).atan2(eye.z as f64);
+        self.pan_offset = Vector3::new(0.0, 1.0, 0.0);
     }
     pub fn handle_mouse_button(&mut self, button: MouseButton, is_pressed: bool) {
         match button {

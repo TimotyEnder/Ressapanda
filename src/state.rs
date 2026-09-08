@@ -276,6 +276,12 @@ impl State {
             event_loop.exit();
         }
         self.key_input_manager.modifier_inputs(key, pressed);
+        self.key_input_manager.camera_preset_positions_inputs(
+            key,
+            pressed,
+            &mut self.camera,
+            &mut self.camera_controller,
+        );
         if let Some(tool) = self.key_input_manager.tool_selection_inputs(key, pressed) {
             self.current_tool = tool;
             self.cursor_loader.change_cursor(
