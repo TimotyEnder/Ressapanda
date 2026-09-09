@@ -5,8 +5,15 @@ use crate::{
     color::VoxelColor,
     cursor_loader::{self, CursorLoader},
     depth_texture::DepthTexture,
-    select_mode::{select_mode::SelectMode, single_select_mode::SingleSelectMode},
-    tools::{add::Add, key_input_manager::KeyInputManager, tool::Tool},
+    select_mode::{
+        select_mode::{SelectMode, select_mode_from_name},
+        single_select_mode::SingleSelectMode,
+    },
+    tools::{
+        add::Add,
+        key_input_manager::KeyInputManager,
+        tool::{Tool, tool_from_name},
+    },
     ui_data::UIData,
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
     voxel_instance::RawVoxelInstance,
@@ -682,8 +689,10 @@ impl State {
                     });
                 });
             });
-        egui::Window::new("Brush")
-            .anchor(egui::Align2::LEFT_TOP, [0.0, top_panel_width])
+        let spacing = 4.0;
+        let mut top_offset = top_panel_width;
+        let brush_window = egui::Window::new("Brush")
+            .anchor(egui::Align2::LEFT_TOP, [0.0, top_offset])
             .collapsible(false)
             .auto_sized()
             .show(ui, |ui| {
@@ -696,11 +705,30 @@ impl State {
                     self.ui_info.show_color_picker = !self.ui_info.show_color_picker;
                 }
             });
-        egui::Window::new("SelectionModes")
-            .anchor(egui::Align2::LEFT_CENTER, [0.0, 0.0])
+        if let Some(inner) = brush_window {
+            top_offset = inner.response.rect.max.y + spacing;
+        }
+        let selection_mode_window = egui::Window::new("Selection Modes")
+            .anchor(egui::Align2::LEFT_TOP, [0.0, top_offset])
             .collapsible(false)
             .auto_sized()
-            .show(ui, |ui| {});
+            .show(ui, |ui| {
+                ["Single", "Area"]
+                    .iter()
+                    .for_each(|name| self.selection_mode_toggle_button(ui, *name));
+            });
+        if let Some(inner) = selection_mode_window {
+            top_offset = inner.response.rect.max.y + spacing;
+        }
+        let tools_window = egui::Window::new("Tools ")
+            .anchor(egui::Align2::LEFT_TOP, [0.0, top_offset])
+            .collapsible(false)
+            .auto_sized()
+            .show(ui, |ui| {
+                ["Add", "Subs", "Del"]
+                    .iter()
+                    .for_each(|name| self.tool_toggle_button(ui, *name));
+            });
         if self.ui_info.show_color_picker {
             egui::Window::new("Brush Color")
                 .auto_sized()
@@ -728,6 +756,28 @@ impl State {
             self.current_brush = Brush {
                 color: VoxelColor::from_egui_color(self.ui_info.ui_brush_color),
             }
+        }
+    }
+    fn tool_toggle_button(&mut self, ui: &mut egui::Ui, tool_name: &'static str) {
+        let button = ui.button(tool_name);
+        if button.clicked() {
+            if let Some(tool) = tool_from_name(tool_name) {
+                self.current_tool = tool;
+            }
+        }
+        if self.current_tool.name() == tool_name {
+            button.highlight();
+        }
+    }
+    fn selection_mode_toggle_button(&mut self, ui: &mut egui::Ui, mode_name: &'static str) {
+        let button = ui.button(mode_name);
+        if button.clicked() {
+            if let Some(mode) = select_mode_from_name(mode_name) {
+                self.current_select_mode = mode;
+            }
+        }
+        if self.current_select_mode.name() == mode_name {
+            button.highlight();
         }
     }
 }

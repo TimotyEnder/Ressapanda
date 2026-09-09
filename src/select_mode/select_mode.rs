@@ -38,6 +38,7 @@ pub trait SelectMode {
         brush: &Brush,
     );
     fn cursor_name(&self) -> &'static str;
+    fn name(&self) -> &'static str;
 }
 
 pub fn select_mode_from_name(name: &'static str) -> Option<Box<dyn SelectMode>> {

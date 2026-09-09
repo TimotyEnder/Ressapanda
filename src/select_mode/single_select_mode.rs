@@ -117,4 +117,7 @@ impl SelectMode for SingleSelectMode {
     fn cursor_name(&self) -> &'static str {
         "x1_"
     }
+    fn name(&self) -> &'static str {
+        "Single"
+    }
 }
