@@ -303,9 +303,6 @@ impl State {
         &self.window
     }
     pub fn handle_key(&mut self, event_loop: &ActiveEventLoop, key: KeyCode, pressed: bool) {
-        if key == KeyCode::Escape && pressed {
-            event_loop.exit();
-        }
         self.key_input_manager.modifier_inputs(key, pressed);
         self.key_input_manager.camera_preset_positions_inputs(
             key,
