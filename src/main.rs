@@ -13,6 +13,7 @@ pub mod raycast;
 pub mod select_mode;
 pub mod state;
 pub mod tools;
+pub mod ui_data;
 pub mod vertex;
 pub mod voxel_instance;
 pub mod voxel_scene;

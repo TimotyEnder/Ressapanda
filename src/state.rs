@@ -7,6 +7,7 @@ use crate::{
     depth_texture::DepthTexture,
     select_mode::{select_mode::SelectMode, single_select_mode::SingleSelectMode},
     tools::{add::Add, key_input_manager::KeyInputManager, tool::Tool},
+    ui_data::UiData,
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
     voxel_instance::RawVoxelInstance,
     voxel_scene::VoxelScene,
@@ -55,8 +56,7 @@ pub struct State {
     egui_renderer: egui_wgpu::Renderer,
     egui_paint_jobs: Vec<epaint::ClippedPrimitive>,
     egui_textures_delta: egui::TexturesDelta,
-    ui_brush_color: Color32,
-    show_color_picker: bool,
+    ui_info: UiData,
 }
 impl State {
     pub async fn new(
@@ -265,6 +265,7 @@ impl State {
             config.format, // sRGB surface format
             egui_wgpu::RendererOptions::default(),
         );
+
         Ok(Self {
             window,
             surface,
@@ -295,8 +296,10 @@ impl State {
             egui_ctx,
             egui_paint_jobs: Vec::new(),
             egui_textures_delta: egui::TexturesDelta::default(),
-            ui_brush_color: Color32::from_rgb(255, 255, 255),
-            show_color_picker: false,
+            ui_info: UiData {
+                ui_brush_color: Color32::from_rgb(255, 255, 255),
+                show_color_picker: false,
+            },
         })
     }
     pub fn window(&self) -> &Window {
@@ -617,27 +620,27 @@ impl State {
             .show(ui, |ui| {
                 ui.vertical_centered(|ui| {
                     let swatch = egui::Button::new("")
-                        .fill(self.ui_brush_color)
+                        .fill(self.ui_info.ui_brush_color)
                         .corner_radius(0)
                         .stroke(egui::Stroke::new(1.0, egui::Color32::WHITE));
                     let size = ui.available_width();
                     if ui.add_sized([size, size], swatch).clicked() {
-                        self.show_color_picker = !self.show_color_picker;
+                        self.ui_info.show_color_picker = !self.ui_info.show_color_picker;
                     }
                 })
             });
-        if self.show_color_picker {
+        if self.ui_info.show_color_picker {
             egui::Window::new("Brush Color")
-                .open(&mut self.show_color_picker)
+                .open(&mut self.ui_info.show_color_picker)
                 .show(ui, |ui| {
                     egui::color_picker::color_picker_color32(
                         ui,
-                        &mut self.ui_brush_color,
+                        &mut self.ui_info.ui_brush_color,
                         egui::color_picker::Alpha::OnlyBlend,
                     );
                 });
             self.current_brush = Brush {
-                color: VoxelColor::from_egui_color(self.ui_brush_color),
+                color: VoxelColor::from_egui_color(self.ui_info.ui_brush_color),
             }
         }
     }
