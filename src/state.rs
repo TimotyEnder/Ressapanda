@@ -12,6 +12,8 @@ use crate::{
     voxel_scene::VoxelScene,
 };
 use anyhow::Ok;
+use egui::epaint;
+use egui_wgpu::RendererOptions;
 use std::{iter, sync::Arc};
 use wgpu::util::DeviceExt;
 use winit::{
@@ -24,7 +26,7 @@ use winit::{
 pub const TEXTURE_DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
 
 pub struct State {
-    window: Arc<Window>,
+    pub window: Arc<Window>,
     surface: wgpu::Surface<'static>,
     device: wgpu::Device,
     queue: wgpu::Queue,
@@ -48,6 +50,11 @@ pub struct State {
     next_frame_instance_count: usize,
     current_brush: Brush,
     cursor_loader: CursorLoader,
+    egui_ctx: egui::Context, // own clone, used for run_ui + tessellate
+    pub egui_winit_state: egui_winit::State,
+    egui_renderer: egui_wgpu::Renderer,
+    egui_paint_jobs: Vec<epaint::ClippedPrimitive>,
+    egui_textures_delta: egui::TexturesDelta,
 }
 impl State {
     pub async fn new(
@@ -241,6 +248,22 @@ impl State {
 
         let cursor_loader = CursorLoader::new(event_loop);
         cursor_loader.change_cursor(window.clone(), &current_select_mode, &current_tool);
+
+        //UI
+        let egui_ctx = egui::Context::default();
+        let egui_winit_state = egui_winit::State::new(
+            egui_ctx.clone(),
+            egui::ViewportId::ROOT,
+            &*window, // &dyn HasDisplayHandle
+            Some(window.scale_factor() as f32),
+            window.theme(),
+            Some(device.limits().max_texture_dimension_2d as usize),
+        );
+        let egui_renderer = egui_wgpu::Renderer::new(
+            &device,
+            config.format, // sRGB surface format
+            egui_wgpu::RendererOptions::default(),
+        );
         Ok(Self {
             window,
             surface,
@@ -266,6 +289,11 @@ impl State {
             next_frame_instance_count,
             current_brush,
             cursor_loader,
+            egui_winit_state,
+            egui_renderer,
+            egui_ctx,
+            egui_paint_jobs: Vec::new(),
+            egui_textures_delta: egui::TexturesDelta::default(),
         })
     }
     pub fn window(&self) -> &Window {
@@ -358,6 +386,18 @@ impl State {
         self.update_camera();
         self.update_temporary_voxel_generation_on_hover();
         self.update_voxel_buffers();
+        self.ui_update();
+    }
+    fn ui_update(&mut self) {
+        let raw_input = self.egui_winit_state.take_egui_input(&self.window);
+        let egui_ctx = self.egui_ctx.clone(); // clone req'd: run_ui borrows ctx, closure borrows self
+        let full_output = egui_ctx.run_ui(raw_input, |ui| self.ui(ui));
+
+        self.egui_winit_state
+            .handle_platform_output(&self.window, full_output.platform_output);
+        self.egui_paint_jobs =
+            egui_ctx.tessellate(full_output.shapes, full_output.pixels_per_point);
+        self.egui_textures_delta = full_output.textures_delta;
     }
     fn update_temporary_voxel_generation_on_hover(&mut self) {
         self.current_select_mode.temp_draw_on_mouse_hover(
@@ -444,9 +484,56 @@ impl State {
                 0..self.next_frame_instance_count as u32,
             );
         }
-        self.queue.submit(iter::once(encoder.finish()));
+
+        //UI render
+        let screen_descriptor = egui_wgpu::ScreenDescriptor {
+            size_in_pixels: [self.config.width, self.config.height],
+            pixels_per_point: self.window.scale_factor() as f32,
+        };
+
+        for (id, deltas) in &self.egui_textures_delta.set {
+            for delta in deltas {
+                self.egui_renderer
+                    .update_texture(&self.device, &self.queue, *id, delta);
+            }
+        }
+
+        let ui_cmd_buffers = self.egui_renderer.update_buffers(
+            &self.device,
+            &self.queue,
+            &mut encoder,
+            &self.egui_paint_jobs,
+            &screen_descriptor,
+        );
+        self.egui_textures_delta.clear();
+        {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("egui pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Load, // draw OVER the voxels, don't clear
+                        store: wgpu::StoreOp::Store,
+                    },
+                    depth_slice: None,
+                })],
+                depth_stencil_attachment: None, // egui must NOT depth-test vs voxels
+                occlusion_query_set: None,
+                timestamp_writes: None,
+                multiview_mask: None,
+            });
+            self.egui_renderer.render(
+                &mut render_pass.forget_lifetime(),
+                &self.egui_paint_jobs,
+                &screen_descriptor,
+            );
+        }
+
+        self.queue
+            .submit(iter::once(encoder.finish()).chain(ui_cmd_buffers));
         self.queue.present(output);
-        Ok(())
+        return Ok(());
     }
     pub fn resize(&mut self, width: u32, height: u32) {
         if width > 0 && height > 0 {
@@ -486,5 +573,9 @@ impl State {
             self.queue
                 .write_buffer(&self.voxel_instance_buffer, 0, bytes);
         }
+    }
+    fn ui(&mut self, ui: &mut egui::Ui) {
+        ui.heading("Tools");
+        ui.label("test");
     }
 }

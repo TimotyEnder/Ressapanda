@@ -35,7 +35,12 @@ impl ApplicationHandler<State> for App {
             Some(canvas) => canvas,
             None => return,
         };
-
+        let response = state
+            .egui_winit_state
+            .on_window_event(&state.window, &event);
+        if response.consumed {
+            return;
+        }
         match event {
             WindowEvent::CloseRequested => event_loop.exit(),
             WindowEvent::Resized(size) => state.resize(size.width, size.height),
