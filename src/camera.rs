@@ -1,4 +1,4 @@
-use cgmath::{Point3, Vector3, prelude::*};
+use cgmath::{Point3, Vector3, prelude::*, vec3};
 
 pub struct Camera {
     eye: cgmath::Point3<f32>,
@@ -98,3 +98,24 @@ pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::from_co
     cgmath::Vector4::new(0.0, 0.0, 0.5, 0.0),
     cgmath::Vector4::new(0.0, 0.0, 0.5, 1.0),
 );
+#[derive(PartialEq, Eq)]
+pub enum CameraLookDirection {
+    Xplus,
+    Xminus,
+    Zplus,
+    Zminus,
+    Down,
+    None,
+}
+impl CameraLookDirection {
+    pub fn eye_position(&self) -> Vector3<f32> {
+        match self {
+            CameraLookDirection::Down => vec3(0.0, 1.0, 0.0),
+            CameraLookDirection::Xminus => vec3(-1.0, 0.0, 0.0),
+            CameraLookDirection::Xplus => vec3(1.0, 0.0, 0.0),
+            CameraLookDirection::Zminus => vec3(0.0, 0.0, -1.0),
+            CameraLookDirection::Zplus => vec3(0.0, 0.0, 1.0),
+            _ => vec3(0.0, 0.0, 0.0),
+        }
+    }
+}

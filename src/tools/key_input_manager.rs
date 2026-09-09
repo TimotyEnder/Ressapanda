@@ -4,13 +4,13 @@ use cgmath::{EuclideanSpace, InnerSpace, Point3, Vector3};
 use winit::keyboard::KeyCode;
 
 use crate::{
-    camera::Camera,
+    camera::{Camera, CameraLookDirection},
     camera_controller::CameraController,
     conversion_utils::snap_vector_to_flat_direction,
     select_mode::select_mode::{SelectMode, select_mode_from_name},
     state::State,
     tools::tool::{Tool, tool_from_name},
-    voxel_scene::VoxelScene,
+    voxel_scene::{VoxelScene, VoxelSceneDirection},
 };
 
 pub struct KeyInputManager {
@@ -98,39 +98,34 @@ impl KeyInputManager {
     ) {
         if pressed {
             let target = Point3::new(0.0, 0.0, 0.0);
-            match key {
+            let look_direction = match key {
                 KeyCode::Digit1 => {
                     // x (view along +X)
-                    let eye = Vector3::new(1.0, 0.0, 0.0);
-                    camera_controller.set_preset_orbit(eye);
-                    camera.set_position(target, target + eye);
+                    CameraLookDirection::Xplus
                 }
                 KeyCode::Digit2 => {
                     // z (view along +Z)
-                    let eye = Vector3::new(0.0, 0.0, 1.0);
-                    camera_controller.set_preset_orbit(eye);
-                    camera.set_position(target, target + eye);
+                    CameraLookDirection::Zplus
                 }
                 KeyCode::Digit3 => {
                     // x backwards (view along -X)
-                    let eye = Vector3::new(-1.0, 0.0, 0.0);
-                    camera_controller.set_preset_orbit(eye);
-                    camera.set_position(target, target + eye);
+                    CameraLookDirection::Xminus
                 }
                 KeyCode::Digit4 => {
                     // z backwards (view along -Z)
-                    let eye = Vector3::new(0.0, 0.0, -1.0);
-                    camera_controller.set_preset_orbit(eye);
-                    camera.set_position(target, target + eye);
+                    CameraLookDirection::Zminus
                 }
                 KeyCode::Digit5 => {
                     // straight up (view straight down)
-                    let eye = Vector3::new(0.0, 1.0, 0.0);
-                    camera_controller.set_preset_orbit(eye);
-                    camera.set_position(target, target + eye);
+                    CameraLookDirection::Down
                 }
-                _ => {}
+                _ => CameraLookDirection::None,
             };
+            if look_direction != CameraLookDirection::None {
+                let eye = look_direction.eye_position();
+                camera_controller.set_preset_orbit(eye);
+                camera.set_position(target, target + eye);
+            }
         }
     }
     pub fn move_commands_inputs(
@@ -153,44 +148,19 @@ impl KeyInputManager {
         scene: &mut VoxelScene,
         camera: &Camera,
     ) {
-        match key {
-            KeyCode::KeyW => {
-                if pressed {
-                    scene.move_by_vector(snap_vector_to_flat_direction(camera.forward()));
-                }
-            }
-            KeyCode::KeyS => {
-                if pressed {
-                    scene.move_by_vector(snap_vector_to_flat_direction(camera.forward()) * -1.0);
-                }
-            }
-            KeyCode::KeyA => {
-                if pressed {
-                    scene.move_by_vector(snap_vector_to_flat_direction(camera.right()) * -1.0);
-                }
-            }
-            KeyCode::KeyD => {
-                if pressed {
-                    scene.move_by_vector(snap_vector_to_flat_direction(camera.right()));
-                }
-            }
-            KeyCode::KeyQ => {
-                if pressed {
-                    scene.move_by_vector(Vector3::new(0.0, 1.0, 0.0));
-                }
-            }
-            KeyCode::KeyE => {
-                if pressed {
-                    scene.move_by_vector(Vector3::new(0.0, -1.0, 0.0));
-                }
-            }
-            KeyCode::KeyC => {
-                if pressed {
-                    scene.reposition_to_calculated_center();
-                }
-            }
-            _ => {}
+        let direction = match key {
+            KeyCode::KeyW => VoxelSceneDirection::Forwards,
+            KeyCode::KeyS => VoxelSceneDirection::Backwards,
+            KeyCode::KeyA => VoxelSceneDirection::Left,
+            KeyCode::KeyD => VoxelSceneDirection::Right,
+            KeyCode::KeyQ => VoxelSceneDirection::UpLeftSteer,
+            KeyCode::KeyE => VoxelSceneDirection::DownRightSteer,
+            _ => VoxelSceneDirection::None,
         };
+        if pressed && direction != VoxelSceneDirection::None {
+            let move_vec = direction.move_vector(camera);
+            scene.move_by_vector(move_vec);
+        }
     }
     fn rotate_inputs(
         &mut self,
@@ -199,50 +169,18 @@ impl KeyInputManager {
         scene: &mut VoxelScene,
         camera: &Camera,
     ) {
-        match key {
-            KeyCode::KeyW => {
-                if pressed {
-                    scene.rotate_around_center(
-                        snap_vector_to_flat_direction(camera.right()),
-                        cgmath::Deg(90.0),
-                    );
-                }
-            }
-            KeyCode::KeyS => {
-                if pressed {
-                    scene.rotate_around_center(
-                        snap_vector_to_flat_direction(camera.right()),
-                        cgmath::Deg(-90.0),
-                    );
-                }
-            }
-            KeyCode::KeyA => {
-                if pressed {
-                    scene.rotate_around_center(Vector3::new(0.0, 1.0, 0.0), cgmath::Deg(90.0));
-                }
-            }
-            KeyCode::KeyD => {
-                if pressed {
-                    scene.rotate_around_center(Vector3::new(0.0, 1.0, 0.0), cgmath::Deg(-90.0));
-                }
-            }
-            KeyCode::KeyQ => {
-                if pressed {
-                    scene.rotate_around_center(
-                        snap_vector_to_flat_direction(camera.forward()),
-                        cgmath::Deg(90.0),
-                    );
-                }
-            }
-            KeyCode::KeyE => {
-                if pressed {
-                    scene.rotate_around_center(
-                        snap_vector_to_flat_direction(camera.forward()),
-                        cgmath::Deg(-90.0),
-                    );
-                }
-            }
-            _ => {}
+        let direction = match key {
+            KeyCode::KeyW => VoxelSceneDirection::Forwards,
+            KeyCode::KeyS => VoxelSceneDirection::Backwards,
+            KeyCode::KeyA => VoxelSceneDirection::Left,
+            KeyCode::KeyD => VoxelSceneDirection::Right,
+            KeyCode::KeyQ => VoxelSceneDirection::UpLeftSteer,
+            KeyCode::KeyE => VoxelSceneDirection::DownRightSteer,
+            _ => VoxelSceneDirection::None,
         };
+        if pressed && direction != VoxelSceneDirection::None {
+            let (axis, deg) = direction.rotate_parameters(camera);
+            scene.rotate_around_center(axis, deg);
+        }
     }
 }

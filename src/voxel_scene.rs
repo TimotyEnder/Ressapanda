@@ -1,9 +1,13 @@
 use cgmath::num_traits::real::Real;
-use cgmath::{Quaternion, Vector3};
+use cgmath::{Deg, Quaternion, Vector3};
 use cgmath::{prelude::*, vec3};
 use std::collections::{BTreeMap, HashMap};
+use winit::keyboard::KeyLocation::Left;
 
+use crate::camera::Camera;
+use crate::conversion_utils::snap_vector_to_flat_direction;
 use crate::filler::voxel_and_intersect_positions_from_a_to_b;
+use crate::voxel_scene::VoxelSceneDirection::{Forwards, UpLeftSteer};
 use crate::{
     color::VoxelColor,
     voxel_instance::{RawVoxelInstance, VoxelInstance},
@@ -271,6 +275,54 @@ impl VoxelScenePosition {
             x: position.x.round() as i32,
             y: position.y.round() as i32,
             z: position.z.round() as i32,
+        }
+    }
+}
+#[derive(PartialEq, Eq)]
+pub enum VoxelSceneDirection {
+    UpLeftSteer,
+    DownRightSteer,
+    Left,
+    Right,
+    Forwards,
+    Backwards,
+    None,
+}
+impl VoxelSceneDirection {
+    pub fn move_vector(&self, camera: &Camera) -> Vector3<f32> {
+        match self {
+            VoxelSceneDirection::UpLeftSteer => Vector3::new(0.0, 1.0, 0.0),
+            VoxelSceneDirection::DownRightSteer => Vector3::new(0.0, -1.0, 0.0),
+            VoxelSceneDirection::Left => snap_vector_to_flat_direction(camera.right()) * -1.0,
+            VoxelSceneDirection::Right => snap_vector_to_flat_direction(camera.right()),
+            VoxelSceneDirection::Forwards => snap_vector_to_flat_direction(camera.forward()),
+            VoxelSceneDirection::Backwards => {
+                snap_vector_to_flat_direction(camera.forward()) * -1.0
+            }
+            _ => vec3(0.0, 0.0, 0.0),
+        }
+    }
+    pub fn rotate_parameters(&self, camera: &Camera) -> (Vector3<f32>, cgmath::Deg<f32>) {
+        match self {
+            VoxelSceneDirection::DownRightSteer => (
+                snap_vector_to_flat_direction(camera.forward()),
+                cgmath::Deg(90.0),
+            ),
+            VoxelSceneDirection::UpLeftSteer => (
+                snap_vector_to_flat_direction(camera.forward()),
+                cgmath::Deg(-90.0),
+            ),
+            VoxelSceneDirection::Right => (Vector3::new(0.0, 1.0, 0.0), cgmath::Deg(90.0)),
+            VoxelSceneDirection::Left => (Vector3::new(0.0, 1.0, 0.0), cgmath::Deg(-90.0)),
+            VoxelSceneDirection::Forwards => (
+                snap_vector_to_flat_direction(camera.right()),
+                cgmath::Deg(90.0),
+            ),
+            VoxelSceneDirection::Backwards => (
+                snap_vector_to_flat_direction(camera.right()),
+                cgmath::Deg(-90.0),
+            ),
+            _ => (Vector3::new(0.0, 1.0, 0.0), Deg(0.0)),
         }
     }
 }
