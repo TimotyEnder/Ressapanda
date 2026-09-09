@@ -252,6 +252,7 @@ impl VoxelScene {
                     voxel,
                 );
             }
+            self.center = self.find_center();
             self.voxels_changed = true;
             return true;
         }
