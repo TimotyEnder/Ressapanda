@@ -7,7 +7,7 @@ use crate::{
     depth_texture::DepthTexture,
     select_mode::{select_mode::SelectMode, single_select_mode::SingleSelectMode},
     tools::{add::Add, key_input_manager::KeyInputManager, tool::Tool},
-    ui_data::UiData,
+    ui_data::UIData,
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
     voxel_instance::RawVoxelInstance,
     voxel_scene::VoxelScene,
@@ -56,7 +56,7 @@ pub struct State {
     egui_renderer: egui_wgpu::Renderer,
     egui_paint_jobs: Vec<epaint::ClippedPrimitive>,
     egui_textures_delta: egui::TexturesDelta,
-    ui_info: UiData,
+    ui_info: UIData,
 }
 impl State {
     pub async fn new(
@@ -296,10 +296,7 @@ impl State {
             egui_ctx,
             egui_paint_jobs: Vec::new(),
             egui_textures_delta: egui::TexturesDelta::default(),
-            ui_info: UiData {
-                ui_brush_color: Color32::from_rgb(255, 255, 255),
-                show_color_picker: false,
-            },
+            ui_info: UIData::new(),
         })
     }
     pub fn window(&self) -> &Window {
@@ -505,7 +502,7 @@ impl State {
         );
         self.egui_textures_delta.clear();
         {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("egui pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
@@ -574,70 +571,91 @@ impl State {
     }
     fn ui(&mut self, ui: &mut egui::Ui) {
         let version = env!("CARGO_PKG_VERSION");
-        Panel::top("options_panel").show(ui, |ui| {
-            ui.horizontal(|ui| {
-                ui.label(format!("Ressapanda {}", version));
-                menu::MenuBar::new().ui(ui, |ui| {
-                    ui.menu_button("File", |ui| {
-                        if ui.button("New").clicked() {
-                            // Handle "New" action
-                        }
-                        if ui.button("Open").clicked() {
-                            // Handle "Open" action
-                        }
-                        if ui.button("Save").clicked() {
-                            // Handle "Save" action
-                        }
-                    });
-                    ui.menu_button("Model", |ui| {
-                        if ui.button("Move to the Left").clicked() { /* ... */ }
-                        if ui.button("Move to the Right").clicked() { /* ... */ }
-                        if ui.button("Move to the Back").clicked() { /* ... */ }
-                        if ui.button("Move to the Forward").clicked() { /* ... */ }
-                        if ui.button("Move to the Up").clicked() { /* ... */ }
-                        if ui.button("Move to the Down").clicked() { /* ... */ }
-                        ui.separator();
-                        if ui.button("Rotate to the Left").clicked() { /* ... */ }
-                        if ui.button("Rotate to the Right").clicked() { /* ... */ }
-                        if ui.button("Rotate to the Back").clicked() { /* ... */ }
-                        if ui.button("Rotate to the Forward").clicked() { /* ... */ }
-                        if ui.button("Rotate to the Up").clicked() { /* ... */ }
-                        if ui.button("Rotate to the Down").clicked() { /* ... */ }
-                    });
-                    ui.menu_button("View", |ui| {
-                        if ui.button("View along X+").clicked() { /* ... */ }
-                        if ui.button("View along Z+").clicked() { /* ... */ }
-                        if ui.button("View along Z-").clicked() { /* ... */ }
-                        if ui.button("View along X-").clicked() { /* ... */ }
-                        if ui.button("View straight from top").clicked() { /* ... */ }
+        let top_panel_width = self.config.height as f32 * 0.02;
+        Panel::top("options_panel")
+            .exact_size(top_panel_width)
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label(format!("Ressapanda {}", version));
+                    menu::MenuBar::new().ui(ui, |ui| {
+                        ui.menu_button("File", |ui| {
+                            if ui.button("New").clicked() {
+                                // Handle "New" action
+                            }
+                            if ui.button("Open").clicked() {
+                                // Handle "Open" action
+                            }
+                            if ui.button("Save").clicked() {
+                                // Handle "Save" action
+                            }
+                        });
+                        ui.menu_button("Model", |ui| {
+                            if ui.button("Move to the Left").clicked() { /* ... */ }
+                            if ui.button("Move to the Right").clicked() { /* ... */ }
+                            if ui.button("Move to the Back").clicked() { /* ... */ }
+                            if ui.button("Move to the Forward").clicked() { /* ... */ }
+                            if ui.button("Move to the Up").clicked() { /* ... */ }
+                            if ui.button("Move to the Down").clicked() { /* ... */ }
+                            ui.separator();
+                            if ui.button("Rotate to the Left").clicked() { /* ... */ }
+                            if ui.button("Rotate to the Right").clicked() { /* ... */ }
+                            if ui.button("Rotate to the Back").clicked() { /* ... */ }
+                            if ui.button("Rotate to the Forward").clicked() { /* ... */ }
+                            if ui.button("Rotate to the Up").clicked() { /* ... */ }
+                            if ui.button("Rotate to the Down").clicked() { /* ... */ }
+                        });
+                        ui.menu_button("View", |ui| {
+                            if ui.button("View along X+").clicked() { /* ... */ }
+                            if ui.button("View along Z+").clicked() { /* ... */ }
+                            if ui.button("View along Z-").clicked() { /* ... */ }
+                            if ui.button("View along X-").clicked() { /* ... */ }
+                            if ui.button("View straight from top").clicked() { /* ... */ }
+                        });
                     });
                 });
             });
-        });
-        Panel::left("tools_panel")
-            .resizable(false)
-            .exact_size(self.config.width as f32 * 0.05)
+        egui::Window::new("Brush")
+            .anchor(egui::Align2::LEFT_TOP, [0.0, top_panel_width])
+            .collapsible(false)
+            .auto_sized()
             .show(ui, |ui| {
-                ui.vertical_centered(|ui| {
-                    let swatch = egui::Button::new("")
-                        .fill(self.ui_info.ui_brush_color)
-                        .corner_radius(0)
-                        .stroke(egui::Stroke::new(1.0, egui::Color32::WHITE));
-                    let size = ui.available_width();
-                    if ui.add_sized([size, size], swatch).clicked() {
-                        self.ui_info.show_color_picker = !self.ui_info.show_color_picker;
-                    }
-                })
+                let swatch = egui::Button::new("")
+                    .fill(self.ui_info.ui_brush_color)
+                    .corner_radius(0)
+                    .stroke(egui::Stroke::new(1.0, egui::Color32::WHITE));
+                let size = self.config.width as f32 * 0.05;
+                if ui.add_sized([size, size], swatch).clicked() {
+                    self.ui_info.show_color_picker = !self.ui_info.show_color_picker;
+                }
             });
+        egui::Window::new("SelectionModes")
+            .anchor(egui::Align2::LEFT_CENTER, [0.0, 0.0])
+            .collapsible(false)
+            .auto_sized()
+            .show(ui, |ui| {});
         if self.ui_info.show_color_picker {
             egui::Window::new("Brush Color")
+                .auto_sized()
+                .collapsible(false)
                 .open(&mut self.ui_info.show_color_picker)
                 .show(ui, |ui| {
-                    egui::color_picker::color_picker_color32(
+                    if egui::color_picker::color_picker_color32(
                         ui,
                         &mut self.ui_info.ui_brush_color,
                         egui::color_picker::Alpha::OnlyBlend,
-                    );
+                    ) {
+                        self.ui_info.color_hex_input_string = self.ui_info.ui_brush_color.to_hex();
+                    }
+                    ui.label("Color Hex:");
+                    let hex_color_input =
+                        ui.text_edit_singleline(&mut self.ui_info.color_hex_input_string);
+                    if hex_color_input.changed() {
+                        if let Some(color) =
+                            Color32::from_hex(&self.ui_info.color_hex_input_string).ok()
+                        {
+                            self.ui_info.ui_brush_color = color
+                        }
+                    }
                 });
             self.current_brush = Brush {
                 color: VoxelColor::from_egui_color(self.ui_info.ui_brush_color),
