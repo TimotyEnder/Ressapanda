@@ -10,6 +10,14 @@ impl VoxelColor {
     pub fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
         Self { r, g, b, a }
     }
+    pub fn from_egui_color(color: egui::Color32) -> Self {
+        Self {
+            r: (color.r() as f32 / 255.0),
+            g: (color.g() as f32 / 255.0),
+            b: (color.b() as f32 / 255.0),
+            a: (color.a() as f32 / 255.0),
+        }
+    }
     pub fn from_hex(hex: &str) -> anyhow::Result<Self> {
         if hex
             .chars()

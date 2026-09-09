@@ -12,7 +12,7 @@ use crate::{
     voxel_scene::VoxelScene,
 };
 use anyhow::Ok;
-use egui::epaint;
+use egui::{Color32, Panel, accesskit::Role::Label, epaint, menu};
 use egui_wgpu::RendererOptions;
 use std::{iter, sync::Arc};
 use wgpu::util::DeviceExt;
@@ -55,6 +55,8 @@ pub struct State {
     egui_renderer: egui_wgpu::Renderer,
     egui_paint_jobs: Vec<epaint::ClippedPrimitive>,
     egui_textures_delta: egui::TexturesDelta,
+    ui_brush_color: Color32,
+    show_color_picker: bool,
 }
 impl State {
     pub async fn new(
@@ -293,6 +295,8 @@ impl State {
             egui_ctx,
             egui_paint_jobs: Vec::new(),
             egui_textures_delta: egui::TexturesDelta::default(),
+            ui_brush_color: Color32::from_rgb(255, 255, 255),
+            show_color_picker: false,
         })
     }
     pub fn window(&self) -> &Window {
@@ -569,7 +573,75 @@ impl State {
         }
     }
     fn ui(&mut self, ui: &mut egui::Ui) {
-        ui.heading("Tools");
-        ui.label("test");
+        let version = env!("CARGO_PKG_VERSION");
+        Panel::top("options_panel").show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label(format!("Ressapanda {}", version));
+                menu::MenuBar::new().ui(ui, |ui| {
+                    ui.menu_button("File", |ui| {
+                        if ui.button("New").clicked() {
+                            // Handle "New" action
+                        }
+                        if ui.button("Open").clicked() {
+                            // Handle "Open" action
+                        }
+                        if ui.button("Save").clicked() {
+                            // Handle "Save" action
+                        }
+                    });
+                    ui.menu_button("Model", |ui| {
+                        if ui.button("Move to the Left").clicked() { /* ... */ }
+                        if ui.button("Move to the Right").clicked() { /* ... */ }
+                        if ui.button("Move to the Back").clicked() { /* ... */ }
+                        if ui.button("Move to the Forward").clicked() { /* ... */ }
+                        if ui.button("Move to the Up").clicked() { /* ... */ }
+                        if ui.button("Move to the Down").clicked() { /* ... */ }
+                        ui.separator();
+                        if ui.button("Rotate to the Left").clicked() { /* ... */ }
+                        if ui.button("Rotate to the Right").clicked() { /* ... */ }
+                        if ui.button("Rotate to the Back").clicked() { /* ... */ }
+                        if ui.button("Rotate to the Forward").clicked() { /* ... */ }
+                        if ui.button("Rotate to the Up").clicked() { /* ... */ }
+                        if ui.button("Rotate to the Down").clicked() { /* ... */ }
+                    });
+                    ui.menu_button("View", |ui| {
+                        if ui.button("View along X+").clicked() { /* ... */ }
+                        if ui.button("View along Z+").clicked() { /* ... */ }
+                        if ui.button("View along Z-").clicked() { /* ... */ }
+                        if ui.button("View along X-").clicked() { /* ... */ }
+                        if ui.button("View straight from top").clicked() { /* ... */ }
+                    });
+                });
+            });
+        });
+        Panel::left("tools_panel")
+            .resizable(false)
+            .exact_size(self.config.width as f32 * 0.05)
+            .show(ui, |ui| {
+                ui.vertical_centered(|ui| {
+                    let swatch = egui::Button::new("")
+                        .fill(self.ui_brush_color)
+                        .corner_radius(0)
+                        .stroke(egui::Stroke::new(1.0, egui::Color32::WHITE));
+                    let size = ui.available_width();
+                    if ui.add_sized([size, size], swatch).clicked() {
+                        self.show_color_picker = !self.show_color_picker;
+                    }
+                })
+            });
+        if self.show_color_picker {
+            egui::Window::new("Brush Color")
+                .open(&mut self.show_color_picker)
+                .show(ui, |ui| {
+                    egui::color_picker::color_picker_color32(
+                        ui,
+                        &mut self.ui_brush_color,
+                        egui::color_picker::Alpha::OnlyBlend,
+                    );
+                });
+            self.current_brush = Brush {
+                color: VoxelColor::from_egui_color(self.ui_brush_color),
+            }
+        }
     }
 }
