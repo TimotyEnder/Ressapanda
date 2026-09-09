@@ -247,7 +247,6 @@ impl State {
         };
 
         let cursor_loader = CursorLoader::new(event_loop);
-        cursor_loader.change_cursor(window.clone(), &current_select_mode, &current_tool);
 
         //UI
         let egui_ctx = egui::Context::default();
@@ -312,22 +311,12 @@ impl State {
         );
         if let Some(tool) = self.key_input_manager.tool_selection_inputs(key, pressed) {
             self.current_tool = tool;
-            self.cursor_loader.change_cursor(
-                self.window.clone(),
-                &self.current_select_mode,
-                &self.current_tool,
-            );
         }
         if let Some(selection_mode) = self
             .key_input_manager
             .select_mode_selection_inputs(key, pressed)
         {
             self.current_select_mode = selection_mode;
-            self.cursor_loader.change_cursor(
-                self.window.clone(),
-                &self.current_select_mode,
-                &self.current_tool,
-            );
         }
         self.key_input_manager.move_commands_inputs(
             key,
@@ -387,6 +376,11 @@ impl State {
         self.update_temporary_voxel_generation_on_hover();
         self.update_voxel_buffers();
         self.ui_update();
+        self.cursor_loader.change_cursor(
+            self.window.clone(),
+            &self.current_select_mode,
+            &self.current_tool,
+        );
     }
     fn ui_update(&mut self) {
         let raw_input = self.egui_winit_state.take_egui_input(&self.window);
