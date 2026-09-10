@@ -172,4 +172,7 @@ impl SelectMode for AreaSelectMode {
     fn name(&self) -> &'static str {
         "Area"
     }
+    fn tooltip(&self) -> &'static str {
+        "Area Select Mode (Shortcut:W)"
+    }
 }

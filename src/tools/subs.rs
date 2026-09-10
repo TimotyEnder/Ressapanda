@@ -27,4 +27,7 @@ impl Tool for Subs {
     fn cursor_name(&self) -> &'static str {
         "subs"
     }
+    fn tooltip(&self) -> &'static str {
+        "Substitute/Paint (Shorcut:S)"
+    }
 }

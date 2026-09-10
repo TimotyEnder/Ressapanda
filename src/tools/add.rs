@@ -30,4 +30,8 @@ impl Tool for Add {
     fn cursor_name(&self) -> &'static str {
         "add"
     }
+
+    fn tooltip(&self) -> &'static str {
+        "Add (Shorcut:A)"
+    }
 }

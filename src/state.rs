@@ -718,12 +718,16 @@ impl State {
             .collapsible(false)
             .auto_sized()
             .show(ui, |ui| {
-                let swatch = egui::Button::new("")
+                let brush_color_button = egui::Button::new("")
                     .fill(self.ui_info.ui_brush_color)
                     .corner_radius(0)
                     .stroke(egui::Stroke::new(1.0, egui::Color32::WHITE));
                 let size = 50.0;
-                if ui.add_sized([size, size], swatch).clicked() {
+                if ui
+                    .add_sized([size, size], brush_color_button)
+                    .on_hover_text("Brush Color")
+                    .clicked()
+                {
                     self.ui_info.show_color_picker = !self.ui_info.show_color_picker;
                     self.ui_info.color_selected = true;
                 }
@@ -820,7 +824,12 @@ impl State {
         let sized = SizedTexture::new(texture.id(), [50.0, 50.0]);
         let img = Image::new(sized);
         let button = egui::Button::image(img);
-        let response = ui.add(button);
+        let mut response = ui.add(button);
+        response = response.on_hover_text(
+            tool_from_name(tool_name)
+                .and_then(|tool| Some(tool.tooltip()))
+                .unwrap_or(""),
+        );
         if response.clicked() {
             if let Some(tool) = tool_from_name(tool_name) {
                 self.current_tool = tool;
@@ -837,7 +846,12 @@ impl State {
         let sized = SizedTexture::new(texture.id(), [50.0, 50.0]);
         let img = Image::new(sized);
         let button = egui::Button::image(img);
-        let response = ui.add(button);
+        let mut response = ui.add(button);
+        response = response.on_hover_text(
+            select_mode_from_name(mode_name)
+                .and_then(|mode| Some(mode.tooltip()))
+                .unwrap_or(""),
+        );
         if response.clicked() {
             if let Some(mode) = select_mode_from_name(mode_name) {
                 self.current_select_mode = mode;

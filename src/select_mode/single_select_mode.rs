@@ -120,4 +120,8 @@ impl SelectMode for SingleSelectMode {
     fn name(&self) -> &'static str {
         "Single"
     }
+
+    fn tooltip(&self) -> &'static str {
+        "Single Select Mode (Shortcut:Q)"
+    }
 }

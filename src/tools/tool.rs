@@ -21,6 +21,7 @@ pub trait Tool {
     );
     fn name(&self) -> &'static str;
     fn cursor_name(&self) -> &'static str;
+    fn tooltip(&self) -> &'static str;
 }
 
 pub fn tool_from_name(name: &'static str) -> Option<Box<dyn Tool>> {

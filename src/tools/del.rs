@@ -29,4 +29,7 @@ impl Tool for Del {
     fn cursor_name(&self) -> &'static str {
         "del"
     }
+    fn tooltip(&self) -> &'static str {
+        "Delete (Shorcut:D)"
+    }
 }
