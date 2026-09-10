@@ -615,93 +615,165 @@ impl State {
                             }
                         });
                         ui.menu_button("Model", |ui| {
-                            if ui.button("Move to the Left").clicked() {
+                            if ui
+                                .button("Move to the Left")
+                                .on_hover_text("(Shortcut:Alt+A)")
+                                .clicked()
+                            {
                                 let move_vec = VoxelSceneDirection::Left.move_vector(&self.camera);
                                 self.voxel_scene.move_by_vector(move_vec);
                             }
-                            if ui.button("Move to the Right").clicked() {
+                            if ui
+                                .button("Move to the Right")
+                                .on_hover_text("(Shortcut:Alt+D)")
+                                .clicked()
+                            {
                                 let move_vec = VoxelSceneDirection::Right.move_vector(&self.camera);
                                 self.voxel_scene.move_by_vector(move_vec);
                             }
-                            if ui.button("Move Back").clicked() {
+                            if ui
+                                .button("Move Back")
+                                .on_hover_text("(Shortcut:Alt+S)")
+                                .clicked()
+                            {
                                 let move_vec =
                                     VoxelSceneDirection::Backwards.move_vector(&self.camera);
                                 self.voxel_scene.move_by_vector(move_vec);
                             }
-                            if ui.button("Move Forward").clicked() {
+                            if ui
+                                .button("Move Forward")
+                                .on_hover_text("(Shortcut:Alt+W)")
+                                .clicked()
+                            {
                                 let move_vec =
                                     VoxelSceneDirection::Forwards.move_vector(&self.camera);
                                 self.voxel_scene.move_by_vector(move_vec);
                             }
-                            if ui.button("Move Up").clicked() {
+                            if ui
+                                .button("Move Up")
+                                .on_hover_text("(Shortcut:Alt+Q)")
+                                .clicked()
+                            {
                                 let move_vec =
                                     VoxelSceneDirection::UpLeftSteer.move_vector(&self.camera);
                                 self.voxel_scene.move_by_vector(move_vec);
                             }
-                            if ui.button("Move Down").clicked() {
+                            if ui
+                                .button("Move Down")
+                                .on_hover_text("(Shortcut:Alt+E)")
+                                .clicked()
+                            {
                                 let move_vec =
                                     VoxelSceneDirection::DownRightSteer.move_vector(&self.camera);
                                 self.voxel_scene.move_by_vector(move_vec);
                             }
                             ui.separator();
-                            if ui.button("Rotate to the Left").clicked() {
+                            if ui
+                                .button("Rotate to the Left")
+                                .on_hover_text("(Shortcut:Shift+A)")
+                                .clicked()
+                            {
                                 let (axis, deg) =
                                     VoxelSceneDirection::Left.rotate_parameters(&self.camera);
                                 self.voxel_scene.rotate_around_center(axis, deg);
                             }
-                            if ui.button("Rotate to the Right").clicked() {
+                            if ui
+                                .button("Rotate to the Right")
+                                .on_hover_text("(Shortcut:Shift+D)")
+                                .clicked()
+                            {
                                 let (axis, deg) =
                                     VoxelSceneDirection::Right.rotate_parameters(&self.camera);
                                 self.voxel_scene.rotate_around_center(axis, deg);
                             }
-                            if ui.button("Rotate Back").clicked() {
+                            if ui
+                                .button("Rotate Back")
+                                .on_hover_text("(Shortcut:Shift+S)")
+                                .clicked()
+                            {
                                 let (axis, deg) =
                                     VoxelSceneDirection::Backwards.rotate_parameters(&self.camera);
                                 self.voxel_scene.rotate_around_center(axis, deg);
                             }
-                            if ui.button("Rotate Forward").clicked() {
+                            if ui
+                                .button("Rotate Forward")
+                                .on_hover_text("(Shortcut:Shift+W)")
+                                .clicked()
+                            {
                                 let (axis, deg) =
                                     VoxelSceneDirection::Forwards.rotate_parameters(&self.camera);
                                 self.voxel_scene.rotate_around_center(axis, deg);
                             }
-                            if ui.button("Steer to the Left").clicked() {
+                            if ui
+                                .button("Steer to the Left")
+                                .on_hover_text("(Shortcut:Shift+Q)")
+                                .clicked()
+                            {
                                 let (axis, deg) = VoxelSceneDirection::UpLeftSteer
                                     .rotate_parameters(&self.camera);
                                 self.voxel_scene.rotate_around_center(axis, deg);
                             }
-                            if ui.button("Steer to the Right").clicked() {
+                            if ui
+                                .button("Steer to the Right")
+                                .on_hover_text("(Shortcut:Shift+E)")
+                                .clicked()
+                            {
                                 let (axis, deg) = VoxelSceneDirection::DownRightSteer
                                     .rotate_parameters(&self.camera);
                                 self.voxel_scene.rotate_around_center(axis, deg);
                             }
                             ui.separator();
-                            if ui.button("Reposition to Center").clicked() {
+                            if ui
+                                .button("Reposition to Center")
+                                .on_hover_text("(Shortcut:Alt+C)")
+                                .clicked()
+                            {
                                 self.voxel_scene.reposition_to_calculated_center();
                             }
                         });
                         ui.menu_button("View", |ui| {
                             let target = Point3::new(0.0, 0.0, 0.0);
-                            if ui.button("View along X+").clicked() {
+                            if ui
+                                .button("View along X+")
+                                .on_hover_text("(Shortcut:1)")
+                                .clicked()
+                            {
                                 let eye = CameraLookDirection::Xplus.eye_position();
                                 self.camera_controller.set_preset_orbit(eye);
                                 self.camera.set_position(target, target + eye);
                             }
-                            if ui.button("View along Z+").clicked() {
+                            if ui
+                                .button("View along Z+")
+                                .on_hover_text("(Shortcut:2)")
+                                .clicked()
+                            {
                                 let eye = CameraLookDirection::Zplus.eye_position();
                                 self.camera_controller.set_preset_orbit(eye);
                                 self.camera.set_position(target, target + eye);
                             }
-                            if ui.button("View along Z-").clicked() {
+                            if ui
+                                .button("View along Z-")
+                                .on_hover_text("(Shortcut:3)")
+                                .clicked()
+                            {
                                 let eye = CameraLookDirection::Zminus.eye_position();
                                 self.camera_controller.set_preset_orbit(eye);
                                 self.camera.set_position(target, target + eye);
                             }
-                            if ui.button("View along X-").clicked() {
+                            if ui
+                                .button("View along X-")
+                                .on_hover_text("(Shortcut:4)")
+                                .clicked()
+                            {
                                 let eye = CameraLookDirection::Xminus.eye_position();
                                 self.camera_controller.set_preset_orbit(eye);
                                 self.camera.set_position(target, target + eye);
                             }
-                            if ui.button("View straight from top").clicked() {
+                            if ui
+                                .button("View straight from top")
+                                .on_hover_text("(Shortcut:5)")
+                                .clicked()
+                            {
                                 let eye = CameraLookDirection::Down.eye_position();
                                 self.camera_controller.set_preset_orbit(eye);
                                 self.camera.set_position(target, target + eye);
