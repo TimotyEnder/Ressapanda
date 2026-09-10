@@ -725,6 +725,7 @@ impl State {
                 let size = 50.0;
                 if ui.add_sized([size, size], swatch).clicked() {
                     self.ui_info.show_color_picker = !self.ui_info.show_color_picker;
+                    self.ui_info.color_selected = true;
                 }
             });
         if let Some(inner) = brush_window {
@@ -768,6 +769,9 @@ impl State {
                         ) {
                             self.ui_info.color_hex_input_string =
                                 self.ui_info.ui_brush_color.to_hex();
+                            self.current_brush = Brush {
+                                color: VoxelColor::from_egui_color(self.ui_info.ui_brush_color),
+                            };
                         }
                     });
                     ui.label("Color Hex:");
@@ -780,9 +784,32 @@ impl State {
                             self.ui_info.ui_brush_color = color
                         }
                     }
+                    ui.label("Recent Colors:");
+                    let colors: Vec<Color32> = self
+                        .ui_info
+                        .last_used_colors
+                        .get_colors_mut()
+                        .iter()
+                        .copied()
+                        .collect();
+                    ui.horizontal(|ui| {
+                        for color in colors {
+                            Self::last_used_color_button(
+                                ui,
+                                color,
+                                &mut self.ui_info.ui_brush_color,
+                                &mut self.ui_info.last_color_added,
+                            );
+                        }
+                    })
                 });
-            self.current_brush = Brush {
-                color: VoxelColor::from_egui_color(self.ui_info.ui_brush_color),
+        } else if self.ui_info.color_selected {
+            self.ui_info.color_selected = false;
+            if self.ui_info.last_color_added != self.ui_info.ui_brush_color {
+                self.ui_info
+                    .last_used_colors
+                    .push(self.ui_info.ui_brush_color);
+                self.ui_info.last_color_added = self.ui_info.ui_brush_color;
             }
         }
     }
@@ -790,7 +817,7 @@ impl State {
         let Some(texture) = self.ui_info.icon_loader.get_icon_texture(tool_name) else {
             return;
         };
-        let sized = SizedTexture::new(texture.id(), [32.0, 32.0]);
+        let sized = SizedTexture::new(texture.id(), [50.0, 50.0]);
         let img = Image::new(sized);
         let button = egui::Button::image(img);
         let response = ui.add(button);
@@ -807,7 +834,7 @@ impl State {
         let Some(texture) = self.ui_info.icon_loader.get_icon_texture(mode_name) else {
             return;
         };
-        let sized = SizedTexture::new(texture.id(), [32.0, 32.0]);
+        let sized = SizedTexture::new(texture.id(), [50.0, 50.0]);
         let img = Image::new(sized);
         let button = egui::Button::image(img);
         let response = ui.add(button);
@@ -818,6 +845,21 @@ impl State {
         }
         if self.current_select_mode.name() == mode_name {
             response.highlight();
+        }
+    }
+    fn last_used_color_button(
+        ui: &mut egui::Ui,
+        color: Color32,
+        brush_color: &mut Color32,
+        last_color_added: &mut Color32,
+    ) {
+        let last_color_button = egui::Button::new("")
+            .fill(color)
+            .corner_radius(0)
+            .stroke(egui::Stroke::new(1.0, egui::Color32::WHITE));
+        if ui.add_sized([25.0, 25.0], last_color_button).clicked() {
+            *brush_color = color;
+            *last_color_added = color;
         }
     }
 }
