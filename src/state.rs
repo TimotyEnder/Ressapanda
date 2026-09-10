@@ -21,7 +21,7 @@ use crate::{
 };
 use anyhow::Ok;
 use cgmath::Point3;
-use egui::{Color32, Panel, accesskit::Role::Label, epaint, menu};
+use egui::{Color32, Image, Panel, accesskit::Role::Label, epaint, load::SizedTexture, menu};
 use egui_wgpu::RendererOptions;
 use std::{iter, sync::Arc};
 use wgpu::util::DeviceExt;
@@ -301,10 +301,10 @@ impl State {
             cursor_loader,
             egui_winit_state,
             egui_renderer,
-            egui_ctx,
+            egui_ctx: egui_ctx.clone(),
             egui_paint_jobs: Vec::new(),
             egui_textures_delta: egui::TexturesDelta::default(),
-            ui_info: UIData::new(),
+            ui_info: UIData::new(egui_ctx.clone()),
         })
     }
     pub fn window(&self) -> &Window {
@@ -689,7 +689,7 @@ impl State {
                     });
                 });
             });
-        let spacing = 4.0;
+        let spacing = self.config.height as f32 * 0.05;
         let mut top_offset = top_panel_width;
         let brush_window = egui::Window::new("Brush")
             .anchor(egui::Align2::LEFT_TOP, [0.0, top_offset])
@@ -709,6 +709,7 @@ impl State {
             top_offset = inner.response.rect.max.y + spacing;
         }
         let selection_mode_window = egui::Window::new("Selection Modes")
+            .title_bar(false)
             .anchor(egui::Align2::LEFT_TOP, [0.0, top_offset])
             .collapsible(false)
             .auto_sized()
@@ -721,6 +722,7 @@ impl State {
             top_offset = inner.response.rect.max.y + spacing;
         }
         let tools_window = egui::Window::new("Tools ")
+            .title_bar(false)
             .anchor(egui::Align2::LEFT_TOP, [0.0, top_offset])
             .collapsible(false)
             .auto_sized()
@@ -759,25 +761,37 @@ impl State {
         }
     }
     fn tool_toggle_button(&mut self, ui: &mut egui::Ui, tool_name: &'static str) {
-        let button = ui.button(tool_name);
-        if button.clicked() {
+        let Some(texture) = self.ui_info.icon_loader.get_icon_texture(tool_name) else {
+            return;
+        };
+        let sized = SizedTexture::new(texture.id(), [32.0, 32.0]);
+        let img = Image::new(sized);
+        let button = egui::Button::image(img);
+        let response = ui.add(button);
+        if response.clicked() {
             if let Some(tool) = tool_from_name(tool_name) {
                 self.current_tool = tool;
             }
         }
         if self.current_tool.name() == tool_name {
-            button.highlight();
+            response.highlight();
         }
     }
     fn selection_mode_toggle_button(&mut self, ui: &mut egui::Ui, mode_name: &'static str) {
-        let button = ui.button(mode_name);
-        if button.clicked() {
+        let Some(texture) = self.ui_info.icon_loader.get_icon_texture(mode_name) else {
+            return;
+        };
+        let sized = SizedTexture::new(texture.id(), [32.0, 32.0]);
+        let img = Image::new(sized);
+        let button = egui::Button::image(img);
+        let response = ui.add(button);
+        if response.clicked() {
             if let Some(mode) = select_mode_from_name(mode_name) {
                 self.current_select_mode = mode;
             }
         }
         if self.current_select_mode.name() == mode_name {
-            button.highlight();
+            response.highlight();
         }
     }
 }
