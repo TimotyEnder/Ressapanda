@@ -270,9 +270,26 @@ impl State {
         );
         let egui_renderer = egui_wgpu::Renderer::new(
             &device,
-            config.format, // sRGB surface format
+            config.format,
             egui_wgpu::RendererOptions::default(),
         );
+
+        let mut visuals = egui::Visuals::dark();
+
+        visuals.selection.bg_fill = egui::Color32::from_hex("#DB8758").unwrap();
+        visuals.selection.stroke.color = egui::Color32::from_hex("#DB8758").unwrap();
+        visuals.widgets.inactive.bg_stroke.color =
+            egui::Color32::from_hex("#000000").unwrap_or_default();
+        visuals.widgets.hovered.bg_stroke.color =
+            egui::Color32::from_hex("#DB8758").unwrap_or_default();
+        visuals.widgets.active.bg_stroke.color =
+            egui::Color32::from_hex("#141414").unwrap_or_default();
+        visuals.widgets.open.weak_bg_fill = egui::Color32::from_hex("#1a1a1a").unwrap_or_default();
+        visuals.panel_fill = egui::Color32::from_hex("#3b3b3b").unwrap_or_default();
+        visuals.window_fill = egui::Color32::from_hex("#3b3b3b").unwrap_or_default();
+        visuals.override_text_color = Some(egui::Color32::WHITE);
+        egui_ctx.set_theme(egui::Theme::Dark);
+        egui_ctx.set_visuals(visuals);
 
         Ok(Self {
             window,
@@ -692,6 +709,7 @@ impl State {
         let spacing = self.config.height as f32 * 0.05;
         let mut top_offset = top_panel_width;
         let brush_window = egui::Window::new("Brush")
+            .title_bar(false)
             .anchor(egui::Align2::LEFT_TOP, [0.0, top_offset])
             .collapsible(false)
             .auto_sized()
