@@ -136,9 +136,15 @@ impl KeyInputManager {
         camera: &Camera,
     ) {
         if self.move_modifier {
+            self.center_input(key, pressed, scene, camera);
             self.move_inputs(key, pressed, scene, camera);
         } else if self.rotate_modifier {
             self.rotate_inputs(key, pressed, scene, camera);
+        }
+    }
+    fn center_input(&self, key: KeyCode, pressed: bool, scene: &mut VoxelScene, _camera: &Camera) {
+        if key == KeyCode::KeyC && pressed {
+            scene.reposition_to_calculated_center();
         }
     }
     fn move_inputs(

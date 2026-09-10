@@ -276,8 +276,8 @@ impl State {
 
         let mut visuals = egui::Visuals::dark();
 
-        visuals.selection.bg_fill = egui::Color32::from_hex("#DB8758").unwrap();
-        visuals.selection.stroke.color = egui::Color32::from_hex("#DB8758").unwrap();
+        visuals.selection.bg_fill = egui::Color32::from_hex("#FFFFFF").unwrap();
+        visuals.selection.stroke.color = egui::Color32::from_hex("#000000").unwrap();
         visuals.widgets.inactive.bg_stroke.color =
             egui::Color32::from_hex("#000000").unwrap_or_default();
         visuals.widgets.hovered.bg_stroke.color =
@@ -596,7 +596,7 @@ impl State {
     }
     fn ui(&mut self, ui: &mut egui::Ui) {
         let version = env!("CARGO_PKG_VERSION");
-        let top_panel_width = self.config.height as f32 * 0.02;
+        let top_panel_width = (self.config.height as f32 * 0.02).round();
         Panel::top("options_panel")
             .exact_size(top_panel_width)
             .show(ui, |ui| {
@@ -674,6 +674,10 @@ impl State {
                                     .rotate_parameters(&self.camera);
                                 self.voxel_scene.rotate_around_center(axis, deg);
                             }
+                            ui.separator();
+                            if ui.button("Reposition to Center").clicked() {
+                                self.voxel_scene.reposition_to_calculated_center();
+                            }
                         });
                         ui.menu_button("View", |ui| {
                             let target = Point3::new(0.0, 0.0, 0.0);
@@ -739,7 +743,7 @@ impl State {
         if let Some(inner) = selection_mode_window {
             top_offset = inner.response.rect.max.y + spacing;
         }
-        let tools_window = egui::Window::new("Tools ")
+        let tools_window = egui::Window::new("Tools")
             .title_bar(false)
             .anchor(egui::Align2::LEFT_TOP, [0.0, top_offset])
             .collapsible(false)
@@ -755,13 +759,17 @@ impl State {
                 .collapsible(false)
                 .open(&mut self.ui_info.show_color_picker)
                 .show(ui, |ui| {
-                    if egui::color_picker::color_picker_color32(
-                        ui,
-                        &mut self.ui_info.ui_brush_color,
-                        egui::color_picker::Alpha::OnlyBlend,
-                    ) {
-                        self.ui_info.color_hex_input_string = self.ui_info.ui_brush_color.to_hex();
-                    }
+                    ui.scope(|ui| {
+                        ui.spacing_mut().slider_width = 300.0;
+                        if egui::color_picker::color_picker_color32(
+                            ui,
+                            &mut self.ui_info.ui_brush_color,
+                            egui::color_picker::Alpha::OnlyBlend,
+                        ) {
+                            self.ui_info.color_hex_input_string =
+                                self.ui_info.ui_brush_color.to_hex();
+                        }
+                    });
                     ui.label("Color Hex:");
                     let hex_color_input =
                         ui.text_edit_singleline(&mut self.ui_info.color_hex_input_string);
