@@ -722,7 +722,7 @@ impl State {
                     .fill(self.ui_info.ui_brush_color)
                     .corner_radius(0)
                     .stroke(egui::Stroke::new(1.0, egui::Color32::WHITE));
-                let size = self.config.width as f32 * 0.05;
+                let size = 50.0;
                 if ui.add_sized([size, size], swatch).clicked() {
                     self.ui_info.show_color_picker = !self.ui_info.show_color_picker;
                 }
