@@ -107,7 +107,6 @@ pub fn find_pos_of_ray_vectors_closest_point_to_voxel_pos(
     // t of point C that is closest to voxel P
     // t  = (P − O) · D / (D · D)
     // C  = O + t·D
-    // y  = C.y = O.y + t·D.y
     let t_closest_to_voxel = ((voxel_pos - vec3(ray.origin.x, ray.origin.y, ray.origin.z))
         .dot(ray.direction))
         / (ray.direction.dot(ray.direction));
