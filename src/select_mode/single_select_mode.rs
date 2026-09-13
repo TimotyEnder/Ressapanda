@@ -44,14 +44,14 @@ impl SelectMode for SingleSelectMode {
                         if let Some(voxel) = scene.get_voxel_from_position(voxel_position) {
                             let point =
                                 voxel.point_on_voxel_grid_closest_to_point(intersect_position);
-                            tool.operate_with_voxel_and_intersect(
+                            tool.operate_with_position(
                                 Vector3::new(point.x, point.y, point.z),
                                 scene,
                                 brush,
                             );
                         }
                     }
-                    _ => tool.operate_with_voxel_and_intersect(voxel_position, scene, brush),
+                    _ => tool.operate_with_position(voxel_position, scene, brush),
                 }
             }
         }
@@ -96,14 +96,14 @@ impl SelectMode for SingleSelectMode {
                 "Add" => {
                     if let Some(voxel) = scene.get_voxel_from_position(voxel_position) {
                         let point = voxel.point_on_voxel_grid_closest_to_point(intersect_position);
-                        tool.temp_operate_with_voxel_and_intersect(
+                        tool.temp_operate_with_position(
                             Vector3::new(point.x, point.y, point.z),
                             scene,
                             transparent_vers_off_brush,
                         );
                     }
                 }
-                _ => tool.temp_operate_with_voxel_and_intersect(
+                _ => tool.temp_operate_with_position(
                     voxel_position,
                     scene,
                     &transparent_vers_off_brush,

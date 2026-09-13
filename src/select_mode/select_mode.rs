@@ -1,7 +1,10 @@
 use crate::{
     brushes::brush::Brush,
     camera::Camera,
-    select_mode::{area_select_mode::AreaSelectMode, single_select_mode::SingleSelectMode},
+    select_mode::{
+        area_select_mode::AreaSelectMode, extended_area_select::ExtendedAreaSelectMode,
+        single_select_mode::SingleSelectMode,
+    },
     tools::tool::Tool,
     voxel_scene::VoxelScene,
 };
@@ -46,6 +49,7 @@ pub fn select_mode_from_name(name: &'static str) -> Option<Box<dyn SelectMode>> 
     match name {
         "Single" => return Some(Box::new(SingleSelectMode::new())),
         "Area" => return Some(Box::new(AreaSelectMode::new())),
+        "Extended" => return Some(Box::new(ExtendedAreaSelectMode::new())),
         _ => return None,
     };
 }

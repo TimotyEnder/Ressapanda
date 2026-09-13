@@ -4,6 +4,7 @@ use egui::{TextureHandle, TextureOptions};
 
 const SINGLE_SELECT: &[u8] = include_bytes!("../Assets/Icons/single_select.png");
 const AREA_SELECT: &[u8] = include_bytes!("../Assets/Icons/area_select.png");
+const EX_AREA_SELECT: &[u8] = include_bytes!("../Assets/Icons/extended_area_select.png");
 const DEL: &[u8] = include_bytes!("../Assets/Icons/del.png");
 const ADD: &[u8] = include_bytes!("../Assets/Icons/add.png");
 const SUBS: &[u8] = include_bytes!("../Assets/Icons/subs.png");
@@ -17,6 +18,7 @@ impl IconLoader {
         [
             (SINGLE_SELECT, "Single"),
             (AREA_SELECT, "Area"),
+            (EX_AREA_SELECT, "Extended"),
             (DEL, "Del"),
             (ADD, "Add"),
             (SUBS, "Subs"),

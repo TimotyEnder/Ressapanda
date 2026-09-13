@@ -2,7 +2,7 @@ use crate::{brushes::brush::Brush, color::VoxelColor, tools::tool::Tool};
 
 pub struct Subs {}
 impl Tool for Subs {
-    fn operate_with_voxel_and_intersect(
+    fn operate_with_position(
         &mut self,
         operating_position: cgmath::Vector3<f32>,
         scene: &mut crate::voxel_scene::VoxelScene,
@@ -16,7 +16,7 @@ impl Tool for Subs {
         "Subs"
     }
 
-    fn temp_operate_with_voxel_and_intersect(
+    fn temp_operate_with_position(
         &mut self,
         operating_position: cgmath::Vector3<f32>,
         scene: &mut crate::voxel_scene::VoxelScene,

@@ -1,4 +1,6 @@
-use cgmath::{EuclideanSpace, InnerSpace, Point3, SquareMatrix, Vector3, Vector4, vec3};
+use cgmath::{
+    EuclideanSpace, InnerSpace, MetricSpace, Point3, SquareMatrix, Vector3, Vector4, vec3,
+};
 
 use crate::{
     camera::{Camera, OPENGL_TO_WGPU_MATRIX},
@@ -7,6 +9,7 @@ use crate::{
     voxel_instance::VoxelInstance,
     voxel_scene::VoxelScene,
 };
+#[derive(Clone, Copy)]
 pub struct Ray {
     pub origin: Point3<f32>,
     pub direction: Vector3<f32>,
@@ -95,4 +98,19 @@ pub fn find_first_voxel_to_intersect_ray(
         ));
     }
     return None;
+}
+pub fn find_pos_of_ray_vectors_closest_point_to_voxel_pos(
+    ray: Ray,
+    voxel_pos: Vector3<f32>,
+) -> Point3<f32> {
+    //damn linear alg is so cool!
+    // t of point C that is closest to voxel P
+    // t  = (P − O) · D / (D · D)
+    // C  = O + t·D
+    // y  = C.y = O.y + t·D.y
+    let t_closest_to_voxel = ((voxel_pos - vec3(ray.origin.x, ray.origin.y, ray.origin.z))
+        .dot(ray.direction))
+        / (ray.direction.dot(ray.direction));
+    let closest_point_to_voxel_on_ray_vector = ray.origin + (t_closest_to_voxel * ray.direction);
+    closest_point_to_voxel_on_ray_vector
 }

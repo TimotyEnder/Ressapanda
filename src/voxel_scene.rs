@@ -6,7 +6,7 @@ use winit::keyboard::KeyLocation::Left;
 
 use crate::camera::Camera;
 use crate::conversion_utils::snap_vector_to_flat_direction;
-use crate::filler::voxel_and_intersect_positions_from_a_to_b;
+use crate::filler::fill_positions_from_a_to_b;
 use crate::voxel_scene::VoxelSceneDirection::{Forwards, UpLeftSteer};
 use crate::{
     color::VoxelColor,
@@ -33,7 +33,7 @@ impl VoxelScene {
     }
     fn axis_grid() -> BTreeMap<VoxelScenePosition, VoxelInstance> {
         let mut map = BTreeMap::new();
-        for position in voxel_and_intersect_positions_from_a_to_b(
+        for position in fill_positions_from_a_to_b(
             Vector3 {
                 x: -16.0,
                 y: 0.0,

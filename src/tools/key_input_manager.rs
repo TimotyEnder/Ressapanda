@@ -40,6 +40,8 @@ impl KeyInputManager {
         ret.keycode_to_flag.insert(KeyCode::KeyQ, false);
         ret.keycode_to_mapping.insert(KeyCode::KeyW, "Area");
         ret.keycode_to_flag.insert(KeyCode::KeyW, false);
+        ret.keycode_to_mapping.insert(KeyCode::KeyE, "Extended");
+        ret.keycode_to_flag.insert(KeyCode::KeyE, false);
         ret
     }
     pub fn modifier_inputs(&mut self, key: KeyCode, pressed: bool) {

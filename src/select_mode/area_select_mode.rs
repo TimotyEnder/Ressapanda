@@ -2,7 +2,7 @@ use cgmath::{Point3, Vector3};
 
 use crate::{
     brushes::brush::Brush,
-    filler::voxel_and_intersect_positions_from_a_to_b,
+    filler::fill_positions_from_a_to_b,
     raycast::{find_first_voxel_to_intersect_ray, raycast_compute_from_mouse_position},
     select_mode::select_mode::SelectMode,
 };
@@ -64,23 +64,23 @@ impl SelectMode for AreaSelectMode {
                         prev_operating_point = prev_voxel
                             .point_on_voxel_grid_closest_to_point(prev_intersect_position);
 
-                        tool.operate_with_voxel_and_intersect(prev_operating_point, scene, brush);
+                        tool.operate_with_position(prev_operating_point, scene, brush);
                     }
                     if let Some(voxel) = scene.get_voxel_from_position(voxel_position) {
                         operating_point =
                             voxel.point_on_voxel_grid_closest_to_point(intersect_position);
-                        tool.operate_with_voxel_and_intersect(
+                        tool.operate_with_position(
                             Vector3::new(operating_point.x, operating_point.y, operating_point.z),
                             scene,
                             brush,
                         );
                     }
                 }
-                for list_voxel in voxel_and_intersect_positions_from_a_to_b(
+                for list_voxel in fill_positions_from_a_to_b(
                     prev_operating_point,
                     Vector3::new(operating_point.x, operating_point.y, operating_point.z),
                 ) {
-                    tool.operate_with_voxel_and_intersect(list_voxel, scene, brush);
+                    tool.operate_with_position(list_voxel, scene, brush);
                 }
             }
             self.previous_hit = None;
@@ -117,27 +117,23 @@ impl SelectMode for AreaSelectMode {
                         prev_operating_point = prev_voxel
                             .point_on_voxel_grid_closest_to_point(prev_intersect_position);
 
-                        tool.temp_operate_with_voxel_and_intersect(
-                            prev_operating_point,
-                            scene,
-                            brush,
-                        );
+                        tool.temp_operate_with_position(prev_operating_point, scene, brush);
                     }
                     if let Some(voxel) = scene.get_voxel_from_position(voxel_position) {
                         operating_point =
                             voxel.point_on_voxel_grid_closest_to_point(intersect_position);
-                        tool.temp_operate_with_voxel_and_intersect(
+                        tool.temp_operate_with_position(
                             Vector3::new(operating_point.x, operating_point.y, operating_point.z),
                             scene,
                             brush,
                         );
                     }
                 }
-                for list_voxel in voxel_and_intersect_positions_from_a_to_b(
+                for list_voxel in fill_positions_from_a_to_b(
                     prev_operating_point,
                     Vector3::new(operating_point.x, operating_point.y, operating_point.z),
                 ) {
-                    tool.temp_operate_with_voxel_and_intersect(list_voxel, scene, brush);
+                    tool.temp_operate_with_position(list_voxel, scene, brush);
                 }
             } else {
                 match tool.name() {
@@ -145,7 +141,7 @@ impl SelectMode for AreaSelectMode {
                         if let Some(voxel) = scene.get_voxel_from_position(voxel_position) {
                             let point =
                                 voxel.point_on_voxel_grid_closest_to_point(intersect_position);
-                            tool.temp_operate_with_voxel_and_intersect(
+                            tool.temp_operate_with_position(
                                 Vector3::new(point.x, point.y, point.z),
                                 scene,
                                 &Brush {
@@ -159,7 +155,7 @@ impl SelectMode for AreaSelectMode {
                             );
                         }
                     }
-                    _ => tool.temp_operate_with_voxel_and_intersect(voxel_position, scene, brush),
+                    _ => tool.temp_operate_with_position(voxel_position, scene, brush),
                 }
             }
         } else {

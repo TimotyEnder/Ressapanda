@@ -7,13 +7,13 @@ use crate::{
 };
 
 pub trait Tool {
-    fn operate_with_voxel_and_intersect(
+    fn operate_with_position(
         &mut self,
         operating_position: Vector3<f32>,
         scene: &mut VoxelScene,
         brush: &Brush,
     );
-    fn temp_operate_with_voxel_and_intersect(
+    fn temp_operate_with_position(
         &mut self,
         operating_position: Vector3<f32>,
         scene: &mut VoxelScene,
