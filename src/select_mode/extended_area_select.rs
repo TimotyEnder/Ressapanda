@@ -81,8 +81,11 @@ impl SelectMode for ExtendedAreaSelectMode {
                 for voxel_pos in fill_positions_from_a_to_b(
                     base_voxel,
                     Self::fill_position(base_voxel, voxel_pos, closest_point),
-                ) {
-                    tool.operate_with_position(voxel_pos, scene, brush);
+                )
+                .iter()
+                .chain(fill_positions_from_a_to_b(base_voxel, voxel_pos).iter())
+                {
+                    tool.operate_with_position(*voxel_pos, scene, brush);
                 }
                 self.base_voxel = None;
                 self.first_hit = None;
@@ -111,36 +114,32 @@ impl SelectMode for ExtendedAreaSelectMode {
             if let Some((intersect_position, voxel_position)) =
                 find_first_voxel_to_intersect_ray(ray, scene)
             {
-                self.base_voxel = Some(voxel_position);
+                let mut prev_operating_point = prev_voxel_position;
+                let mut operating_point = voxel_position;
+                if tool.name().contains("Add") {
+                    if let Some(prev_voxel) = scene.get_voxel_from_position(prev_voxel_position) {
+                        prev_operating_point = prev_voxel
+                            .point_on_voxel_grid_closest_to_point(prev_intersect_position);
+
+                        tool.operate_with_position(prev_operating_point, scene, brush);
+                    }
+                    if let Some(voxel) = scene.get_voxel_from_position(voxel_position) {
+                        operating_point =
+                            voxel.point_on_voxel_grid_closest_to_point(intersect_position);
+                        tool.operate_with_position(
+                            Vector3::new(operating_point.x, operating_point.y, operating_point.z),
+                            scene,
+                            brush,
+                        );
+                    }
+                }
+                self.base_voxel = Some(operating_point);
+                self.first_hit = Some((intersect_position, prev_operating_point));
                 self.area_selected = true;
                 if voxel_position.x != prev_voxel_position.x
                     && voxel_position.y != prev_voxel_position.y
                     && voxel_position.z != prev_voxel_position.z
                 {
-                    let mut prev_operating_point = prev_voxel_position;
-                    let mut operating_point = voxel_position;
-                    if tool.name().contains("Add") {
-                        if let Some(prev_voxel) = scene.get_voxel_from_position(prev_voxel_position)
-                        {
-                            prev_operating_point = prev_voxel
-                                .point_on_voxel_grid_closest_to_point(prev_intersect_position);
-
-                            tool.operate_with_position(prev_operating_point, scene, brush);
-                        }
-                        if let Some(voxel) = scene.get_voxel_from_position(voxel_position) {
-                            operating_point =
-                                voxel.point_on_voxel_grid_closest_to_point(intersect_position);
-                            tool.operate_with_position(
-                                Vector3::new(
-                                    operating_point.x,
-                                    operating_point.y,
-                                    operating_point.z,
-                                ),
-                                scene,
-                                brush,
-                            );
-                        }
-                    }
                     for list_voxel in
                         fill_positions_from_a_to_b(prev_operating_point, operating_point)
                     {
@@ -181,8 +180,11 @@ impl SelectMode for ExtendedAreaSelectMode {
                     for list_voxel in fill_positions_from_a_to_b(
                         base_voxel,
                         Self::fill_position(base_voxel, voxel_pos, closest_point),
-                    ) {
-                        tool.temp_operate_with_position(list_voxel, scene, brush);
+                    )
+                    .iter()
+                    .chain(fill_positions_from_a_to_b(base_voxel, voxel_pos).iter())
+                    {
+                        tool.temp_operate_with_position(*list_voxel, scene, brush);
                     }
                 }
             }
