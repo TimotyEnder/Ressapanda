@@ -1,4 +1,4 @@
-use crate::{brushes::brush::Brush, color::VoxelColor, tools::tool::Tool};
+use crate::{brushes::brush::Brush, tools::tool::Tool};
 
 pub struct Subs {}
 impl Tool for Subs {
@@ -20,7 +20,7 @@ impl Tool for Subs {
         &mut self,
         operating_position: cgmath::Vector3<f32>,
         scene: &mut crate::voxel_scene::VoxelScene,
-        brush: &Brush,
+        _brush: &Brush,
     ) {
         scene.select_voxel_at_position(operating_position);
     }

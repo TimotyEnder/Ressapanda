@@ -1,5 +1,4 @@
 use cgmath::{MetricSpace, Point3, Vector3, vec3};
-use log::log;
 
 use crate::{
     brushes::brush::Brush,
@@ -13,7 +12,7 @@ use crate::{
 
 pub struct ExtendedAreaSelectMode {
     first_hit: Option<(Point3<f32>, Vector3<f32>)>,
-    base_voxel: Option<(Vector3<f32>)>,
+    base_voxel: Option<Vector3<f32>>,
     area_selected: bool,
 }
 impl ExtendedAreaSelectMode {
@@ -25,7 +24,7 @@ impl ExtendedAreaSelectMode {
         }
     }
     fn fill_position(
-        base_voxel: Vector3<f32>,
+        _base_voxel: Vector3<f32>,
         voxel_pos: Vector3<f32>,
         closest_point: Point3<f32>,
     ) -> Vector3<f32> {

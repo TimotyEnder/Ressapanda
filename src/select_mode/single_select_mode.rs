@@ -5,7 +5,7 @@ use crate::{
     color::VoxelColor,
     raycast::{find_first_voxel_to_intersect_ray, raycast_compute_from_mouse_position},
     select_mode::select_mode::SelectMode,
-    tools::{add::Add, tool::Tool},
+    tools::tool::Tool,
 };
 
 pub struct SingleSelectMode {
@@ -59,13 +59,13 @@ impl SelectMode for SingleSelectMode {
 
     fn mouse_up(
         &mut self,
-        mouse_x: f64,
-        mouse_y: f64,
-        camera: &crate::camera::Camera,
-        scene: &mut crate::voxel_scene::VoxelScene,
-        config: &wgpu::SurfaceConfiguration,
-        tool: &mut Box<dyn Tool>,
-        brush: &Brush,
+        _mouse_x: f64,
+        _mouse_y: f64,
+        _camera: &crate::camera::Camera,
+        _scene: &mut crate::voxel_scene::VoxelScene,
+        _config: &wgpu::SurfaceConfiguration,
+        _tool: &mut Box<dyn Tool>,
+        _brush: &Brush,
     ) {
         self.press_flag = false;
     }

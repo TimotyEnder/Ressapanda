@@ -23,8 +23,8 @@ impl SelectMode for AreaSelectMode {
         camera: &crate::camera::Camera,
         scene: &mut crate::voxel_scene::VoxelScene,
         config: &wgpu::SurfaceConfiguration,
-        tool: &mut Box<dyn crate::tools::tool::Tool>,
-        brush: &Brush,
+        _tool: &mut Box<dyn crate::tools::tool::Tool>,
+        _brush: &Brush,
     ) {
         let ray = raycast_compute_from_mouse_position(
             camera,

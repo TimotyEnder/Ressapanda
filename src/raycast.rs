@@ -1,11 +1,7 @@
-use cgmath::{
-    EuclideanSpace, InnerSpace, MetricSpace, Point3, SquareMatrix, Vector3, Vector4, vec3,
-};
+use cgmath::{InnerSpace, Point3, SquareMatrix, Vector3, Vector4, vec3};
 
 use crate::{
     camera::{Camera, OPENGL_TO_WGPU_MATRIX},
-    color::VoxelColor,
-    state::State,
     voxel_instance::VoxelInstance,
     voxel_scene::VoxelScene,
 };

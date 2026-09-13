@@ -37,7 +37,7 @@ impl VoxelInstance {
     }
     pub fn to_raw(&self) -> RawVoxelInstance {
         let info_vec = Vector4::new(
-            { if self.selected { 1.0 } else { 0.0 } },
+            if self.selected { 1.0 } else { 0.0 },
             if self.grid_voxel { 1.0 } else { 0.0 },
             0.0,
             0.0,

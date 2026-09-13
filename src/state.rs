@@ -3,7 +3,7 @@ use crate::{
     camera::{Camera, CameraLookDirection, CameraUniform},
     camera_controller::CameraController,
     color::VoxelColor,
-    cursor_loader::{self, CursorLoader},
+    cursor_loader::CursorLoader,
     depth_texture::DepthTexture,
     select_mode::{
         select_mode::{SelectMode, select_mode_from_name},
@@ -21,8 +21,7 @@ use crate::{
 };
 use anyhow::Ok;
 use cgmath::Point3;
-use egui::{Color32, Image, Panel, accesskit::Role::Label, epaint, load::SizedTexture, menu};
-use egui_wgpu::RendererOptions;
+use egui::{Color32, Image, Panel, epaint, load::SizedTexture, menu};
 use std::{iter, sync::Arc};
 use wgpu::util::DeviceExt;
 use winit::{
@@ -327,7 +326,7 @@ impl State {
     pub fn window(&self) -> &Window {
         &self.window
     }
-    pub fn handle_key(&mut self, event_loop: &ActiveEventLoop, key: KeyCode, pressed: bool) {
+    pub fn handle_key(&mut self, _event_loop: &ActiveEventLoop, key: KeyCode, pressed: bool) {
         self.key_input_manager.modifier_inputs(key, pressed);
         self.key_input_manager.camera_preset_positions_inputs(
             key,
@@ -356,7 +355,7 @@ impl State {
     }
     pub fn handle_mouse_button(
         &mut self,
-        event_loop: &ActiveEventLoop,
+        _event_loop: &ActiveEventLoop,
         button: MouseButton,
         pressed: bool,
     ) {
@@ -395,6 +394,13 @@ impl State {
             &self.camera,
         );
         self.last_mouse_position_recorded = pos;
+    }
+    pub fn handle_focus(&mut self) {
+        self.cursor_loader.change_cursor(
+            self.window.clone(),
+            &self.current_select_mode,
+            &self.current_tool,
+        );
     }
     pub fn update(&mut self) {
         self.camera_controller.update_camera(&mut self.camera);
@@ -820,7 +826,7 @@ impl State {
         if let Some(inner) = selection_mode_window {
             top_offset = inner.response.rect.max.y + spacing;
         }
-        let tools_window = egui::Window::new("Tools")
+        let _tools_window = egui::Window::new("Tools")
             .title_bar(false)
             .anchor(egui::Align2::LEFT_TOP, [0.0, top_offset])
             .collapsible(false)

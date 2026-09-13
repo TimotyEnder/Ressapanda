@@ -1,9 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use winit::{
-    event_loop,
-    window::{Cursor, CustomCursor, CustomCursorSource, Window},
-};
+use winit::window::{Cursor, CustomCursor, Window};
 
 use crate::{select_mode::select_mode::SelectMode, tools::tool::Tool};
 

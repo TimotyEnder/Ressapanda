@@ -1,14 +1,12 @@
-use std::{collections::HashMap, io::SeekFrom};
+use std::collections::HashMap;
 
-use cgmath::{EuclideanSpace, InnerSpace, Point3, Vector3};
+use cgmath::Point3;
 use winit::keyboard::KeyCode;
 
 use crate::{
     camera::{Camera, CameraLookDirection},
     camera_controller::CameraController,
-    conversion_utils::snap_vector_to_flat_direction,
     select_mode::select_mode::{SelectMode, select_mode_from_name},
-    state::State,
     tools::tool::{Tool, tool_from_name},
     voxel_scene::{VoxelScene, VoxelSceneDirection},
 };

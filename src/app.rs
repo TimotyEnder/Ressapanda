@@ -28,7 +28,7 @@ impl ApplicationHandler<State> for App {
     fn window_event(
         &mut self,
         event_loop: &winit::event_loop::ActiveEventLoop,
-        window_id: winit::window::WindowId,
+        _window_id: winit::window::WindowId,
         event: winit::event::WindowEvent,
     ) {
         let state = match &mut self.state {
@@ -77,6 +77,12 @@ impl ApplicationHandler<State> for App {
             } => {
                 state.handle_cursor_moved(position);
             }
+            WindowEvent::Focused(focused) => {
+                if focused {
+                    state.handle_focus();
+                }
+            }
+            WindowEvent::CursorEntered { .. } => state.handle_focus(),
             WindowEvent::KeyboardInput {
                 event:
                     KeyEvent {

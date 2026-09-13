@@ -1,4 +1,4 @@
-use cgmath::{Point3, Vector3};
+use cgmath::Vector3;
 
 use crate::{
     brushes::brush::Brush,

@@ -1,13 +1,10 @@
-use cgmath::num_traits::real::Real;
 use cgmath::{Deg, Quaternion, Vector3};
 use cgmath::{prelude::*, vec3};
-use std::collections::{BTreeMap, HashMap};
-use winit::keyboard::KeyLocation::Left;
+use std::collections::BTreeMap;
 
 use crate::camera::Camera;
 use crate::conversion_utils::snap_vector_to_flat_direction;
 use crate::filler::fill_positions_from_a_to_b;
-use crate::voxel_scene::VoxelSceneDirection::{Forwards, UpLeftSteer};
 use crate::{
     color::VoxelColor,
     voxel_instance::{RawVoxelInstance, VoxelInstance},

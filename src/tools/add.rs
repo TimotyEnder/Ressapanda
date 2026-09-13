@@ -1,7 +1,6 @@
 use cgmath::Vector3;
-use wgpu::Color;
 
-use crate::{brushes::brush::Brush, color::VoxelColor, tools::tool::Tool, voxel_scene::VoxelScene};
+use crate::{brushes::brush::Brush, tools::tool::Tool, voxel_scene::VoxelScene};
 
 pub struct Add {}
 impl Tool for Add {
