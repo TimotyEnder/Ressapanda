@@ -10,6 +10,12 @@ const X1_DEL: &[u8] = include_bytes!("../Assets/Cursors/x1del.png");
 const XN_ADD: &[u8] = include_bytes!("../Assets/Cursors/xnadd.png");
 const XN_SUBS: &[u8] = include_bytes!("../Assets/Cursors/xnsubs.png");
 const XN_DEL: &[u8] = include_bytes!("../Assets/Cursors/xndel.png");
+const XE_ADD: &[u8] = include_bytes!("../Assets/Cursors/xeadd.png");
+const XE_SUBS: &[u8] = include_bytes!("../Assets/Cursors/xesubs.png");
+const XE_DEL: &[u8] = include_bytes!("../Assets/Cursors/xedel.png");
+const XEE_ADD: &[u8] = include_bytes!("../Assets/Cursors/xeeadd.png");
+const XEE_SUBS: &[u8] = include_bytes!("../Assets/Cursors/xeesubs.png");
+const XEE_DEL: &[u8] = include_bytes!("../Assets/Cursors/xeedel.png");
 
 pub struct CursorLoader {
     cursors: HashMap<String, CustomCursor>,
@@ -24,6 +30,12 @@ impl CursorLoader {
             (XN_ADD, "xn_add"),
             (XN_DEL, "xn_del"),
             (XN_SUBS, "xn_subs"),
+            (XE_ADD, "xe_add"),
+            (XE_DEL, "xe_del"),
+            (XE_SUBS, "xe_subs"),
+            (XEE_ADD, "xee_add"),
+            (XEE_DEL, "xee_del"),
+            (XEE_SUBS, "xee_subs"),
         ]
         .iter()
         .for_each(|(cursor_const, name)| {
