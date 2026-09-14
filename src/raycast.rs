@@ -72,7 +72,7 @@ pub fn find_first_voxel_to_intersect_ray(
 ) -> Option<(Point3<f32>, Vector3<f32>)> {
     let mut min_t_min: Option<f32> = None;
     let mut min_tmin_voxel = None;
-    for voxel in voxel_scene.get_voxels() {
+    for voxel in voxel_scene.get_all_voxels() {
         if let Some(t_min) = t_min_for_voxel_ray_overlap(&ray, voxel) {
             if let Some(min_t_min) = min_t_min.as_mut() {
                 *min_t_min = (*min_t_min).min(t_min);
