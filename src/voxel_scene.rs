@@ -289,29 +289,37 @@ impl VoxelScene {
     }
     pub fn move_by_vector(&mut self, move_vector: Vector3<f32>) -> bool {
         let move_scene_vector = VoxelScenePosition::from_voxel_position(move_vector);
-        let move_overrides_grid = self.voxel_sets[self.current_voxel_set_selected]
-            .position_to_voxel
-            .iter()
-            .filter(|(_, v)| !v.is_grid())
-            .any(|(pos, _)| {
-                let dest = VoxelScenePosition {
-                    x: pos.x + move_scene_vector.x,
-                    y: pos.y + move_scene_vector.y,
-                    z: pos.z + move_scene_vector.z,
-                };
-                self.voxel_sets[self.current_voxel_set_selected]
-                    .position_to_voxel
-                    .get(&dest)
-                    .is_some_and(|v| v.is_grid())
-            });
-
-        if !move_overrides_grid {
-            let old_keys: Vec<VoxelScenePosition> = self.voxel_sets
-                [self.current_voxel_set_selected]
+        let mut move_overrides_grid = false;
+        move_overrides_grid = move_overrides_grid
+            || self.voxel_sets[self.current_voxel_set_selected]
                 .position_to_voxel
                 .iter()
-                .filter_map(|(k, v)| (!v.is_grid()).then_some(*k))
-                .collect();
+                .filter(|(_, v)| !v.is_grid())
+                .any(|(pos, _)| {
+                    let dest = VoxelScenePosition {
+                        x: pos.x + move_scene_vector.x,
+                        y: pos.y + move_scene_vector.y,
+                        z: pos.z + move_scene_vector.z,
+                    };
+                    let mut overrides = false;
+                    for i in 0..self.voxel_sets.len() {
+                        overrides = overrides
+                            || self.voxel_sets[i]
+                                .position_to_voxel
+                                .get(&dest)
+                                .is_some_and(|v| v.is_grid());
+                    }
+                    overrides
+                });
+
+        if !move_overrides_grid {
+            let mut old_keys: Vec<VoxelScenePosition> = Vec::new();
+            old_keys.extend(
+                self.voxel_sets[self.current_voxel_set_selected]
+                    .position_to_voxel
+                    .iter()
+                    .filter_map(|(k, v)| (!v.is_grid()).then_some(*k)),
+            );
 
             for voxel in self.voxel_sets[self.current_voxel_set_selected]
                 .position_to_voxel
