@@ -9,11 +9,11 @@ use crate::{
     color::VoxelColor,
     voxel_instance::{RawVoxelInstance, VoxelInstance},
 };
-struct VoxelSet {
+struct VoxelGroup {
     pub position_to_voxel: BTreeMap<VoxelScenePosition, VoxelInstance>,
     name: String,
 }
-impl VoxelSet {
+impl VoxelGroup {
     pub fn grid_voxel() -> Self {
         Self {
             position_to_voxel: Self::axis_grid(),
@@ -26,7 +26,7 @@ impl VoxelSet {
             name: if let Some(name) = opt_name {
                 name
             } else {
-                format!("VoxelSet:{}", 1)
+                format!("VoxelGroup:{}", 1)
             },
         }
     }
@@ -56,8 +56,8 @@ impl VoxelSet {
     }
 }
 pub struct VoxelScene {
-    voxel_sets: Vec<VoxelSet>,
-    current_voxel_set_selected: usize,
+    voxel_groups: Vec<VoxelGroup>,
+    current_voxel_group_selected: usize,
     temporary_voxels: Vec<VoxelInstance>,
     raw_voxel_instance_list: Vec<RawVoxelInstance>,
     voxels_changed: bool,
@@ -65,12 +65,12 @@ pub struct VoxelScene {
 }
 impl VoxelScene {
     pub fn new() -> Self {
-        let mut voxel_sets = Vec::new();
-        voxel_sets.push(VoxelSet::grid_voxel());
-        voxel_sets.push(VoxelSet::new(None));
+        let mut voxel_groups = Vec::new();
+        voxel_groups.push(VoxelGroup::grid_voxel());
+        voxel_groups.push(VoxelGroup::new(None));
         Self {
-            voxel_sets: voxel_sets,
-            current_voxel_set_selected: 1,
+            voxel_groups: voxel_groups,
+            current_voxel_group_selected: 1,
             raw_voxel_instance_list: Vec::new(),
             voxels_changed: true,
             temporary_voxels: Vec::new(),
@@ -82,9 +82,9 @@ impl VoxelScene {
         if self.voxels_changed {
             self.voxels_changed = false;
             self.raw_voxel_instance_list.clear();
-            for i in (0..self.voxel_sets.len()).rev() {
+            for i in (0..self.voxel_groups.len()).rev() {
                 self.raw_voxel_instance_list.extend(
-                    self.voxel_sets[i]
+                    self.voxel_groups[i]
                         .position_to_voxel
                         .values()
                         .map(|voxel| voxel.to_raw()),
@@ -94,7 +94,7 @@ impl VoxelScene {
                 .extend(self.temporary_voxels.iter().map(|voxel| voxel.to_raw()));
         }
         self.temporary_voxels.clear();
-        self.voxel_sets[self.current_voxel_set_selected]
+        self.voxel_groups[self.current_voxel_group_selected]
             .position_to_voxel
             .values_mut()
             .for_each(|voxel| voxel.unselect());
@@ -108,7 +108,7 @@ impl VoxelScene {
         self.voxels_changed = true;
     }
     pub fn get_voxel_instance_count(&self) -> usize {
-        self.voxel_sets
+        self.voxel_groups
             .iter()
             .map(|vox_set| vox_set.position_to_voxel.len())
             .sum::<usize>()
@@ -116,7 +116,7 @@ impl VoxelScene {
     }
     pub fn select_voxel_at_position(&mut self, position: Vector3<f32>) {
         let voxel_scene_position = VoxelScenePosition::from_voxel_position(position);
-        if let Some(voxel) = self.voxel_sets[self.current_voxel_set_selected]
+        if let Some(voxel) = self.voxel_groups[self.current_voxel_group_selected]
             .position_to_voxel
             .get_mut(&voxel_scene_position)
         {
@@ -129,16 +129,16 @@ impl VoxelScene {
         position: Vector3<f32>,
     ) -> Option<&mut VoxelInstance> {
         let voxel_scene_position = VoxelScenePosition::from_voxel_position(position);
-        if self.voxel_sets[self.current_voxel_set_selected]
+        if self.voxel_groups[self.current_voxel_group_selected]
             .position_to_voxel
             .contains_key(&voxel_scene_position)
         {
-            return self.voxel_sets[self.current_voxel_set_selected]
+            return self.voxel_groups[self.current_voxel_group_selected]
                 .position_to_voxel
                 .get_mut(&voxel_scene_position);
         }
-        for voxel_set in self.voxel_sets.iter_mut() {
-            if let Some(voxel) = voxel_set.position_to_voxel.get_mut(&voxel_scene_position) {
+        for voxel_group in self.voxel_groups.iter_mut() {
+            if let Some(voxel) = voxel_group.position_to_voxel.get_mut(&voxel_scene_position) {
                 return Some(voxel);
             }
         }
@@ -158,7 +158,7 @@ impl VoxelScene {
     pub fn add_voxel(&mut self, position: Vector3<f32>, color: &VoxelColor) {
         let voxel_scene_position = VoxelScenePosition::from_voxel_position(position);
 
-        if !self.voxel_sets[self.current_voxel_set_selected]
+        if !self.voxel_groups[self.current_voxel_group_selected]
             .position_to_voxel
             .contains_key(&voxel_scene_position)
         {
@@ -173,7 +173,7 @@ impl VoxelScene {
                 },
             );
             self.voxels_changed = true;
-            self.voxel_sets[self.current_voxel_set_selected]
+            self.voxel_groups[self.current_voxel_group_selected]
                 .position_to_voxel
                 .insert(voxel_scene_position, voxel_to_add);
             self.center = self.find_center();
@@ -181,13 +181,13 @@ impl VoxelScene {
     }
     pub fn remove_voxel(&mut self, position: Vector3<f32>) -> bool {
         let voxel_scene_position = VoxelScenePosition::from_voxel_position(position);
-        if let Some(voxel) = self.voxel_sets[self.current_voxel_set_selected]
+        if let Some(voxel) = self.voxel_groups[self.current_voxel_group_selected]
             .position_to_voxel
             .get(&voxel_scene_position)
         {
             if !voxel.is_grid() {
                 self.voxels_changed = true;
-                self.voxel_sets[self.current_voxel_set_selected]
+                self.voxel_groups[self.current_voxel_group_selected]
                     .position_to_voxel
                     .remove(&voxel_scene_position);
                 self.center = self.find_center()
@@ -197,15 +197,15 @@ impl VoxelScene {
     }
     pub fn get_all_voxels(&self) -> Vec<&VoxelInstance> {
         let mut all_voxels = Vec::new();
-        for i in 0..self.voxel_sets.len() {
-            all_voxels.extend(self.voxel_sets[i].position_to_voxel.values());
+        for i in 0..self.voxel_groups.len() {
+            all_voxels.extend(self.voxel_groups[i].position_to_voxel.values());
         }
         all_voxels
     }
     fn find_center(&self) -> Vector3<f32> {
         let mut sum = vec3(0.0, 0.0, 0.0);
         let mut n = 0.0;
-        for voxel in self.voxel_sets[self.current_voxel_set_selected]
+        for voxel in self.voxel_groups[self.current_voxel_group_selected]
             .position_to_voxel
             .values()
         {
@@ -231,13 +231,13 @@ impl VoxelScene {
     pub fn rotate_around_center(&mut self, axis: Vector3<f32>, deg: cgmath::Deg<f32>) -> bool {
         let center = self.center;
         let rotation = Quaternion::from_axis_angle(axis.normalize(), deg);
-        let old_keys: Vec<VoxelScenePosition> = self.voxel_sets[self.current_voxel_set_selected]
+        let old_keys: Vec<VoxelScenePosition> = self.voxel_groups[self.current_voxel_group_selected]
             .position_to_voxel
             .iter()
             .filter_map(|(k, v)| (!v.is_grid()).then_some(*k))
             .collect();
         let mut smallest_y = f32::INFINITY;
-        for voxel in self.voxel_sets[self.current_voxel_set_selected]
+        for voxel in self.voxel_groups[self.current_voxel_group_selected]
             .position_to_voxel
             .values_mut()
         {
@@ -253,7 +253,7 @@ impl VoxelScene {
         }
         let necessary_lift_overlap_prevention = (1.0 - smallest_y).max(0.0);
         if smallest_y <= 0.0 {
-            for voxel in self.voxel_sets[self.current_voxel_set_selected]
+            for voxel in self.voxel_groups[self.current_voxel_group_selected]
                 .position_to_voxel
                 .values_mut()
             {
@@ -269,7 +269,7 @@ impl VoxelScene {
         let voxels: Vec<VoxelInstance> = old_keys
             .iter()
             .map(|k| {
-                self.voxel_sets[self.current_voxel_set_selected]
+                self.voxel_groups[self.current_voxel_group_selected]
                     .position_to_voxel
                     .remove(k)
                     .unwrap()
@@ -277,7 +277,7 @@ impl VoxelScene {
             .collect();
 
         for (_, voxel) in old_keys.into_iter().zip(voxels) {
-            self.voxel_sets[self.current_voxel_set_selected]
+            self.voxel_groups[self.current_voxel_group_selected]
                 .position_to_voxel
                 .insert(
                     VoxelScenePosition::from_voxel_position(voxel.get_position()),
@@ -291,7 +291,7 @@ impl VoxelScene {
         let move_scene_vector = VoxelScenePosition::from_voxel_position(move_vector);
         let mut move_overrides_grid = false;
         move_overrides_grid = move_overrides_grid
-            || self.voxel_sets[self.current_voxel_set_selected]
+            || self.voxel_groups[self.current_voxel_group_selected]
                 .position_to_voxel
                 .iter()
                 .filter(|(_, v)| !v.is_grid())
@@ -302,9 +302,9 @@ impl VoxelScene {
                         z: pos.z + move_scene_vector.z,
                     };
                     let mut overrides = false;
-                    for i in 0..self.voxel_sets.len() {
+                    for i in 0..self.voxel_groups.len() {
                         overrides = overrides
-                            || self.voxel_sets[i]
+                            || self.voxel_groups[i]
                                 .position_to_voxel
                                 .get(&dest)
                                 .is_some_and(|v| v.is_grid());
@@ -315,13 +315,13 @@ impl VoxelScene {
         if !move_overrides_grid {
             let mut old_keys: Vec<VoxelScenePosition> = Vec::new();
             old_keys.extend(
-                self.voxel_sets[self.current_voxel_set_selected]
+                self.voxel_groups[self.current_voxel_group_selected]
                     .position_to_voxel
                     .iter()
                     .filter_map(|(k, v)| (!v.is_grid()).then_some(*k)),
             );
 
-            for voxel in self.voxel_sets[self.current_voxel_set_selected]
+            for voxel in self.voxel_groups[self.current_voxel_group_selected]
                 .position_to_voxel
                 .values_mut()
             {
@@ -333,7 +333,7 @@ impl VoxelScene {
             let voxels: Vec<VoxelInstance> = old_keys
                 .iter()
                 .map(|k| {
-                    self.voxel_sets[self.current_voxel_set_selected]
+                    self.voxel_groups[self.current_voxel_group_selected]
                         .position_to_voxel
                         .remove(k)
                         .unwrap()
@@ -341,7 +341,7 @@ impl VoxelScene {
                 .collect();
 
             for (old, voxel) in old_keys.into_iter().zip(voxels) {
-                self.voxel_sets[self.current_voxel_set_selected]
+                self.voxel_groups[self.current_voxel_group_selected]
                     .position_to_voxel
                     .insert(
                         VoxelScenePosition {
@@ -358,14 +358,14 @@ impl VoxelScene {
         }
         return false;
     }
-    pub fn set_current_voxel_set(&mut self, working_set: usize) {
-        self.current_voxel_set_selected = working_set;
+    pub fn set_current_voxel_group(&mut self, working_set: usize) {
+        self.current_voxel_group_selected = working_set;
     }
-    pub fn get_current_voxel_set(&mut self) -> usize {
-        self.current_voxel_set_selected
+    pub fn get_current_voxel_group(&mut self) -> usize {
+        self.current_voxel_group_selected
     }
-    pub fn get_voxel_set_names(&mut self) -> Vec<&String> {
-        self.voxel_sets.iter().map(|set| &set.name).collect()
+    pub fn get_voxel_group_names(&mut self) -> Vec<&String> {
+        self.voxel_groups.iter().map(|set| &set.name).collect()
     }
 }
 #[derive(Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]
