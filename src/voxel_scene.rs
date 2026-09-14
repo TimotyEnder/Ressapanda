@@ -231,7 +231,8 @@ impl VoxelScene {
     pub fn rotate_around_center(&mut self, axis: Vector3<f32>, deg: cgmath::Deg<f32>) -> bool {
         let center = self.center;
         let rotation = Quaternion::from_axis_angle(axis.normalize(), deg);
-        let old_keys: Vec<VoxelScenePosition> = self.voxel_groups[self.current_voxel_group_selected]
+        let old_keys: Vec<VoxelScenePosition> = self.voxel_groups
+            [self.current_voxel_group_selected]
             .position_to_voxel
             .iter()
             .filter_map(|(k, v)| (!v.is_grid()).then_some(*k))
@@ -364,8 +365,12 @@ impl VoxelScene {
     pub fn get_current_voxel_group(&mut self) -> usize {
         self.current_voxel_group_selected
     }
-    pub fn get_voxel_group_names(&mut self) -> Vec<&String> {
-        self.voxel_groups.iter().map(|set| &set.name).collect()
+    pub fn get_voxel_group_names_and_indexes(&self) -> Vec<(usize, String)> {
+        self.voxel_groups
+            .iter()
+            .enumerate()
+            .map(|(index, set)| (index, set.name.clone()))
+            .collect()
     }
 }
 #[derive(Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]

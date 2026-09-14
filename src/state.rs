@@ -21,7 +21,7 @@ use crate::{
 };
 use anyhow::Ok;
 use cgmath::Point3;
-use egui::{Color32, Image, Panel, epaint, load::SizedTexture, menu};
+use egui::{Color32, Image, Panel, accesskit::Role::Button, epaint, load::SizedTexture, menu};
 use std::{iter, sync::Arc};
 use wgpu::util::DeviceExt;
 use winit::{
@@ -810,6 +810,65 @@ impl State {
                     self.ui_info.color_selected = true;
                 }
             });
+        let voxel_set_window = egui::Window::new("Voxel Groups")
+            .fixed_size([230.0, 500.0])
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::RIGHT_TOP, [0.0, top_offset])
+            .show(ui, |ui| {
+                Panel::top("Voxel Group Controls").show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        if let Some(button) =
+                            self.voxel_group_control_button_with_name( "Add_Voxel_Group")
+                        {
+                            if ui
+                                .add(button)
+                                .on_hover_text("Add another voxel group to the scene")
+                                .clicked()
+                            {}
+                        }
+                        if let Some(button) = self.voxel_group_control_button_with_name(
+
+                            "Delete_Voxel_Group",
+
+                        ) {
+                            if ui.add(button).on_hover_text("Remove the selected voxel group").clicked() {}
+                        }
+                        if let Some(button) = self.voxel_group_control_button_with_name(
+
+                            "Merge_Voxel_Group",
+
+                        ) {
+                            if ui.add(button).on_hover_text( "Merge the selected vertex group to the one below it").clicked() {}
+                        }
+                        if let Some(button) = self.voxel_group_control_button_with_name(
+
+                            "Move_Voxel_Group_Up",
+
+                        ) {
+                            if ui.add(button).on_hover_text( "Move the selected vertex group up one place in the hierarchy").clicked() {}
+                        }
+                        if let Some(button) = self.voxel_group_control_button_with_name(
+
+                            "Move_Voxel_Group_Down",
+
+                        ) {
+                            if ui.add(button).on_hover_text("Move the selected vertex group down one place in the hierarchy").clicked() {}
+                        }
+                    });
+
+                    ui.vertical_centered(|ui| {
+                        let indexes_and_names =
+                            self.voxel_scene.get_voxel_group_names_and_indexes();
+                        for (index, name) in indexes_and_names {
+                            if ui.add(self.voxel_group_menu_element( &name)).clicked()
+                            {
+                                self.voxel_scene.set_current_voxel_group(index);
+                            }
+                        }
+                    })
+                });
+            });
         if let Some(inner) = brush_window {
             top_offset = inner.response.rect.max.y + spacing;
         }
@@ -836,6 +895,7 @@ impl State {
                     .iter()
                     .for_each(|name| self.tool_toggle_button(ui, *name));
             });
+
         if self.ui_info.show_color_picker {
             egui::Window::new("Brush Color")
                 .auto_sized()
@@ -953,5 +1013,22 @@ impl State {
             *brush_color = color;
             *last_color_added = color;
         }
+    }
+    fn voxel_group_control_button_with_name(
+        &mut self,
+        button_icon_name: &'static str,
+    ) -> Option<egui::Button<'_>> {
+        let Some(texture) = self.ui_info.icon_loader.get_icon_texture(button_icon_name) else {
+            return None;
+        };
+        let sized = SizedTexture::new(texture.id(), [25.0, 25.0]);
+        let img = Image::new(sized);
+        Some(egui::Button::image(img))
+    }
+    fn voxel_group_menu_element(&self, group_name: &str) -> egui::Button<'_> {
+        let voxel_group_button = egui::Button::new(group_name)
+            .corner_radius(0)
+            .stroke(egui::Stroke::new(1.0, egui::Color32::BLACK));
+        voxel_group_button
     }
 }
