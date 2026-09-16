@@ -62,4 +62,10 @@ impl Default for VoxelColor {
         }
     }
 }
-pub const Orange: Color32 = Color32::from_hex("#DB8758").unwrap();
+pub const ORANGE: Color32 = Color32::from_rgb(219, 135, 88);
+pub const WHITE: Color32 = Color32::from_rgb(255, 255, 255);
+pub const BLACK: Color32 = Color32::from_rgb(0, 0, 0);
+pub const ACTIVE_BG_STROKE: Color32 = Color32::from_rgb(20, 20, 20);
+pub const OPEN_WEAK_BG_FILL: Color32 = Color32::from_rgb(26, 26, 26);
+pub const PANEL_FILL: Color32 = Color32::from_rgb(59, 59, 59);
+pub const SUB_PANEL_FILL: Color32 = Color32::from_rgb(40, 40, 40);

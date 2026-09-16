@@ -11,13 +11,15 @@ use crate::{
 };
 struct VoxelGroup {
     pub position_to_voxel: BTreeMap<VoxelScenePosition, VoxelInstance>,
-    name: String,
+    pub name: String,
+    pub visible: bool,
 }
 impl VoxelGroup {
     pub fn grid_voxel() -> Self {
         Self {
             position_to_voxel: Self::axis_grid(),
             name: String::from("Grid Voxel Set"),
+            visible: true,
         }
     }
     pub fn new(opt_name: Option<String>) -> Self {
@@ -28,6 +30,7 @@ impl VoxelGroup {
             } else {
                 format!("VoxelGroup:{}", 1)
             },
+            visible: true,
         }
     }
     fn axis_grid() -> BTreeMap<VoxelScenePosition, VoxelInstance> {
@@ -83,12 +86,14 @@ impl VoxelScene {
             self.voxels_changed = false;
             self.raw_voxel_instance_list.clear();
             for i in (0..self.voxel_groups.len()).rev() {
-                self.raw_voxel_instance_list.extend(
-                    self.voxel_groups[i]
-                        .position_to_voxel
-                        .values()
-                        .map(|voxel| voxel.to_raw()),
-                );
+                if self.voxel_groups[i].visible {
+                    self.raw_voxel_instance_list.extend(
+                        self.voxel_groups[i]
+                            .position_to_voxel
+                            .values()
+                            .map(|voxel| voxel.to_raw()),
+                    );
+                }
             }
             self.raw_voxel_instance_list
                 .extend(self.temporary_voxels.iter().map(|voxel| voxel.to_raw()));
@@ -369,8 +374,20 @@ impl VoxelScene {
         self.voxel_groups
             .iter()
             .enumerate()
+            .filter(|(index, set)| *index > 0)
             .map(|(index, set)| (index, set.name.clone()))
             .collect()
+    }
+    pub fn is_voxel_group_visible(&self, group: usize) -> bool {
+        if group > 0 && !self.voxel_groups.is_empty() && self.voxel_groups.len() > group {
+            return self.voxel_groups[group].visible;
+        }
+        return false;
+    }
+    pub fn set_voxel_group_visibility(&mut self, group: usize, visible: bool) {
+        if group > 0 && !self.voxel_groups.is_empty() && self.voxel_groups.len() > group {
+            self.voxel_groups[group].visible = visible;
+        }
     }
 }
 #[derive(Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]
@@ -424,11 +441,11 @@ impl VoxelSceneDirection {
             ),
             VoxelSceneDirection::Right => (Vector3::new(0.0, 1.0, 0.0), cgmath::Deg(90.0)),
             VoxelSceneDirection::Left => (Vector3::new(0.0, 1.0, 0.0), cgmath::Deg(-90.0)),
-            VoxelSceneDirection::Forwards => (
+            VoxelSceneDirection::Backwards => (
                 snap_vector_to_flat_direction(camera.right()),
                 cgmath::Deg(90.0),
             ),
-            VoxelSceneDirection::Backwards => (
+            VoxelSceneDirection::Forwards => (
                 snap_vector_to_flat_direction(camera.right()),
                 cgmath::Deg(-90.0),
             ),

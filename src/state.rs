@@ -2,7 +2,10 @@ use crate::{
     brushes::brush::Brush,
     camera::{Camera, CameraLookDirection, CameraUniform},
     camera_controller::CameraController,
-    color::VoxelColor,
+    color::{
+        ACTIVE_BG_STROKE, BLACK, OPEN_WEAK_BG_FILL, ORANGE, PANEL_FILL, SUB_PANEL_FILL, VoxelColor,
+        WHITE,
+    },
     cursor_loader::CursorLoader,
     depth_texture::DepthTexture,
     select_mode::{
@@ -21,7 +24,10 @@ use crate::{
 };
 use anyhow::Ok;
 use cgmath::Point3;
-use egui::{Color32, Image, Panel, accesskit::Role::Button, epaint, load::SizedTexture, menu};
+use egui::{
+    Align, Align2, Color32, FontId, Image, Panel, accesskit::Role::Button, epaint,
+    load::SizedTexture, menu,
+};
 use std::{iter, sync::Arc};
 use wgpu::util::DeviceExt;
 use winit::{
@@ -275,17 +281,14 @@ impl State {
 
         let mut visuals = egui::Visuals::dark();
 
-        visuals.selection.bg_fill = egui::Color32::from_hex("#FFFFFF").unwrap();
-        visuals.selection.stroke.color = egui::Color32::from_hex("#000000").unwrap();
-        visuals.widgets.inactive.bg_stroke.color =
-            egui::Color32::from_hex("#000000").unwrap_or_default();
-        visuals.widgets.hovered.bg_stroke.color =
-            egui::Color32::from_hex("#DB8758").unwrap_or_default();
-        visuals.widgets.active.bg_stroke.color =
-            egui::Color32::from_hex("#141414").unwrap_or_default();
-        visuals.widgets.open.weak_bg_fill = egui::Color32::from_hex("#1a1a1a").unwrap_or_default();
-        visuals.panel_fill = egui::Color32::from_hex("#3b3b3b").unwrap_or_default();
-        visuals.window_fill = egui::Color32::from_hex("#3b3b3b").unwrap_or_default();
+        visuals.selection.bg_fill = WHITE;
+        visuals.selection.stroke.color = BLACK;
+        visuals.widgets.inactive.bg_stroke.color = BLACK;
+        visuals.widgets.hovered.bg_stroke.color = ORANGE;
+        visuals.widgets.active.bg_stroke.color = ACTIVE_BG_STROKE;
+        visuals.widgets.open.weak_bg_fill = OPEN_WEAK_BG_FILL;
+        visuals.panel_fill = PANEL_FILL;
+        visuals.window_fill = PANEL_FILL;
         visuals.override_text_color = Some(egui::Color32::WHITE);
         egui_ctx.set_theme(egui::Theme::Dark);
         egui_ctx.set_visuals(visuals);
@@ -862,6 +865,7 @@ impl State {
                             self.voxel_scene.get_voxel_group_names_and_indexes();
                         for (index, name) in indexes_and_names {
                             self.voxel_group_menu_element(ui, &name, index);
+                            ui.add_space(10.0);
                         }
                     })
                 });
@@ -1022,25 +1026,67 @@ impl State {
         let img = Image::new(sized);
         Some(egui::Button::image(img))
     }
-    fn voxel_group_menu_element(&self, ui: &mut egui::Ui, group_name: &str, index: usize) {
+    fn voxel_group_menu_element(&mut self, ui: &mut egui::Ui, group_name: &str, index: usize) {
         let (rect, response) =
             ui.allocate_exact_size(egui::vec2(200.0, 50.0), egui::Sense::click());
-        ui.painter().rect_filled(rect, 0, Color32::GRAY);
-
+        ui.painter().rect_filled(rect, 0, SUB_PANEL_FILL);
+        ui.painter().text(
+            rect.center(),
+            Align2::CENTER_CENTER,
+            group_name,
+            FontId::proportional(15.0),
+            WHITE,
+        );
         if self.voxel_scene.get_current_voxel_group() == index {
             ui.painter().rect_stroke(
                 rect,
                 0,
-                egui::Stroke::new(0.5, Color32::BLACK),
-                egui::StrokeKind::Middle,
+                egui::Stroke::new(3.0, ORANGE),
+                egui::StrokeKind::Inside,
             );
         } else {
             ui.painter().rect_stroke(
                 rect,
                 0,
-                egui::Stroke::new(0.1, Color32::BLACK),
-                egui::StrokeKind::Middle,
+                egui::Stroke::new(2.0, BLACK),
+                egui::StrokeKind::Inside,
             );
         }
+        if response.hovered() {
+            ui.painter().rect_stroke(
+                rect,
+                0,
+                egui::Stroke::new(2.0, WHITE),
+                egui::StrokeKind::Inside,
+            );
+        }
+        if response.clicked() {
+            self.voxel_scene.set_current_voxel_group(index);
+        }
+        let Some(button) = self.voxel_group_visibility_button(index).take() else {
+            return;
+        };
+        let size = egui::vec2(30.0, 30.0);
+        let gap = 8.0;
+        let pos = egui::pos2(rect.left() + gap, rect.center().y - (size.y / 2.0));
+        let response = ui.put(egui::Rect::from_min_size(pos, size), button);
+        if response.clicked() {
+            self.voxel_scene
+                .set_voxel_group_visibility(index, !self.voxel_scene.is_voxel_group_visible(index));
+        }
+    }
+    fn voxel_group_visibility_button(&self, index: usize) -> Option<egui::Button<'_>> {
+        let Some(texture) = self.ui_info.icon_loader.get_icon_texture({
+            if self.voxel_scene.is_voxel_group_visible(index) {
+                "Voxel_Group_Visible"
+            } else {
+                "Voxel_Group_Invisible"
+            }
+        }) else {
+            return None;
+        };
+        let sized = SizedTexture::new(texture.id(), [25.0, 25.0]);
+        let img = Image::new(sized);
+        Some(egui::Button::image(img).fill(Color32::from_white_alpha(0)))
     }
 }
