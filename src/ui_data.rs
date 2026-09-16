@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use egui::Color32;
 
 use crate::icon_loader::IconLoader;
@@ -11,6 +13,7 @@ pub struct UIData {
     pub color_hex_input_string: String,
     pub icon_loader: IconLoader,
     pub voxel_group_removal_popup: bool,
+    pub voxel_group_rename_request_focus_flag: bool,
 }
 impl UIData {
     pub fn new(ctx: egui::Context) -> Self {
@@ -23,6 +26,7 @@ impl UIData {
             color_hex_input_string: Color32::from_rgb(255, 255, 255).to_hex(),
             icon_loader: IconLoader::new(ctx),
             voxel_group_removal_popup: false,
+            voxel_group_rename_request_focus_flag: false,
         }
     }
 }

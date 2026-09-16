@@ -13,6 +13,7 @@ struct VoxelGroup {
     pub position_to_voxel: BTreeMap<VoxelScenePosition, VoxelInstance>,
     pub name: String,
     pub visible: bool,
+    pub editing_name: bool,
 }
 impl VoxelGroup {
     pub fn grid_voxel() -> Self {
@@ -20,6 +21,7 @@ impl VoxelGroup {
             position_to_voxel: Self::axis_grid(),
             name: String::from("Grid Voxel Set"),
             visible: true,
+            editing_name: false,
         }
     }
     pub fn new(opt_name: Option<String>, counter: usize) -> Self {
@@ -31,6 +33,7 @@ impl VoxelGroup {
                 format!("VoxelGroup:{}", counter)
             },
             visible: true,
+            editing_name: true,
         }
     }
     fn axis_grid() -> BTreeMap<VoxelScenePosition, VoxelInstance> {
@@ -72,6 +75,7 @@ impl VoxelScene {
         let mut voxel_groups = Vec::new();
         voxel_groups.push(VoxelGroup::grid_voxel());
         voxel_groups.push(VoxelGroup::new(None, 1));
+        voxel_groups[1].editing_name = false;
         Self {
             voxel_groups: voxel_groups,
             current_voxel_group_selected: 1,
@@ -375,12 +379,12 @@ impl VoxelScene {
     pub fn get_current_voxel_group(&self) -> usize {
         self.current_voxel_group_selected
     }
-    pub fn get_voxel_group_names_and_indexes(&self) -> Vec<(usize, String)> {
+    pub fn get_voxel_group_names_and_indexes(&self) -> Vec<(usize, String, bool)> {
         self.voxel_groups
             .iter()
             .enumerate()
             .filter(|(index, _)| *index > 0)
-            .map(|(index, set)| (index, set.name.clone()))
+            .map(|(index, set)| (index, set.name.clone(), set.editing_name))
             .collect()
     }
     pub fn is_voxel_group_visible(&self, group: usize) -> bool {
@@ -412,6 +416,17 @@ impl VoxelScene {
     }
     pub fn get_current_voxel_group_name(&self) -> &str {
         &self.voxel_groups[self.current_voxel_group_selected].name
+    }
+    pub fn get_voxel_group_name_ref_mut(&mut self, voxel_group: usize) -> Option<&mut String> {
+        if voxel_group > 0 && voxel_group < self.voxel_groups.len() {
+            return Some(&mut self.voxel_groups[voxel_group].name);
+        }
+        None
+    }
+    pub fn stop_voxel_group_edit(&mut self, voxel_group: usize) {
+        if voxel_group > 0 && voxel_group < self.voxel_groups.len() {
+            self.voxel_groups[voxel_group].editing_name = false;
+        }
     }
 }
 #[derive(Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]

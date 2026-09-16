@@ -24,7 +24,10 @@ use crate::{
 };
 use anyhow::Ok;
 use cgmath::Point3;
-use egui::{Align, Align2, Color32, FontId, Image, Panel, epaint, load::SizedTexture, menu};
+use egui::{
+    Align, Align2, Color32, FontId, Image, Panel, Rect, WidgetType::TextEdit, epaint,
+    load::SizedTexture, menu,
+};
 use std::{iter, sync::Arc};
 use wgpu::util::DeviceExt;
 use winit::{
@@ -829,6 +832,7 @@ impl State {
                             .clicked()
                         {
                             self.voxel_scene.add_voxel_group();
+                            self.ui_info.voxel_group_rename_request_focus_flag = true;
                         }
                         let Some(button) =
                             self.voxel_group_control_button_with_name("Delete_Voxel_Group")
@@ -884,8 +888,8 @@ impl State {
                     ui.vertical_centered(|ui| {
                         let indexes_and_names =
                             self.voxel_scene.get_voxel_group_names_and_indexes();
-                        for (index, name) in indexes_and_names {
-                            self.voxel_group_menu_element(ui, &name, index);
+                        for (index, name, editable) in indexes_and_names {
+                            self.voxel_group_menu_element(ui, &name, index, editable);
                             ui.add_space(10.0);
                         }
                     })
@@ -1068,17 +1072,45 @@ impl State {
         let img = Image::new(sized);
         Some(egui::Button::image(img))
     }
-    fn voxel_group_menu_element(&mut self, ui: &mut egui::Ui, group_name: &str, index: usize) {
+    fn voxel_group_menu_element(
+        &mut self,
+        ui: &mut egui::Ui,
+        group_name: &str,
+        index: usize,
+        editable: bool,
+    ) {
         let (rect, response) =
             ui.allocate_exact_size(egui::vec2(200.0, 50.0), egui::Sense::click());
         ui.painter().rect_filled(rect, 0, SUB_PANEL_FILL);
-        ui.painter().text(
-            rect.center(),
-            Align2::CENTER_CENTER,
-            group_name,
-            FontId::proportional(15.0),
-            WHITE,
-        );
+        if !editable {
+            ui.painter().text(
+                rect.center(),
+                Align2::CENTER_CENTER,
+                group_name,
+                FontId::proportional(15.0),
+                WHITE,
+            );
+        } else {
+            if let Some(input) = self.voxel_scene.get_voxel_group_name_ref_mut(index) {
+                let size = egui::vec2(150.0, 20.0);
+                let offset = 20.0;
+                let pos = egui::pos2(
+                    rect.center().x + offset - (size.x / 2.0),
+                    rect.center().y - (size.y / 2.0),
+                );
+                let response = ui.put(
+                    Rect::from_min_size(pos, size),
+                    egui::TextEdit::singleline(input),
+                );
+                if self.ui_info.voxel_group_rename_request_focus_flag {
+                    response.request_focus();
+                    self.ui_info.voxel_group_rename_request_focus_flag = false;
+                }
+                if response.lost_focus() {
+                    self.voxel_scene.stop_voxel_group_edit(index);
+                }
+            }
+        }
         if self.voxel_scene.get_current_voxel_group() == index {
             ui.painter().rect_stroke(
                 rect,
