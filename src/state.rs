@@ -856,7 +856,9 @@ impl State {
                             .add(button)
                             .on_hover_text("Merge the selected vertex group to the one below it")
                             .clicked()
-                        {}
+                        {
+                            self.voxel_scene.merger_voxel_group();
+                        }
 
                         let Some(button) =
                             self.voxel_group_control_button_with_name("Move_Voxel_Group_Up")

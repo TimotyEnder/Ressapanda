@@ -24,6 +24,9 @@ impl VoxelGroup {
             editing_name: false,
         }
     }
+    pub fn merge_with(&mut self, other: VoxelGroup) {
+        self.position_to_voxel.extend(other.position_to_voxel);
+    }
     pub fn new(opt_name: Option<String>, counter: usize) -> Self {
         Self {
             position_to_voxel: BTreeMap::new(),
@@ -427,6 +430,14 @@ impl VoxelScene {
             self.voxel_groups
                 .swap(self.current_voxel_group_selected, shift_index);
         }
+    }
+    pub fn merger_voxel_group(&mut self) {
+        let shift_index = self.current_voxel_group_selected + 1;
+        if shift_index > 0 && shift_index < self.voxel_groups.len() {
+            let to_merge = self.voxel_groups.remove(shift_index);
+            self.voxel_groups[self.current_voxel_group_selected].merge_with(to_merge);
+        }
+        self.voxels_changed = true;
     }
     pub fn get_current_voxel_group_name(&self) -> &str {
         &self.voxel_groups[self.current_voxel_group_selected].name
