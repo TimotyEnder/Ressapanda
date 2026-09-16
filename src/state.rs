@@ -1167,6 +1167,9 @@ impl State {
         if response.clicked() {
             self.voxel_scene.set_current_voxel_group(index);
         }
+        if response.double_clicked() {
+            self.voxel_scene.make_voxel_group_name_editable(index);
+        }
         let Some(button) = self.voxel_group_visibility_button(index).take() else {
             return;
         };

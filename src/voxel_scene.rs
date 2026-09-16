@@ -27,22 +27,18 @@ impl VoxelGroup {
     pub fn merge_with(&mut self, other: VoxelGroup) {
         self.position_to_voxel.extend(other.position_to_voxel);
     }
-    pub fn as_a_copy_of(other: &VoxelGroup) -> Self {
+    pub fn as_a_copy_of(other: &VoxelGroup, counter: usize, name: String) -> Self {
         Self {
             position_to_voxel: BTreeMap::clone(&other.position_to_voxel),
-            name: format!("{}(Copy)", other.name),
+            name: name,
             visible: other.visible,
             editing_name: true,
         }
     }
-    pub fn new(opt_name: Option<String>, counter: usize) -> Self {
+    pub fn new(name: String) -> Self {
         Self {
             position_to_voxel: BTreeMap::new(),
-            name: if let Some(name) = opt_name {
-                name
-            } else {
-                format!("VoxelGroup:{}", counter)
-            },
+            name: name,
             visible: true,
             editing_name: true,
         }
@@ -85,7 +81,7 @@ impl VoxelScene {
     pub fn new() -> Self {
         let mut voxel_groups = Vec::new();
         voxel_groups.push(VoxelGroup::grid_voxel());
-        voxel_groups.push(VoxelGroup::new(None, 1));
+        voxel_groups.push(VoxelGroup::new(format!("Voxel Set:{}", 1)));
         voxel_groups[1].editing_name = false;
         Self {
             voxel_groups: voxel_groups,
@@ -411,8 +407,9 @@ impl VoxelScene {
         self.voxels_changed = true;
     }
     pub fn add_voxel_group(&mut self) {
-        self.voxel_groups
-            .push(VoxelGroup::new(None, self.voxel_group_name_counter));
+        let unique_name =
+            self.turn_name_unique(format!("Voxel Set:{}", self.voxel_group_name_counter), None);
+        self.voxel_groups.push(VoxelGroup::new(unique_name));
         self.voxel_group_name_counter += 1;
     }
     pub fn remove_voxel_group(&mut self) {
@@ -448,8 +445,15 @@ impl VoxelScene {
         self.voxels_changed = true;
     }
     pub fn duplicate_voxel_group(&mut self) {
-        let duplicate =
-            VoxelGroup::as_a_copy_of(&self.voxel_groups[self.current_voxel_group_selected]);
+        let unique_name = self.turn_name_unique(
+            String::from(&self.voxel_groups[self.current_voxel_group_selected].name),
+            None,
+        );
+        let duplicate = VoxelGroup::as_a_copy_of(
+            &self.voxel_groups[self.current_voxel_group_selected],
+            self.voxel_group_name_counter,
+            unique_name,
+        );
         self.voxel_groups
             .insert(self.current_voxel_group_selected + 1, duplicate);
     }
@@ -462,10 +466,41 @@ impl VoxelScene {
         }
         None
     }
+    pub fn make_voxel_group_name_editable(&mut self, voxel_group: usize) {
+        if voxel_group > 0 && voxel_group < self.voxel_groups.len() {
+            self.reset_input_state();
+            self.voxel_groups[voxel_group].editing_name = true;
+        }
+    }
     pub fn stop_voxel_group_edit(&mut self, voxel_group: usize) {
         if voxel_group > 0 && voxel_group < self.voxel_groups.len() {
             self.voxel_groups[voxel_group].editing_name = false;
+            self.voxel_groups[voxel_group].name = self.turn_name_unique(
+                String::from(&self.voxel_groups[voxel_group].name),
+                Some(voxel_group),
+            );
         }
+    }
+    fn turn_name_unique(&mut self, name: String, voxel_group: Option<usize>) -> String {
+        let mut other_names = self
+            .voxel_groups
+            .iter()
+            .enumerate()
+            .collect::<Vec<(usize, &VoxelGroup)>>();
+        if let Some(voxel_group) = voxel_group {
+            other_names = other_names
+                .into_iter()
+                .filter(|(index, _)| *index != voxel_group)
+                .collect::<Vec<(usize, &VoxelGroup)>>();
+        }
+        let mut name_counter = 1;
+        let og_name = name;
+        let mut name = format!("{}", og_name);
+        while other_names.iter().any(|(_, group)| group.name == name) {
+            name = format!("{} ({})", &og_name, name_counter);
+            name_counter += 1;
+        }
+        name
     }
     pub fn reset_input_state(&mut self) {
         for group in self.voxel_groups.iter_mut() {
