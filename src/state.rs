@@ -921,23 +921,23 @@ impl State {
     }
     fn popups(&mut self, ui: &mut egui::Ui) {
         if self.ui_info.voxel_group_removal_popup {
-            egui::Window::new(format!(
-                "Remove Voxel Group {}?",
-                self.voxel_scene.get_current_voxel_group()
-            ))
-            .anchor(Align2::CENTER_CENTER, [0.0, 0.0])
-            .show(ui, |ui| {
-                ui.label("Are you sure you want to remove the selected voxel group?");
-                ui.horizontal(|ui| {
-                    if ui.button("Yes").clicked() {
-                        self.voxel_scene.remove_voxel_group();
-                        self.ui_info.voxel_group_removal_popup = false;
-                    }
-                    if ui.button("No").clicked() {
-                        self.ui_info.voxel_group_removal_popup = false;
-                    }
+            egui::Window::new("Remove Voxel Group {}?")
+                .anchor(Align2::CENTER_CENTER, [0.0, 0.0])
+                .show(ui, |ui| {
+                    ui.label(format!(
+                        "Are you sure you want to remove the '{}' voxel group?",
+                        self.voxel_scene.get_current_voxel_group_name(),
+                    ));
+                    ui.horizontal(|ui| {
+                        if ui.button("Yes").clicked() {
+                            self.voxel_scene.remove_voxel_group();
+                            self.ui_info.voxel_group_removal_popup = false;
+                        }
+                        if ui.button("No").clicked() {
+                            self.ui_info.voxel_group_removal_popup = false;
+                        }
+                    });
                 });
-            });
         }
         if self.ui_info.show_color_picker {
             egui::Window::new("Brush Color")
