@@ -22,13 +22,13 @@ impl VoxelGroup {
             visible: true,
         }
     }
-    pub fn new(opt_name: Option<String>) -> Self {
+    pub fn new(opt_name: Option<String>, counter: usize) -> Self {
         Self {
             position_to_voxel: BTreeMap::new(),
             name: if let Some(name) = opt_name {
                 name
             } else {
-                format!("VoxelGroup:{}", 1)
+                format!("VoxelGroup:{}", counter)
             },
             visible: true,
         }
@@ -65,12 +65,13 @@ pub struct VoxelScene {
     raw_voxel_instance_list: Vec<RawVoxelInstance>,
     voxels_changed: bool,
     center: Vector3<f32>,
+    voxel_group_name_counter: usize,
 }
 impl VoxelScene {
     pub fn new() -> Self {
         let mut voxel_groups = Vec::new();
         voxel_groups.push(VoxelGroup::grid_voxel());
-        voxel_groups.push(VoxelGroup::new(None));
+        voxel_groups.push(VoxelGroup::new(None, 1));
         Self {
             voxel_groups: voxel_groups,
             current_voxel_group_selected: 1,
@@ -78,6 +79,7 @@ impl VoxelScene {
             voxels_changed: true,
             temporary_voxels: Vec::new(),
             center: vec3(0.0, 0.0, 0.0),
+            voxel_group_name_counter: 2,
         }
     }
 
@@ -115,7 +117,8 @@ impl VoxelScene {
     pub fn get_voxel_instance_count(&self) -> usize {
         self.voxel_groups
             .iter()
-            .map(|vox_set| vox_set.position_to_voxel.len())
+            .filter(|voxel_group| voxel_group.visible)
+            .map(|vox_group| vox_group.position_to_voxel.len())
             .sum::<usize>()
             + self.temporary_voxels.len()
     }
@@ -203,7 +206,9 @@ impl VoxelScene {
     pub fn get_all_voxels(&self) -> Vec<&VoxelInstance> {
         let mut all_voxels = Vec::new();
         for i in 0..self.voxel_groups.len() {
-            all_voxels.extend(self.voxel_groups[i].position_to_voxel.values());
+            if self.voxel_groups[i].visible {
+                all_voxels.extend(self.voxel_groups[i].position_to_voxel.values());
+            }
         }
         all_voxels
     }
@@ -374,7 +379,7 @@ impl VoxelScene {
         self.voxel_groups
             .iter()
             .enumerate()
-            .filter(|(index, set)| *index > 0)
+            .filter(|(index, _)| *index > 0)
             .map(|(index, set)| (index, set.name.clone()))
             .collect()
     }
@@ -388,6 +393,25 @@ impl VoxelScene {
         if group > 0 && !self.voxel_groups.is_empty() && self.voxel_groups.len() > group {
             self.voxel_groups[group].visible = visible;
         }
+        self.voxels_changed = true;
+    }
+    pub fn add_voxel_group(&mut self) {
+        self.voxel_groups
+            .push(VoxelGroup::new(None, self.voxel_group_name_counter));
+        self.voxel_group_name_counter += 1;
+    }
+    pub fn remove_voxel_group(&mut self) {
+        if self.voxel_groups.len() > self.current_voxel_group_selected {
+            self.voxel_groups.remove(self.current_voxel_group_selected);
+        }
+        if self.current_voxel_group_selected + 1 < self.voxel_groups.len() {
+            self.current_voxel_group_selected += 1;
+        } else {
+            self.current_voxel_group_selected -= 1;
+        }
+    }
+    pub fn get_current_voxel_group_name(&self) -> &str {
+        &self.voxel_groups[self.current_voxel_group_selected].name
     }
 }
 #[derive(Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]

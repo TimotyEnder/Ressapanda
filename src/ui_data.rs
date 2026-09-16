@@ -10,6 +10,7 @@ pub struct UIData {
     pub color_selected: bool,
     pub color_hex_input_string: String,
     pub icon_loader: IconLoader,
+    pub voxel_group_removal_popup: bool,
 }
 impl UIData {
     pub fn new(ctx: egui::Context) -> Self {
@@ -21,6 +22,7 @@ impl UIData {
             last_color_added: Color32::from_rgb(255, 255, 255),
             color_hex_input_string: Color32::from_rgb(255, 255, 255).to_hex(),
             icon_loader: IconLoader::new(ctx),
+            voxel_group_removal_popup: false,
         }
     }
 }

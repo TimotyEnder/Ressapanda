@@ -24,10 +24,7 @@ use crate::{
 };
 use anyhow::Ok;
 use cgmath::Point3;
-use egui::{
-    Align, Align2, Color32, FontId, Image, Panel, accesskit::Role::Button, epaint,
-    load::SizedTexture, menu,
-};
+use egui::{Align, Align2, Color32, FontId, Image, Panel, epaint, load::SizedTexture, menu};
 use std::{iter, sync::Arc};
 use wgpu::util::DeviceExt;
 use winit::{
@@ -813,7 +810,7 @@ impl State {
                     self.ui_info.color_selected = true;
                 }
             });
-        let voxel_set_window = egui::Window::new("Voxel Groups")
+        let _voxel_set_window = egui::Window::new("Voxel Groups")
             .fixed_size([230.0, 500.0])
             .collapsible(false)
             .resizable(false)
@@ -821,43 +818,67 @@ impl State {
             .show(ui, |ui| {
                 Panel::top("Voxel Group Controls").show(ui, |ui| {
                     ui.horizontal(|ui| {
-                        if let Some(button) =
-                            self.voxel_group_control_button_with_name( "Add_Voxel_Group")
+                        let Some(button) =
+                            self.voxel_group_control_button_with_name("Add_Voxel_Group")
+                        else {
+                            return;
+                        };
+                        if ui
+                            .add(button)
+                            .on_hover_text("Add another voxel group to the scene")
+                            .clicked()
                         {
-                            if ui
-                                .add(button)
-                                .on_hover_text("Add another voxel group to the scene")
-                                .clicked()
-                            {}
+                            self.voxel_scene.add_voxel_group();
                         }
-                        if let Some(button) = self.voxel_group_control_button_with_name(
-
-                            "Delete_Voxel_Group",
-
-                        ) {
-                            if ui.add(button).on_hover_text("Remove the selected voxel group").clicked() {}
+                        let Some(button) =
+                            self.voxel_group_control_button_with_name("Delete_Voxel_Group")
+                        else {
+                            return;
+                        };
+                        if ui
+                            .add(button)
+                            .on_hover_text("Remove the selected voxel group")
+                            .clicked()
+                        {
+                            self.ui_info.voxel_group_removal_popup = true;
                         }
-                        if let Some(button) = self.voxel_group_control_button_with_name(
 
-                            "Merge_Voxel_Group",
+                        let Some(button) =
+                            self.voxel_group_control_button_with_name("Merge_Voxel_Group")
+                        else {
+                            return;
+                        };
+                        if ui
+                            .add(button)
+                            .on_hover_text("Merge the selected vertex group to the one below it")
+                            .clicked()
+                        {}
 
-                        ) {
-                            if ui.add(button).on_hover_text( "Merge the selected vertex group to the one below it").clicked() {}
-                        }
-                        if let Some(button) = self.voxel_group_control_button_with_name(
+                        let Some(button) =
+                            self.voxel_group_control_button_with_name("Move_Voxel_Group_Up")
+                        else {
+                            return;
+                        };
+                        if ui
+                            .add(button)
+                            .on_hover_text(
+                                "Move the selected vertex group up one place in the hierarchy",
+                            )
+                            .clicked()
+                        {}
 
-                            "Move_Voxel_Group_Up",
-
-                        ) {
-                            if ui.add(button).on_hover_text( "Move the selected vertex group up one place in the hierarchy").clicked() {}
-                        }
-                        if let Some(button) = self.voxel_group_control_button_with_name(
-
-                            "Move_Voxel_Group_Down",
-
-                        ) {
-                            if ui.add(button).on_hover_text("Move the selected vertex group down one place in the hierarchy").clicked() {}
-                        }
+                        let Some(button) =
+                            self.voxel_group_control_button_with_name("Move_Voxel_Group_Down")
+                        else {
+                            return;
+                        };
+                        if ui
+                            .add(button)
+                            .on_hover_text(
+                                "Move the selected vertex group down one place in the hierarchy",
+                            )
+                            .clicked()
+                        {}
                     });
 
                     ui.vertical_centered(|ui| {
@@ -896,7 +917,28 @@ impl State {
                     .iter()
                     .for_each(|name| self.tool_toggle_button(ui, *name));
             });
-
+        self.popups(ui);
+    }
+    fn popups(&mut self, ui: &mut egui::Ui) {
+        if self.ui_info.voxel_group_removal_popup {
+            egui::Window::new(format!(
+                "Remove Voxel Group {}?",
+                self.voxel_scene.get_current_voxel_group()
+            ))
+            .anchor(Align2::CENTER_CENTER, [0.0, 0.0])
+            .show(ui, |ui| {
+                ui.label("Are you sure you want to remove the selected voxel group?");
+                ui.horizontal(|ui| {
+                    if ui.button("Yes").clicked() {
+                        self.voxel_scene.remove_voxel_group();
+                        self.ui_info.voxel_group_removal_popup = false;
+                    }
+                    if ui.button("No").clicked() {
+                        self.ui_info.voxel_group_removal_popup = false;
+                    }
+                });
+            });
+        }
         if self.ui_info.show_color_picker {
             egui::Window::new("Brush Color")
                 .auto_sized()
@@ -1016,7 +1058,7 @@ impl State {
         }
     }
     fn voxel_group_control_button_with_name(
-        &mut self,
+        &self,
         button_icon_name: &'static str,
     ) -> Option<egui::Button<'_>> {
         let Some(texture) = self.ui_info.icon_loader.get_icon_texture(button_icon_name) else {
