@@ -13,6 +13,8 @@ const DELETE_VOXEL_GROUP: &[u8] = include_bytes!("../Assets/Icons/delete_voxel_g
 const MERGE_VOXEL_GROUP: &[u8] = include_bytes!("../Assets/Icons/merge_voxel_group.png");
 const MOVE_VOXEL_GROUP_UP: &[u8] = include_bytes!("../Assets/Icons/move_voxel_group_up.png");
 const MOVE_VOXEL_GROUP_DOWN: &[u8] = include_bytes!("../Assets/Icons/move_voxel_group_down.png");
+const VOXEL_GROUP_VISIBLE: &[u8] = include_bytes!("../Assets/Icons/voxel_group_visible.png");
+const VOXEL_GROUP_INVISIBLE: &[u8] = include_bytes!("../Assets/Icons/voxel_group_invisible.png");
 
 pub struct IconLoader {
     icons: HashMap<String, TextureHandle>,
@@ -32,6 +34,8 @@ impl IconLoader {
             (MERGE_VOXEL_GROUP, "Merge_Voxel_Group"),
             (MOVE_VOXEL_GROUP_DOWN, "Move_Voxel_Group_Down"),
             (MOVE_VOXEL_GROUP_UP, "Move_Voxel_Group_Up"),
+            (VOXEL_GROUP_INVISIBLE, "Voxel_Group_Invisible"),
+            (VOXEL_GROUP_VISIBLE, "Voxel_Group_Visible"),
         ]
         .iter()
         .for_each(|(icon_const, name)| {
