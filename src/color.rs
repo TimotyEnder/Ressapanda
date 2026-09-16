@@ -1,4 +1,5 @@
 use anyhow::Ok;
+use egui::Color32;
 
 pub struct VoxelColor {
     pub r: f32,
@@ -61,3 +62,4 @@ impl Default for VoxelColor {
         }
     }
 }
+pub const Orange: Color32 = Color32::from_hex("#DB8758").unwrap();

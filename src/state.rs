@@ -861,10 +861,7 @@ impl State {
                         let indexes_and_names =
                             self.voxel_scene.get_voxel_group_names_and_indexes();
                         for (index, name) in indexes_and_names {
-                            if ui.add(self.voxel_group_menu_element( &name)).clicked()
-                            {
-                                self.voxel_scene.set_current_voxel_group(index);
-                            }
+                            self.voxel_group_menu_element(ui, &name, index);
                         }
                     })
                 });
@@ -1025,10 +1022,25 @@ impl State {
         let img = Image::new(sized);
         Some(egui::Button::image(img))
     }
-    fn voxel_group_menu_element(&self, group_name: &str) -> egui::Button<'_> {
-        let voxel_group_button = egui::Button::new(group_name)
-            .corner_radius(0)
-            .stroke(egui::Stroke::new(1.0, egui::Color32::BLACK));
-        voxel_group_button
+    fn voxel_group_menu_element(&self, ui: &mut egui::Ui, group_name: &str, index: usize) {
+        let (rect, response) =
+            ui.allocate_exact_size(egui::vec2(200.0, 50.0), egui::Sense::click());
+        ui.painter().rect_filled(rect, 0, Color32::GRAY);
+
+        if self.voxel_scene.get_current_voxel_group() == index {
+            ui.painter().rect_stroke(
+                rect,
+                0,
+                egui::Stroke::new(0.5, Color32::BLACK),
+                egui::StrokeKind::Middle,
+            );
+        } else {
+            ui.painter().rect_stroke(
+                rect,
+                0,
+                egui::Stroke::new(0.1, Color32::BLACK),
+                egui::StrokeKind::Middle,
+            );
+        }
     }
 }
