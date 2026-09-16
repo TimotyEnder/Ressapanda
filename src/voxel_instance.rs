@@ -1,6 +1,7 @@
 use cgmath::{Point3, Quaternion, Vector3, Vector4, prelude::*};
 
 use crate::color::VoxelColor;
+#[derive(Clone, Copy)]
 pub struct VoxelInstance {
     position: cgmath::Vector3<f32>,
     rotation: cgmath::Quaternion<f32>,

@@ -605,7 +605,7 @@ impl State {
     }
     fn ui(&mut self, ui: &mut egui::Ui) {
         let version = env!("CARGO_PKG_VERSION");
-        let top_panel_width = (self.config.height as f32 * 0.02).round();
+        let top_panel_width = 23.0;
         Panel::top("options_panel")
             .exact_size(top_panel_width)
             .show(ui, |ui| {
@@ -813,8 +813,10 @@ impl State {
                     self.ui_info.color_selected = true;
                 }
             });
+
         let _voxel_set_window = egui::Window::new("Voxel Groups")
-            .fixed_size([230.0, 500.0])
+            .title_frame(self.styled_title_frame(ui))
+            .fixed_size([280.0, 500.0])
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::RIGHT_TOP, [0.0, top_offset])
@@ -831,6 +833,7 @@ impl State {
                             .on_hover_text("Add another voxel group to the scene")
                             .clicked()
                         {
+                            self.voxel_scene.reset_input_state();
                             self.voxel_scene.add_voxel_group();
                             self.ui_info.voxel_group_rename_request_focus_flag = true;
                         }
@@ -857,7 +860,20 @@ impl State {
                             .on_hover_text("Merge the selected vertex group to the one below it")
                             .clicked()
                         {
-                            self.voxel_scene.merger_voxel_group();
+                            self.voxel_scene.merge_voxel_group();
+                        }
+                        let Some(button) =
+                            self.voxel_group_control_button_with_name("Duplicate_Voxel_Group")
+                        else {
+                            return;
+                        };
+                        if ui
+                            .add(button)
+                            .on_hover_text("Duplicate the selected voxel group.")
+                            .clicked()
+                        {
+                            self.voxel_scene.reset_input_state();
+                            self.voxel_scene.duplicate_voxel_group();
                         }
 
                         let Some(button) =
@@ -949,9 +965,11 @@ impl State {
                     });
                 });
         }
+
         if self.ui_info.show_color_picker {
             egui::Window::new("Brush Color")
                 .auto_sized()
+                .title_frame(self.styled_title_frame(ui))
                 .collapsible(false)
                 .open(&mut self.ui_info.show_color_picker)
                 .show(ui, |ui| {
@@ -1007,6 +1025,12 @@ impl State {
                 self.ui_info.last_color_added = self.ui_info.ui_brush_color;
             }
         }
+    }
+    fn styled_title_frame(&self, ui: &mut egui::Ui) -> egui::Frame {
+        let title_frame = egui::Frame::window(&ui.style())
+            .fill(OPEN_WEAK_BG_FILL)
+            .stroke(egui::Stroke::NONE);
+        title_frame
     }
     fn tool_toggle_button(&mut self, ui: &mut egui::Ui, tool_name: &'static str) {
         let Some(texture) = self.ui_info.icon_loader.get_icon_texture(tool_name) else {
@@ -1086,7 +1110,7 @@ impl State {
         editable: bool,
     ) {
         let (rect, response) =
-            ui.allocate_exact_size(egui::vec2(200.0, 50.0), egui::Sense::click());
+            ui.allocate_exact_size(egui::vec2(260.0, 50.0), egui::Sense::click());
         ui.painter().rect_filled(rect, 0, SUB_PANEL_FILL);
         if !editable {
             ui.painter().text(

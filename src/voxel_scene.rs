@@ -27,6 +27,14 @@ impl VoxelGroup {
     pub fn merge_with(&mut self, other: VoxelGroup) {
         self.position_to_voxel.extend(other.position_to_voxel);
     }
+    pub fn as_a_copy_of(other: &VoxelGroup) -> Self {
+        Self {
+            position_to_voxel: BTreeMap::clone(&other.position_to_voxel),
+            name: format!("{}(Copy)", other.name),
+            visible: other.visible,
+            editing_name: true,
+        }
+    }
     pub fn new(opt_name: Option<String>, counter: usize) -> Self {
         Self {
             position_to_voxel: BTreeMap::new(),
@@ -408,7 +416,7 @@ impl VoxelScene {
         self.voxel_group_name_counter += 1;
     }
     pub fn remove_voxel_group(&mut self) {
-        if self.voxel_groups.len() > self.current_voxel_group_selected {
+        if self.voxel_groups.len() + 1 > self.current_voxel_group_selected {
             self.voxel_groups.remove(self.current_voxel_group_selected);
         }
         if self.current_voxel_group_selected + 1 < self.voxel_groups.len() {
@@ -431,13 +439,19 @@ impl VoxelScene {
                 .swap(self.current_voxel_group_selected, shift_index);
         }
     }
-    pub fn merger_voxel_group(&mut self) {
+    pub fn merge_voxel_group(&mut self) {
         let shift_index = self.current_voxel_group_selected + 1;
         if shift_index > 0 && shift_index < self.voxel_groups.len() {
             let to_merge = self.voxel_groups.remove(shift_index);
             self.voxel_groups[self.current_voxel_group_selected].merge_with(to_merge);
         }
         self.voxels_changed = true;
+    }
+    pub fn duplicate_voxel_group(&mut self) {
+        let duplicate =
+            VoxelGroup::as_a_copy_of(&self.voxel_groups[self.current_voxel_group_selected]);
+        self.voxel_groups
+            .insert(self.current_voxel_group_selected + 1, duplicate);
     }
     pub fn get_current_voxel_group_name(&self) -> &str {
         &self.voxel_groups[self.current_voxel_group_selected].name
@@ -451,6 +465,11 @@ impl VoxelScene {
     pub fn stop_voxel_group_edit(&mut self, voxel_group: usize) {
         if voxel_group > 0 && voxel_group < self.voxel_groups.len() {
             self.voxel_groups[voxel_group].editing_name = false;
+        }
+    }
+    pub fn reset_input_state(&mut self) {
+        for group in self.voxel_groups.iter_mut() {
+            group.editing_name = false;
         }
     }
 }
