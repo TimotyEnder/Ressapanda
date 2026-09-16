@@ -869,7 +869,9 @@ impl State {
                                 "Move the selected vertex group up one place in the hierarchy",
                             )
                             .clicked()
-                        {}
+                        {
+                            self.voxel_scene.shift_voxel_group_up();
+                        }
 
                         let Some(button) =
                             self.voxel_group_control_button_with_name("Move_Voxel_Group_Down")
@@ -882,7 +884,9 @@ impl State {
                                 "Move the selected vertex group down one place in the hierarchy",
                             )
                             .clicked()
-                        {}
+                        {
+                            self.voxel_scene.shift_voxel_group_down();
+                        }
                     });
 
                     ui.vertical_centered(|ui| {

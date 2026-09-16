@@ -414,6 +414,20 @@ impl VoxelScene {
             self.current_voxel_group_selected -= 1;
         }
     }
+    pub fn shift_voxel_group_down(&mut self) {
+        let shift_index = self.current_voxel_group_selected + 1;
+        if shift_index > 0 && shift_index < self.voxel_groups.len() {
+            self.voxel_groups
+                .swap(self.current_voxel_group_selected, shift_index);
+        }
+    }
+    pub fn shift_voxel_group_up(&mut self) {
+        let shift_index = self.current_voxel_group_selected - 1;
+        if shift_index > 0 && shift_index < self.voxel_groups.len() {
+            self.voxel_groups
+                .swap(self.current_voxel_group_selected, shift_index);
+        }
+    }
     pub fn get_current_voxel_group_name(&self) -> &str {
         &self.voxel_groups[self.current_voxel_group_selected].name
     }
