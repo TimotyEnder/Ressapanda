@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use crate::camera::Camera;
 use crate::conversion_utils::snap_vector_to_flat_direction;
 use crate::filler::fill_positions_from_a_to_b;
+use crate::save::{SaveFile, SavedVoxelGroup};
 use crate::{
     color::VoxelColor,
     voxel_instance::{RawVoxelInstance, VoxelInstance},
@@ -18,6 +19,36 @@ struct VoxelGroup {
     pub center: Vector3<f32>,
 }
 impl VoxelGroup {
+    pub fn to_saved(&self) -> SavedVoxelGroup {
+        SavedVoxelGroup {
+            visible: self.visible,
+            name: self.name.clone(),
+            voxels: self
+                .position_to_voxel
+                .values()
+                .map(|voxel| voxel.to_saved())
+                .collect(),
+        }
+    }
+    pub fn from_saved(save: SavedVoxelGroup) -> Self {
+        let mut position_to_voxel = BTreeMap::new();
+        for voxel in save.voxels {
+            let scene_pos = VoxelScenePosition {
+                x: voxel.x,
+                y: voxel.y,
+                z: voxel.z,
+            };
+            let voxel = VoxelInstance::from_saved(voxel);
+            position_to_voxel.insert(scene_pos, voxel);
+        }
+        Self {
+            position_to_voxel: position_to_voxel,
+            name: save.name,
+            visible: save.visible,
+            editing_name: false,
+            center: vec3(0.0, 0.0, 0.0),
+        }
+    }
     pub fn grid_voxel() -> Self {
         Self {
             position_to_voxel: Self::axis_grid(),
@@ -81,6 +112,35 @@ pub struct VoxelScene {
     voxel_group_name_counter: usize,
 }
 impl VoxelScene {
+    pub fn to_saved(&self) -> SaveFile {
+        SaveFile {
+            panda: String::from("RESSA!"),
+            version: format!("{}", env!("CARGO_PKG_VERSION")),
+            groups: self
+                .voxel_groups
+                .iter()
+                .enumerate()
+                .filter(|(index, _)| *index > 0)
+                .map(|(_, group)| group)
+                .map(|group| group.to_saved())
+                .collect(),
+            name_counter: self.voxel_group_name_counter,
+        }
+    }
+    pub fn from_saved(save: SaveFile) -> Self {
+        let mut voxel_groups = vec![VoxelGroup::grid_voxel()];
+        for group in save.groups {
+            voxel_groups.push(VoxelGroup::from_saved(group));
+        }
+        Self {
+            voxel_groups: voxel_groups,
+            current_voxel_groups_selected: vec![1],
+            temporary_voxels: Vec::new(),
+            raw_voxel_instance_list: Vec::new(),
+            voxels_changed: true,
+            voxel_group_name_counter: save.name_counter,
+        }
+    }
     pub fn new() -> Self {
         let mut voxel_groups = Vec::new();
         voxel_groups.push(VoxelGroup::grid_voxel());
@@ -548,13 +608,13 @@ impl VoxelScene {
     }
 }
 #[derive(Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]
-struct VoxelScenePosition {
+pub struct VoxelScenePosition {
     pub x: i32,
     pub y: i32,
     pub z: i32,
 }
 impl VoxelScenePosition {
-    fn from_voxel_position(position: Vector3<f32>) -> Self {
+    pub fn from_voxel_position(position: Vector3<f32>) -> Self {
         Self {
             x: position.x.round() as i32,
             y: position.y.round() as i32,

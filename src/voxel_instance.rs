@@ -1,6 +1,6 @@
-use cgmath::{Deg, Point3, Quaternion, Vector3, Vector4, prelude::*};
+use cgmath::{Deg, Point3, Quaternion, Vector3, Vector4, prelude::*, vec3};
 
-use crate::color::VoxelColor;
+use crate::{color::VoxelColor, save::SavedVoxel, voxel_scene::VoxelScenePosition};
 #[derive(Clone, Copy)]
 pub struct VoxelInstance {
     position: cgmath::Vector3<f32>,
@@ -9,6 +9,26 @@ pub struct VoxelInstance {
     grid_voxel: bool,
 }
 impl VoxelInstance {
+    pub fn to_saved(&self) -> SavedVoxel {
+        let position = VoxelScenePosition::from_voxel_position(self.position);
+        SavedVoxel {
+            x: position.x,
+            y: position.y,
+            z: position.z,
+            r: self.color.r,
+            g: self.color.g,
+            b: self.color.b,
+            a: self.color.a,
+        }
+    }
+    pub fn from_saved(save: SavedVoxel) -> Self {
+        Self {
+            position: vec3(save.x as f32, save.y as f32, save.z as f32),
+            color: VoxelColor::new(save.r, save.g, save.b, save.a),
+            selected: false,
+            grid_voxel: false,
+        }
+    }
     pub fn new(position: cgmath::Vector3<f32>, color: VoxelColor) -> Self {
         Self {
             position,

@@ -11,6 +11,7 @@ pub mod depth_texture;
 pub mod filler;
 pub mod icon_loader;
 pub mod raycast;
+pub mod save;
 pub mod select_mode;
 pub mod state;
 pub mod tools;
