@@ -8,6 +8,7 @@ use crate::{
     },
     cursor_loader::CursorLoader,
     depth_texture::DepthTexture,
+    save::{load_from_file, save_to_file},
     select_mode::{
         select_mode::{SelectMode, select_mode_from_name},
         single_select_mode::SingleSelectMode,
@@ -17,12 +18,11 @@ use crate::{
         key_input_manager::KeyInputManager,
         tool::{Tool, tool_from_name},
     },
-    ui_data::UIData,
+    ui_data::{FileAction, UIData},
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
     voxel_instance::RawVoxelInstance,
     voxel_scene::{VoxelScene, VoxelSceneDirection},
 };
-use anyhow::Ok;
 use cgmath::Point3;
 use egui::{
     Align, Align2, Color32, FontId, Image, Panel, Rect, WidgetType::TextEdit, epaint,
@@ -614,13 +614,27 @@ impl State {
                     menu::MenuBar::new().ui(ui, |ui| {
                         ui.menu_button("File", |ui| {
                             if ui.button("New").clicked() {
-                                // Handle "New" action
+                                self.voxel_scene = VoxelScene::new();
+                                self.ui_info.current_save_path = None;
                             }
                             if ui.button("Open").clicked() {
-                                // Handle "Open" action
+                                self.ui_info.file_dialog.set_user_data(FileAction::Open);
+                                self.ui_info.file_dialog.pick_file();
                             }
                             if ui.button("Save").clicked() {
-                                // Handle "Save" action
+                                if let Some(ref path) = self.ui_info.current_save_path {
+                                    match save_to_file(&self.voxel_scene, &path) {
+                                        Err(e) => log::error!("Open failed: {e}"),
+                                        _ => {}
+                                    }
+                                } else {
+                                    self.ui_info.file_dialog.set_user_data(FileAction::Save);
+                                    self.ui_info.file_dialog.save_file();
+                                }
+                            }
+                            if ui.button("Save As").clicked() {
+                                self.ui_info.file_dialog.set_user_data(FileAction::Save);
+                                self.ui_info.file_dialog.save_file();
                             }
                         });
                         ui.menu_button("Model", |ui| {
@@ -948,6 +962,25 @@ impl State {
                     .for_each(|name| self.tool_toggle_button(ui, *name));
             });
         self.popups(ui);
+        self.file_save_dialog(ui);
+    }
+    fn file_save_dialog(&mut self, ui: &mut egui::Ui) {
+        self.ui_info.file_dialog.update(ui.ctx());
+        if let Some(path) = self.ui_info.file_dialog.take_picked() {
+            match self.ui_info.file_dialog.user_data() {
+                Some(FileAction::Open) => match load_from_file(&path) {
+                    Ok(scene_saved) => self.voxel_scene = scene_saved,
+                    Err(e) => log::error!("Open failed: {e}"),
+                },
+                Some(FileAction::Save) => {
+                    if let Err(e) = save_to_file(&self.voxel_scene, &path) {
+                        log::error!("Save failed: {e}");
+                    }
+                }
+                _ => {}
+            }
+            self.ui_info.current_save_path = Some(path);
+        }
     }
     fn popups(&mut self, ui: &mut egui::Ui) {
         if self.ui_info.voxel_group_removal_popup {

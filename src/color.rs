@@ -1,4 +1,3 @@
-use anyhow::Ok;
 use egui::Color32;
 #[derive(Clone, Copy)]
 pub struct VoxelColor {

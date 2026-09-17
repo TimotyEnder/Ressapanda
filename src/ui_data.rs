@@ -1,9 +1,15 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, path::PathBuf};
 
 use egui::Color32;
+use egui_file_dialog::FileDialog;
 
 use crate::icon_loader::IconLoader;
 
+#[derive(Clone, Copy)]
+pub enum FileAction {
+    Open,
+    Save,
+}
 pub struct UIData {
     pub ui_brush_color: Color32,
     pub last_color_added: Color32,
@@ -14,6 +20,8 @@ pub struct UIData {
     pub icon_loader: IconLoader,
     pub voxel_group_removal_popup: bool,
     pub voxel_group_rename_request_focus_flag: bool,
+    pub current_save_path: Option<PathBuf>,
+    pub file_dialog: egui_file_dialog::FileDialog,
 }
 impl UIData {
     pub fn new(ctx: egui::Context) -> Self {
@@ -27,6 +35,14 @@ impl UIData {
             icon_loader: IconLoader::new(ctx),
             voxel_group_removal_popup: false,
             voxel_group_rename_request_focus_flag: false,
+            current_save_path: None,
+            file_dialog: FileDialog::new()
+                .add_file_filter_extensions("Ressapanda Scene", vec!["rspnd"])
+                .default_file_filter("Ressapanda Scene")
+                .default_file_name("new_scene.rspnd")
+                .add_save_extension("Ressapanda Scene", "rspnd")
+                .default_save_extension("rspnd")
+                .allow_file_overwrite(true),
         }
     }
 }
