@@ -21,7 +21,7 @@ impl VoxelGroup {
     pub fn grid_voxel() -> Self {
         Self {
             position_to_voxel: Self::axis_grid(),
-            name: String::from("Grid Voxel Set"),
+            name: String::from("Grid Voxel Group"),
             visible: true,
             editing_name: false,
             center: vec3(0.0, 0.0, 0.0),
@@ -85,7 +85,7 @@ impl VoxelScene {
     pub fn new() -> Self {
         let mut voxel_groups = Vec::new();
         voxel_groups.push(VoxelGroup::grid_voxel());
-        voxel_groups.push(VoxelGroup::new(format!("Voxel Set:{}", 1)));
+        voxel_groups.push(VoxelGroup::new(format!("Voxel Group:{}", 1)));
         voxel_groups[1].editing_name = false;
         Self {
             voxel_groups: voxel_groups,
@@ -422,21 +422,24 @@ impl VoxelScene {
         self.voxels_changed = true;
     }
     pub fn add_voxel_group(&mut self) {
-        let unique_name =
-            self.turn_name_unique(format!("Voxel Set:{}", self.voxel_group_name_counter), None);
+        let unique_name = self.turn_name_unique(
+            format!("Voxel Group:{}", self.voxel_group_name_counter),
+            None,
+        );
         self.voxel_groups.push(VoxelGroup::new(unique_name));
         self.voxel_group_name_counter += 1;
     }
     pub fn remove_voxel_group(&mut self) {
-        if self.current_voxel_groups_selected.len() < self.voxel_groups.len() + 1 {
-            self.voxel_groups = self
-                .voxel_groups
-                .iter()
-                .enumerate()
-                .filter(|(index, _)| !self.current_voxel_groups_selected.contains(index))
-                .map(|(_, voxel)| voxel.clone())
-                .collect();
-            self.current_voxel_groups_selected = vec![1];
+        self.voxel_groups = self
+            .voxel_groups
+            .iter()
+            .enumerate()
+            .filter(|(index, _)| !self.current_voxel_groups_selected.contains(index))
+            .map(|(_, voxel)| voxel.clone())
+            .collect();
+        self.current_voxel_groups_selected = vec![1];
+        if self.voxel_groups.len() <= 1 {
+            self.add_voxel_group();
         }
     }
     pub fn shift_voxel_group_down(&mut self) {
@@ -473,17 +476,27 @@ impl VoxelScene {
         self.voxels_changed = true;
     }
     pub fn duplicate_voxel_group(&mut self) {
-        let unique_name = self.turn_name_unique(
-            String::from(&self.voxel_groups[self.current_voxel_groups_selected[0]].name),
-            None,
-        );
-        let duplicate = VoxelGroup::as_a_copy_of(
-            &self.voxel_groups[self.current_voxel_groups_selected[0]],
-            self.voxel_group_name_counter,
-            unique_name,
-        );
-        self.voxel_groups
-            .insert(self.current_voxel_groups_selected[0] + 1, duplicate);
+        let mut duplicates = Vec::new();
+        for i in self.current_voxel_groups_selected.clone() {
+            let unique_name = self.turn_name_unique(String::from(&self.voxel_groups[i].name), None);
+            let duplicate = VoxelGroup::as_a_copy_of(
+                &self.voxel_groups[i],
+                self.voxel_group_name_counter,
+                unique_name,
+            );
+            duplicates.push(duplicate);
+        }
+        let mut insertion_index = *self
+            .current_voxel_groups_selected
+            .iter()
+            .max()
+            .unwrap_or(&0)
+            + 1;
+        for i in 0..duplicates.len() {
+            self.voxel_groups
+                .insert(insertion_index, duplicates.remove(0));
+            insertion_index += 1;
+        }
     }
     pub fn get_current_voxel_group_names(&self) -> Vec<&str> {
         self.current_voxel_groups_selected

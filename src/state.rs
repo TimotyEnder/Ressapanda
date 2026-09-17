@@ -1014,6 +1014,7 @@ impl State {
                             Self::last_used_color_button(
                                 ui,
                                 color,
+                                &mut self.current_brush,
                                 &mut self.ui_info.ui_brush_color,
                                 &mut self.ui_info.last_color_added,
                             );
@@ -1083,7 +1084,8 @@ impl State {
     fn last_used_color_button(
         ui: &mut egui::Ui,
         color: Color32,
-        brush_color: &mut Color32,
+        brush: &mut Brush,
+        ui_brush_color: &mut Color32,
         last_color_added: &mut Color32,
     ) {
         let last_color_button = egui::Button::new("")
@@ -1091,7 +1093,10 @@ impl State {
             .corner_radius(0)
             .stroke(egui::Stroke::new(1.0, egui::Color32::WHITE));
         if ui.add_sized([25.0, 25.0], last_color_button).clicked() {
-            *brush_color = color;
+            *brush = Brush {
+                color: VoxelColor::from_egui_color(color),
+            };
+            *ui_brush_color = color;
             *last_color_added = color;
         }
     }
