@@ -41,8 +41,8 @@ impl SelectMode for SingleSelectMode {
             if let Some((intersect_position, voxel_position)) = hit {
                 match tool.name() {
                     "Add" => {
-                        if let Some(voxel) =
-                            scene.get_voxel_from_position_prioritizing_current_set(voxel_position)
+                        if let Some(voxel) = scene
+                            .get_voxel_from_position_prioritizing_first_selected_set(voxel_position)
                         {
                             let point =
                                 voxel.point_on_voxel_grid_closest_to_point(intersect_position);
@@ -96,8 +96,8 @@ impl SelectMode for SingleSelectMode {
         if let Some((intersect_position, voxel_position)) = hit {
             match tool.name() {
                 "Add" => {
-                    if let Some(voxel) =
-                        scene.get_voxel_from_position_prioritizing_current_set(voxel_position)
+                    if let Some(voxel) = scene
+                        .get_voxel_from_position_prioritizing_first_selected_set(voxel_position)
                     {
                         let point = voxel.point_on_voxel_grid_closest_to_point(intersect_position);
                         tool.temp_operate_with_position(

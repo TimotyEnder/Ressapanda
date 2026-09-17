@@ -60,16 +60,18 @@ impl SelectMode for AreaSelectMode {
                 let mut prev_operating_point = prev_voxel_position;
                 let mut operating_point = voxel_position;
                 if tool.name().contains("Add") {
-                    if let Some(prev_voxel) =
-                        scene.get_voxel_from_position_prioritizing_current_set(prev_voxel_position)
+                    if let Some(prev_voxel) = scene
+                        .get_voxel_from_position_prioritizing_first_selected_set(
+                            prev_voxel_position,
+                        )
                     {
                         prev_operating_point = prev_voxel
                             .point_on_voxel_grid_closest_to_point(prev_intersect_position);
 
                         tool.operate_with_position(prev_operating_point, scene, brush);
                     }
-                    if let Some(voxel) =
-                        scene.get_voxel_from_position_prioritizing_current_set(voxel_position)
+                    if let Some(voxel) = scene
+                        .get_voxel_from_position_prioritizing_first_selected_set(voxel_position)
                     {
                         operating_point =
                             voxel.point_on_voxel_grid_closest_to_point(intersect_position);
@@ -117,16 +119,18 @@ impl SelectMode for AreaSelectMode {
                 let mut prev_operating_point = prev_voxel_position;
                 let mut operating_point = voxel_position;
                 if tool.name().contains("Add") {
-                    if let Some(prev_voxel) =
-                        scene.get_voxel_from_position_prioritizing_current_set(prev_voxel_position)
+                    if let Some(prev_voxel) = scene
+                        .get_voxel_from_position_prioritizing_first_selected_set(
+                            prev_voxel_position,
+                        )
                     {
                         prev_operating_point = prev_voxel
                             .point_on_voxel_grid_closest_to_point(prev_intersect_position);
 
                         tool.temp_operate_with_position(prev_operating_point, scene, brush);
                     }
-                    if let Some(voxel) =
-                        scene.get_voxel_from_position_prioritizing_current_set(voxel_position)
+                    if let Some(voxel) = scene
+                        .get_voxel_from_position_prioritizing_first_selected_set(voxel_position)
                     {
                         operating_point =
                             voxel.point_on_voxel_grid_closest_to_point(intersect_position);
@@ -146,8 +150,8 @@ impl SelectMode for AreaSelectMode {
             } else {
                 match tool.name() {
                     "Add" => {
-                        if let Some(voxel) =
-                            scene.get_voxel_from_position_prioritizing_current_set(voxel_position)
+                        if let Some(voxel) = scene
+                            .get_voxel_from_position_prioritizing_first_selected_set(voxel_position)
                         {
                             let point =
                                 voxel.point_on_voxel_grid_closest_to_point(intersect_position);

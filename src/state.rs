@@ -955,8 +955,8 @@ impl State {
                 .anchor(Align2::CENTER_CENTER, [0.0, 0.0])
                 .show(ui, |ui| {
                     ui.label(format!(
-                        "Are you sure you want to remove the '{}' voxel group?",
-                        self.voxel_scene.get_current_voxel_group_name(),
+                        "Are you sure you want to remove the '{:?}' voxel group(s)?",
+                        self.voxel_scene.get_current_voxel_group_names(),
                     ));
                     ui.horizontal(|ui| {
                         if ui.button("Yes").clicked() {
@@ -1145,7 +1145,7 @@ impl State {
                 }
             }
         }
-        if self.voxel_scene.get_current_voxel_group() == index {
+        if self.voxel_scene.get_current_voxel_groups().contains(&index) {
             ui.painter().rect_stroke(
                 rect,
                 0,
@@ -1164,12 +1164,22 @@ impl State {
             ui.painter().rect_stroke(
                 rect,
                 0,
-                egui::Stroke::new(2.0, WHITE),
+                egui::Stroke::new(1.0, WHITE),
                 egui::StrokeKind::Inside,
             );
         }
         if response.clicked() {
-            self.voxel_scene.set_current_voxel_group(index);
+            if self
+                .key_input_manager
+                .get_modifier_keys_status()
+                .control_modifier
+            {
+                self.voxel_scene
+                    .toggle_presence_in_current_voxel_group_selection(index);
+            } else {
+                self.voxel_scene.set_current_voxel_group(vec![index]);
+            }
+            self.voxel_scene.reset_input_state();
         }
         if response.double_clicked() {
             self.voxel_scene.make_voxel_group_name_editable(index);

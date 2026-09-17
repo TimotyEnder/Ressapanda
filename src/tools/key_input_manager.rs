@@ -10,12 +10,17 @@ use crate::{
     tools::tool::{Tool, tool_from_name},
     voxel_scene::{VoxelScene, VoxelSceneDirection},
 };
-
+pub struct ModifierKeysStatus {
+    pub move_modifier: bool,
+    pub rotate_modifier: bool,
+    pub control_modifier: bool,
+}
 pub struct KeyInputManager {
     keycode_to_mapping: HashMap<KeyCode, &'static str>,
     keycode_to_flag: HashMap<KeyCode, bool>,
     move_modifier: bool,
     rotate_modifier: bool,
+    control_modifier: bool,
 }
 impl KeyInputManager {
     pub fn new() -> Self {
@@ -24,6 +29,7 @@ impl KeyInputManager {
             keycode_to_flag: HashMap::new(),
             move_modifier: false,
             rotate_modifier: false,
+            control_modifier: false,
         };
         //Tools
         ret.keycode_to_mapping.insert(KeyCode::KeyA, "Add");
@@ -49,6 +55,9 @@ impl KeyInputManager {
             }
             KeyCode::AltLeft => {
                 self.move_modifier = pressed;
+            }
+            KeyCode::ControlLeft => {
+                self.control_modifier = pressed;
             }
             _ => {}
         };
@@ -187,6 +196,13 @@ impl KeyInputManager {
         if pressed && direction != VoxelSceneDirection::None {
             let (axis, deg) = direction.rotate_parameters(camera);
             scene.rotate_around_center(axis, deg);
+        }
+    }
+    pub fn get_modifier_keys_status(&self) -> ModifierKeysStatus {
+        ModifierKeysStatus {
+            move_modifier: self.move_modifier,
+            rotate_modifier: self.rotate_modifier,
+            control_modifier: self.control_modifier,
         }
     }
 }
