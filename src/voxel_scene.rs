@@ -110,6 +110,7 @@ pub struct VoxelScene {
     raw_voxel_instance_list: Vec<RawVoxelInstance>,
     voxels_changed: bool,
     voxel_group_name_counter: usize,
+    saved: bool,
 }
 impl VoxelScene {
     pub fn to_saved(&self) -> SaveFile {
@@ -139,6 +140,7 @@ impl VoxelScene {
             raw_voxel_instance_list: Vec::new(),
             voxels_changed: true,
             voxel_group_name_counter: save.name_counter,
+            saved: true,
         }
     }
     pub fn new() -> Self {
@@ -153,6 +155,7 @@ impl VoxelScene {
             voxels_changed: true,
             temporary_voxels: Vec::new(),
             voxel_group_name_counter: 2,
+            saved: false,
         }
     }
 
@@ -188,6 +191,12 @@ impl VoxelScene {
     }
     pub fn force_voxel_scene_update(&mut self) {
         self.voxels_changed = true;
+    }
+    pub fn get_saved(&self) -> bool {
+        self.saved
+    }
+    pub fn set_saved(&mut self) {
+        self.saved = true;
     }
     pub fn get_voxel_instance_count(&self) -> usize {
         self.voxel_groups
@@ -256,6 +265,7 @@ impl VoxelScene {
                     },
                 );
                 self.voxels_changed = true;
+                self.saved = false;
                 self.voxel_groups[*i]
                     .position_to_voxel
                     .insert(voxel_scene_position, voxel_to_add);
@@ -273,6 +283,7 @@ impl VoxelScene {
             {
                 if !voxel.is_grid() {
                     self.voxels_changed = true;
+                    self.saved = false;
                     self.voxel_groups[*i]
                         .position_to_voxel
                         .remove(&voxel_scene_position);
@@ -399,6 +410,7 @@ impl VoxelScene {
                 );
             }
             self.voxels_changed = true;
+            self.saved = false;
         }
         return true;
     }
@@ -437,6 +449,7 @@ impl VoxelScene {
         }
         self.find_center();
         self.voxels_changed = true;
+        self.saved = false;
     }
     pub fn set_current_voxel_group(&mut self, working_set: Vec<usize>) {
         self.current_voxel_groups_selected = working_set;
@@ -475,6 +488,7 @@ impl VoxelScene {
             self.voxel_groups[group].visible = visible;
         }
         self.voxels_changed = true;
+        self.saved = false;
     }
     pub fn add_voxel_group(&mut self) {
         let unique_name = self.turn_name_unique(
@@ -529,6 +543,7 @@ impl VoxelScene {
             self.current_voxel_groups_selected.remove(shift_pos);
         }
         self.voxels_changed = true;
+        self.saved = false;
     }
     pub fn duplicate_voxel_group(&mut self) {
         let mut duplicates = Vec::new();

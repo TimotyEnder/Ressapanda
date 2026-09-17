@@ -72,6 +72,19 @@ pub struct State {
     ui_info: UIData,
 }
 impl State {
+    pub fn get_window_name(&self) -> String {
+        let saved = self.voxel_scene.get_saved();
+        if let Some(ref path) = self.ui_info.current_save_path {
+            if let Some(name) = path.file_name() {
+                return format!(
+                    "Ressapanda!:{}{}",
+                    name.display(),
+                    if saved { "" } else { "*" }
+                );
+            }
+        }
+        return format!("Ressapanda!{}", if saved { "" } else { "*" });
+    }
     pub async fn new(
         window: Arc<Window>,
         event_loop: &winit::event_loop::ActiveEventLoop,
@@ -406,6 +419,7 @@ impl State {
         );
     }
     pub fn update(&mut self) {
+        self.window.set_title(&self.get_window_name());
         self.camera_controller.update_camera(&mut self.camera);
         self.update_camera();
         self.update_temporary_voxel_generation_on_hover();
@@ -631,10 +645,12 @@ impl State {
                                     self.ui_info.file_dialog.set_user_data(FileAction::Save);
                                     self.ui_info.file_dialog.save_file();
                                 }
+                                self.voxel_scene.set_saved();
                             }
                             if ui.button("Save As").clicked() {
                                 self.ui_info.file_dialog.set_user_data(FileAction::Save);
                                 self.ui_info.file_dialog.save_file();
+                                self.voxel_scene.set_saved();
                             }
                         });
                         ui.menu_button("Model", |ui| {

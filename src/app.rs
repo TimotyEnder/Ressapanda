@@ -19,8 +19,7 @@ impl App {
 }
 impl ApplicationHandler<State> for App {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        let mut window_attributes = WindowAttributes::default();
-        window_attributes.title = String::from("Ressapanda!");
+        let window_attributes = WindowAttributes::default();
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
         self.state = Some(pollster::block_on(State::new(window, event_loop)).unwrap());
     }
