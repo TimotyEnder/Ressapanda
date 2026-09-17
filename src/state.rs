@@ -816,7 +816,7 @@ impl State {
 
         let _voxel_set_window = egui::Window::new("Voxel Groups")
             .title_frame(self.styled_title_frame(ui))
-            .fixed_size([280.0, 500.0])
+            .default_width(280.0)
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::RIGHT_TOP, [0.0, top_offset])
@@ -906,16 +906,20 @@ impl State {
                             self.voxel_scene.shift_voxel_group_down();
                         }
                     });
-
-                    ui.vertical_centered(|ui| {
-                        let indexes_and_names =
-                            self.voxel_scene.get_voxel_group_names_and_indexes();
-                        for (index, name, editable) in indexes_and_names {
-                            self.voxel_group_menu_element(ui, &name, index, editable);
-                            ui.add_space(10.0);
-                        }
-                    })
                 });
+
+                egui::ScrollArea::vertical()
+                    .max_height(self.config.height as f32 * 0.3)
+                    .show(ui, |ui| {
+                        ui.vertical_centered(|ui| {
+                            let indexes_and_names =
+                                self.voxel_scene.get_voxel_group_names_and_indexes();
+                            for (index, name, editable) in indexes_and_names {
+                                self.voxel_group_menu_element(ui, &name, index, editable);
+                                ui.add_space(10.0);
+                            }
+                        });
+                    });
             });
         if let Some(inner) = brush_window {
             top_offset = inner.response.rect.max.y + spacing;
