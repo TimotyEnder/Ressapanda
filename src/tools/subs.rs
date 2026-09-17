@@ -8,8 +8,9 @@ impl Tool for Subs {
         scene: &mut crate::voxel_scene::VoxelScene,
         brush: &Brush,
     ) {
-        scene.remove_voxel(operating_position);
-        scene.add_voxel(operating_position, &brush.color);
+        if scene.remove_voxel(operating_position) {
+            scene.add_voxel(operating_position, &brush.color);
+        }
     }
 
     fn name(&self) -> &'static str {

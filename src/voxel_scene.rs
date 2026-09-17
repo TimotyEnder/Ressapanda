@@ -209,7 +209,8 @@ impl VoxelScene {
                 self.voxel_groups[self.current_voxel_group_selected]
                     .position_to_voxel
                     .remove(&voxel_scene_position);
-                self.center = self.find_center()
+                self.center = self.find_center();
+                return true;
             }
         }
         return false;
