@@ -65,7 +65,6 @@ impl VoxelGroup {
             let voxel_scene_position = VoxelScenePosition::from_voxel_position(position);
             let voxel = VoxelInstance::new_grid_voxel(
                 position,
-                Quaternion::from_angle_z(cgmath::Deg(0.0)),
                 VoxelColor::from_hex("#333333").unwrap_or_default(),
             );
             map.insert(voxel_scene_position, voxel);
@@ -173,11 +172,8 @@ impl VoxelScene {
     }
     pub fn add_temporary_voxels(&mut self, positions: Vec<Vector3<f32>>, color: &VoxelColor) {
         for pos in positions {
-            let voxel_to_add = VoxelInstance::new(
-                pos,
-                Quaternion::from_angle_y(cgmath::Deg(0.0)),
-                VoxelColor::new(color.r, color.g, color.b, color.a),
-            );
+            let voxel_to_add =
+                VoxelInstance::new(pos, VoxelColor::new(color.r, color.g, color.b, color.a));
             self.voxels_changed = true;
             self.temporary_voxels.push(voxel_to_add);
         }
@@ -192,7 +188,6 @@ impl VoxelScene {
             {
                 let voxel_to_add = VoxelInstance::new(
                     position,
-                    Quaternion::from_angle_y(cgmath::Deg(0.0)),
                     VoxelColor {
                         r: color.r,
                         g: color.g,

@@ -1,36 +1,25 @@
-use cgmath::{Point3, Quaternion, Vector3, Vector4, prelude::*};
+use cgmath::{Deg, Point3, Quaternion, Vector3, Vector4, prelude::*};
 
 use crate::color::VoxelColor;
 #[derive(Clone, Copy)]
 pub struct VoxelInstance {
     position: cgmath::Vector3<f32>,
-    rotation: cgmath::Quaternion<f32>,
     color: VoxelColor,
     selected: bool,
     grid_voxel: bool,
 }
 impl VoxelInstance {
-    pub fn new(
-        position: cgmath::Vector3<f32>,
-        rotation: cgmath::Quaternion<f32>,
-        color: VoxelColor,
-    ) -> Self {
+    pub fn new(position: cgmath::Vector3<f32>, color: VoxelColor) -> Self {
         Self {
             position,
-            rotation,
             color,
             selected: false,
             grid_voxel: false,
         }
     }
-    pub fn new_grid_voxel(
-        position: cgmath::Vector3<f32>,
-        rotation: cgmath::Quaternion<f32>,
-        color: VoxelColor,
-    ) -> Self {
+    pub fn new_grid_voxel(position: cgmath::Vector3<f32>, color: VoxelColor) -> Self {
         Self {
             position,
-            rotation,
             color,
             selected: false,
             grid_voxel: true,
@@ -45,7 +34,7 @@ impl VoxelInstance {
         );
         RawVoxelInstance {
             matrix: (cgmath::Matrix4::from_translation(self.position)
-                * cgmath::Matrix4::from(self.rotation))
+                * cgmath::Matrix4::from(Quaternion::from_angle_z(Deg(0.0))))
             .into(),
             color: self.color.to_vector_4().into(),
             info_vec: info_vec.into(),
@@ -107,9 +96,7 @@ impl VoxelInstance {
     pub fn get_position(&self) -> Vector3<f32> {
         self.position
     }
-    pub fn get_rotation(&self) -> Quaternion<f32> {
-        self.rotation
-    }
+
     pub fn select(&mut self) {
         self.selected = true;
     }
