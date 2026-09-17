@@ -344,6 +344,9 @@ impl State {
     }
     pub fn handle_key(&mut self, _event_loop: &ActiveEventLoop, key: KeyCode, pressed: bool) {
         self.key_input_manager.modifier_inputs(key, pressed);
+        if self.key_input_manager.save_input(key, pressed) {
+            self.conditional_save();
+        }
         self.key_input_manager.camera_preset_positions_inputs(
             key,
             pressed,
@@ -617,6 +620,18 @@ impl State {
                 .write_buffer(&self.voxel_instance_buffer, 0, bytes);
         }
     }
+    fn conditional_save(&mut self) {
+        if let Some(ref path) = self.ui_info.current_save_path {
+            match save_to_file(&self.voxel_scene, &path) {
+                Err(e) => log::error!("Open failed: {e}"),
+                _ => {}
+            }
+        } else {
+            self.ui_info.file_dialog.set_user_data(FileAction::Save);
+            self.ui_info.file_dialog.save_file();
+        }
+        self.voxel_scene.set_saved();
+    }
     fn ui(&mut self, ui: &mut egui::Ui) {
         let version = env!("CARGO_PKG_VERSION");
         let top_panel_width = 23.0;
@@ -636,16 +651,7 @@ impl State {
                                 self.ui_info.file_dialog.pick_file();
                             }
                             if ui.button("Save").clicked() {
-                                if let Some(ref path) = self.ui_info.current_save_path {
-                                    match save_to_file(&self.voxel_scene, &path) {
-                                        Err(e) => log::error!("Open failed: {e}"),
-                                        _ => {}
-                                    }
-                                } else {
-                                    self.ui_info.file_dialog.set_user_data(FileAction::Save);
-                                    self.ui_info.file_dialog.save_file();
-                                }
-                                self.voxel_scene.set_saved();
+                                self.conditional_save();
                             }
                             if ui.button("Save As").clicked() {
                                 self.ui_info.file_dialog.set_user_data(FileAction::Save);
