@@ -13,9 +13,9 @@ impl VoxelColor {
     }
     pub fn from_egui_color(color: egui::Color32) -> Self {
         Self {
-            r: (color.r() as f32 / 255.0),
-            g: (color.g() as f32 / 255.0),
-            b: (color.b() as f32 / 255.0),
+            r: srgb_to_linear(color.r() as f32 / 255.0),
+            g: srgb_to_linear(color.g() as f32 / 255.0),
+            b: srgb_to_linear(color.b() as f32 / 255.0),
             a: (color.a() as f32 / 255.0),
         }
     }
@@ -35,9 +35,9 @@ impl VoxelColor {
             } else {
                 255
             };
-            let r = r255 as f32 / 255.0;
-            let g = g255 as f32 / 255.0;
-            let b = b255 as f32 / 255.0;
+            let r = srgb_to_linear(r255 as f32 / 255.0);
+            let g = srgb_to_linear(g255 as f32 / 255.0);
+            let b = srgb_to_linear(b255 as f32 / 255.0);
             let a = a255 as f32 / 255.0;
             return Ok(Self { r, g, b, a });
         }
@@ -60,6 +60,13 @@ impl Default for VoxelColor {
             b: 1.0,
             a: 1.0,
         }
+    }
+}
+pub fn srgb_to_linear(c: f32) -> f32 {
+    if c <= 0.04045 {
+        c / 12.92
+    } else {
+        ((c + 0.055) / 1.055).powf(2.4)
     }
 }
 pub const ORANGE: Color32 = Color32::from_rgb(219, 135, 88);

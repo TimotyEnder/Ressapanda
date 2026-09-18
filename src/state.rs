@@ -132,6 +132,7 @@ impl State {
         // Shader code in this tutorial assumes an Srgb surface texture. Using a different
         // one will result all the colors comming out darker. If you want to support non
         // Srgb surfaces, you'll need to account for that when drawing to the frame.
+        // Imagine reading tutorials well :< better late then never
         let surface_format = surface_caps
             .formats
             .iter()
@@ -317,7 +318,7 @@ impl State {
         let egui_winit_state = egui_winit::State::new(
             egui_ctx.clone(),
             egui::ViewportId::ROOT,
-            &*window, // &dyn HasDisplayHandle
+            &*window,
             Some(window.scale_factor() as f32),
             window.theme(),
             Some(device.limits().max_texture_dimension_2d as usize),
@@ -485,7 +486,7 @@ impl State {
     }
     fn ui_update(&mut self) {
         let raw_input = self.egui_winit_state.take_egui_input(&self.window);
-        let egui_ctx = self.egui_ctx.clone(); // clone req'd: run_ui borrows ctx, closure borrows self
+        let egui_ctx = self.egui_ctx.clone();
         let full_output = egui_ctx.run_ui(raw_input, |ui| self.ui(ui));
 
         self.egui_winit_state
@@ -527,7 +528,7 @@ impl State {
             }
             wgpu::CurrentSurfaceTexture::Lost => {
                 // You could recreate the devices and all resources
-                // created with it here, but we'll just bail
+                // created with it here, but we'll just bail cuz fuck that
                 anyhow::bail!("Lost device :(");
             }
         };
@@ -548,9 +549,9 @@ impl State {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.078,
-                            g: 0.078,
-                            b: 0.078,
+                            r: crate::color::srgb_to_linear(0.3094) as f64,
+                            g: crate::color::srgb_to_linear(0.3094) as f64,
+                            b: crate::color::srgb_to_linear(0.3094) as f64,
                             a: 1.0,
                         }),
                         store: wgpu::StoreOp::Store,
@@ -650,12 +651,12 @@ impl State {
                     view: &view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Load, // draw OVER the voxels, don't clear
+                        load: wgpu::LoadOp::Load,
                         store: wgpu::StoreOp::Store,
                     },
                     depth_slice: None,
                 })],
-                depth_stencil_attachment: None, // egui must NOT depth-test vs voxels
+                depth_stencil_attachment: None,
                 occlusion_query_set: None,
                 timestamp_writes: None,
                 multiview_mask: None,

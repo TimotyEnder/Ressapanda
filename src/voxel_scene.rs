@@ -128,7 +128,12 @@ impl VoxelGroup {
             let voxel_scene_position = VoxelScenePosition::from_voxel_position(position);
             let voxel = VoxelInstance::new_grid_voxel(
                 position,
-                VoxelColor::from_hex("#333333").unwrap_or_default(),
+                VoxelColor::new(
+                    crate::color::srgb_to_linear(0.4845),
+                    crate::color::srgb_to_linear(0.4845),
+                    crate::color::srgb_to_linear(0.4845),
+                    1.0,
+                ),
             );
             map.insert(voxel_scene_position, voxel);
         }
