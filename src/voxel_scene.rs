@@ -552,22 +552,77 @@ impl VoxelScene {
         }
     }
     pub fn shift_voxel_group_down(&mut self) {
-        for i in self.current_voxel_groups_selected.iter_mut() {
-            let shift_index = *i + 1;
-            if shift_index > 0 && shift_index < self.voxel_groups.len() {
-                self.voxel_groups.swap(*i, shift_index);
-                *i = shift_index;
-            }
-        }
+        let largest_index = *(self
+            .current_voxel_groups_selected
+            .iter()
+            .max()
+            .unwrap_or(&0));
+        let insertion_name = self.voxel_groups
+            [(largest_index + 1).min(self.voxel_groups.len() - 1)]
+        .name
+        .clone();
+        let selected_names: Vec<String> = self
+            .voxel_groups
+            .iter()
+            .enumerate()
+            .filter(|(index, _)| self.current_voxel_groups_selected.contains(index))
+            .map(|(_, group)| group.name.clone())
+            .collect();
+        let to_shift: Vec<VoxelGroup> = self
+            .voxel_groups
+            .extract_if(0..self.voxel_groups.len(), |element| {
+                selected_names.contains(&element.name)
+            })
+            .collect();
+        let insert_index = self
+            .voxel_groups
+            .iter()
+            .position(|group| group.name == insertion_name)
+            .map_or(self.voxel_groups.len(), |index| index + 1);
+        self.voxel_groups
+            .splice(insert_index..insert_index, to_shift);
+        self.current_voxel_groups_selected = self
+            .voxel_groups
+            .iter()
+            .enumerate()
+            .filter(|(_, group)| selected_names.contains(&group.name))
+            .map(|(index, _)| index.clone())
+            .collect::<Vec<usize>>();
     }
     pub fn shift_voxel_group_up(&mut self) {
-        for i in self.current_voxel_groups_selected.iter_mut() {
-            let shift_index = *i - 1;
-            if shift_index > 0 && shift_index < self.voxel_groups.len() {
-                self.voxel_groups.swap(*i, shift_index);
-                *i = shift_index;
-            }
-        }
+        let smallest_index = *(self
+            .current_voxel_groups_selected
+            .iter()
+            .min()
+            .unwrap_or(&0));
+        let insertion_name = self.voxel_groups[(smallest_index - 1).max(1)].name.clone();
+        let selected_names: Vec<String> = self
+            .voxel_groups
+            .iter()
+            .enumerate()
+            .filter(|(index, _)| self.current_voxel_groups_selected.contains(index))
+            .map(|(_, group)| group.name.clone())
+            .collect();
+        let to_shift: Vec<VoxelGroup> = self
+            .voxel_groups
+            .extract_if(0..self.voxel_groups.len(), |element| {
+                selected_names.contains(&element.name)
+            })
+            .collect();
+        let insert_index = self
+            .voxel_groups
+            .iter()
+            .position(|group| group.name == insertion_name)
+            .map_or(1, |index| index);
+        self.voxel_groups
+            .splice(insert_index..insert_index, to_shift);
+        self.current_voxel_groups_selected = self
+            .voxel_groups
+            .iter()
+            .enumerate()
+            .filter(|(_, group)| selected_names.contains(&group.name))
+            .map(|(index, _)| index.clone())
+            .collect::<Vec<usize>>();
     }
     pub fn merge_voxel_group(&mut self) {
         let shift_index = self.current_voxel_groups_selected[0] + 1;
