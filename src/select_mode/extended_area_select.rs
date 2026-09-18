@@ -8,6 +8,7 @@ use crate::{
         raycast_compute_from_mouse_position,
     },
     select_mode::select_mode::SelectMode,
+    tools::key_input_manager::ModifierKeysStatus,
 };
 
 pub struct ExtendedAreaSelectMode {
@@ -51,6 +52,7 @@ impl SelectMode for ExtendedAreaSelectMode {
         &mut self,
         mouse_x: f64,
         mouse_y: f64,
+        modifier_key_status: ModifierKeysStatus,
         camera: &crate::camera::Camera,
         scene: &mut crate::voxel_scene::VoxelScene,
         config: &wgpu::SurfaceConfiguration,
@@ -97,6 +99,7 @@ impl SelectMode for ExtendedAreaSelectMode {
         &mut self,
         mouse_x: f64,
         mouse_y: f64,
+        modifier_key_status: ModifierKeysStatus,
         camera: &crate::camera::Camera,
         scene: &mut crate::voxel_scene::VoxelScene,
         config: &wgpu::SurfaceConfiguration,
@@ -165,6 +168,7 @@ impl SelectMode for ExtendedAreaSelectMode {
         &mut self,
         mouse_x: f64,
         mouse_y: f64,
+        modifier_key_status: ModifierKeysStatus,
         camera: &crate::camera::Camera,
         scene: &mut crate::voxel_scene::VoxelScene,
         config: &wgpu::SurfaceConfiguration,

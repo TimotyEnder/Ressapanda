@@ -5,7 +5,7 @@ use crate::{
         area_select_mode::AreaSelectMode, extended_area_select::ExtendedAreaSelectMode,
         single_select_mode::SingleSelectMode,
     },
-    tools::tool::Tool,
+    tools::{key_input_manager::ModifierKeysStatus, tool::Tool},
     voxel_scene::VoxelScene,
 };
 
@@ -14,6 +14,7 @@ pub trait SelectMode {
         &mut self,
         mouse_x: f64,
         mouse_y: f64,
+        modifier_key_status: ModifierKeysStatus,
         camera: &Camera,
         scene: &mut VoxelScene,
         config: &wgpu::SurfaceConfiguration,
@@ -24,6 +25,7 @@ pub trait SelectMode {
         &mut self,
         mouse_x: f64,
         mouse_y: f64,
+        modifier_key_status: ModifierKeysStatus,
         camera: &Camera,
         scene: &mut VoxelScene,
         config: &wgpu::SurfaceConfiguration,
@@ -34,6 +36,7 @@ pub trait SelectMode {
         &mut self,
         mouse_x: f64,
         mouse_y: f64,
+        modifier_key_status: ModifierKeysStatus,
         camera: &Camera,
         scene: &mut VoxelScene,
         config: &wgpu::SurfaceConfiguration,

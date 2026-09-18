@@ -429,6 +429,7 @@ impl State {
             self.current_select_mode.mouse_down(
                 self.last_mouse_position_recorded.x,
                 self.last_mouse_position_recorded.y,
+                self.key_input_manager.get_modifier_keys_status(),
                 &self.camera,
                 &mut self.voxel_scene,
                 &self.config,
@@ -439,6 +440,7 @@ impl State {
             self.current_select_mode.mouse_up(
                 self.last_mouse_position_recorded.x,
                 self.last_mouse_position_recorded.y,
+                self.key_input_manager.get_modifier_keys_status(),
                 &self.camera,
                 &mut self.voxel_scene,
                 &self.config,
@@ -496,6 +498,7 @@ impl State {
         self.current_select_mode.temp_draw_on_mouse_hover(
             self.last_mouse_position_recorded.x,
             self.last_mouse_position_recorded.y,
+            self.key_input_manager.get_modifier_keys_status(),
             &self.camera,
             &mut self.voxel_scene,
             &self.config,

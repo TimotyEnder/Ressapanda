@@ -5,15 +5,19 @@ use crate::{
     color::VoxelColor,
     raycast::{find_first_voxel_to_intersect_ray, raycast_compute_from_mouse_position},
     select_mode::select_mode::SelectMode,
-    tools::tool::Tool,
+    tools::{key_input_manager::ModifierKeysStatus, tool::Tool},
 };
 
 pub struct SingleSelectMode {
     press_flag: bool,
+    previous_voxel_pos_drawn: Option<Vector3<f32>>,
 }
 impl SingleSelectMode {
     pub fn new() -> Self {
-        Self { press_flag: false }
+        Self {
+            press_flag: false,
+            previous_voxel_pos_drawn: None,
+        }
     }
 }
 impl SelectMode for SingleSelectMode {
@@ -21,6 +25,7 @@ impl SelectMode for SingleSelectMode {
         &mut self,
         mouse_x: f64,
         mouse_y: f64,
+        modifier_key_status: ModifierKeysStatus,
         camera: &crate::camera::Camera,
         scene: &mut crate::voxel_scene::VoxelScene,
         config: &wgpu::SurfaceConfiguration,
@@ -46,14 +51,15 @@ impl SelectMode for SingleSelectMode {
                         {
                             let point =
                                 voxel.point_on_voxel_grid_closest_to_point(intersect_position);
-                            tool.operate_with_position(
-                                Vector3::new(point.x, point.y, point.z),
-                                scene,
-                                brush,
-                            );
+                            let op_position = Vector3::new(point.x, point.y, point.z);
+                            tool.operate_with_position(op_position, scene, brush);
+                            self.previous_voxel_pos_drawn = Some(op_position);
                         }
                     }
-                    _ => tool.operate_with_position(voxel_position, scene, brush),
+                    _ => {
+                        tool.operate_with_position(voxel_position, scene, brush);
+                        self.previous_voxel_pos_drawn = Some(voxel_position);
+                    }
                 }
             }
         }
@@ -63,6 +69,7 @@ impl SelectMode for SingleSelectMode {
         &mut self,
         _mouse_x: f64,
         _mouse_y: f64,
+        modifier_key_status: ModifierKeysStatus,
         _camera: &crate::camera::Camera,
         _scene: &mut crate::voxel_scene::VoxelScene,
         _config: &wgpu::SurfaceConfiguration,
@@ -76,6 +83,7 @@ impl SelectMode for SingleSelectMode {
         &mut self,
         mouse_x: f64,
         mouse_y: f64,
+        modifier_key_status: ModifierKeysStatus,
         camera: &crate::camera::Camera,
         scene: &mut crate::voxel_scene::VoxelScene,
         config: &wgpu::SurfaceConfiguration,
@@ -100,18 +108,41 @@ impl SelectMode for SingleSelectMode {
                         .get_voxel_from_position_prioritizing_first_selected_set(voxel_position)
                     {
                         let point = voxel.point_on_voxel_grid_closest_to_point(intersect_position);
-                        tool.temp_operate_with_position(
-                            Vector3::new(point.x, point.y, point.z),
-                            scene,
-                            transparent_vers_off_brush,
-                        );
+                        let op_position = Vector3::new(point.x, point.y, point.z);
+                        if self.press_flag && modifier_key_status.shift_modifier {
+                            if let Some(prev_drawn) = self.previous_voxel_pos_drawn {
+                                if prev_drawn == voxel_position {
+                                    return;
+                                }
+                            }
+                            tool.operate_with_position(op_position, scene, brush);
+                            self.previous_voxel_pos_drawn = Some(op_position);
+                        } else {
+                            tool.temp_operate_with_position(
+                                op_position,
+                                scene,
+                                transparent_vers_off_brush,
+                            );
+                        }
                     }
                 }
-                _ => tool.temp_operate_with_position(
-                    voxel_position,
-                    scene,
-                    &transparent_vers_off_brush,
-                ),
+                _ => {
+                    if self.press_flag && modifier_key_status.shift_modifier {
+                        if let Some(prev_drawn) = self.previous_voxel_pos_drawn {
+                            if prev_drawn == voxel_position {
+                                return;
+                            }
+                        }
+                        tool.operate_with_position(voxel_position, scene, brush);
+                        self.previous_voxel_pos_drawn = Some(voxel_position);
+                    } else {
+                        tool.temp_operate_with_position(
+                            voxel_position,
+                            scene,
+                            &transparent_vers_off_brush,
+                        )
+                    }
+                }
             }
         } else {
             scene.force_voxel_scene_update();
@@ -126,6 +157,6 @@ impl SelectMode for SingleSelectMode {
     }
 
     fn tooltip(&self) -> &'static str {
-        "Single Select Mode (Shortcut:Q)"
+        "Single Select Mode (Shortcut:Q). For continuous drawing, hold (Shift)"
     }
 }

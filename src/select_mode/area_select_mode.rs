@@ -5,6 +5,7 @@ use crate::{
     filler::fill_positions_from_a_to_b,
     raycast::{find_first_voxel_to_intersect_ray, raycast_compute_from_mouse_position},
     select_mode::select_mode::SelectMode,
+    tools::key_input_manager::ModifierKeysStatus,
 };
 
 pub struct AreaSelectMode {
@@ -20,6 +21,7 @@ impl SelectMode for AreaSelectMode {
         &mut self,
         mouse_x: f64,
         mouse_y: f64,
+        modifier_key_status: ModifierKeysStatus,
         camera: &crate::camera::Camera,
         scene: &mut crate::voxel_scene::VoxelScene,
         config: &wgpu::SurfaceConfiguration,
@@ -40,6 +42,7 @@ impl SelectMode for AreaSelectMode {
         &mut self,
         mouse_x: f64,
         mouse_y: f64,
+        modifier_key_status: ModifierKeysStatus,
         camera: &crate::camera::Camera,
         scene: &mut crate::voxel_scene::VoxelScene,
         config: &wgpu::SurfaceConfiguration,
@@ -99,6 +102,7 @@ impl SelectMode for AreaSelectMode {
         &mut self,
         mouse_x: f64,
         mouse_y: f64,
+        modifier_key_status: ModifierKeysStatus,
         camera: &crate::camera::Camera,
         scene: &mut crate::voxel_scene::VoxelScene,
         config: &wgpu::SurfaceConfiguration,
