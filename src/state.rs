@@ -67,7 +67,7 @@ pub struct State {
     next_frame_instance_count: usize,
     current_brush: Brush,
     cursor_loader: CursorLoader,
-    egui_ctx: egui::Context, // own clone, used for run_ui + tessellate
+    egui_ctx: egui::Context,
     pub egui_winit_state: egui_winit::State,
     egui_renderer: egui_wgpu::Renderer,
     egui_paint_jobs: Vec<epaint::ClippedPrimitive>,
