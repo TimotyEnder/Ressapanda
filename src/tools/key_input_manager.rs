@@ -11,15 +11,15 @@ use crate::{
     voxel_scene::{VoxelScene, VoxelSceneDirection},
 };
 pub struct ModifierKeysStatus {
-    pub move_modifier: bool,
-    pub rotate_modifier: bool,
+    pub alt_modifier: bool,
+    pub shift_modifier: bool,
     pub control_modifier: bool,
 }
 pub struct KeyInputManager {
     keycode_to_mapping: HashMap<KeyCode, &'static str>,
     keycode_to_flag: HashMap<KeyCode, bool>,
-    move_modifier: bool,
-    rotate_modifier: bool,
+    alt_modifier: bool,
+    shift_modifier: bool,
     control_modifier: bool,
 }
 impl KeyInputManager {
@@ -27,8 +27,8 @@ impl KeyInputManager {
         let mut ret = Self {
             keycode_to_mapping: HashMap::new(),
             keycode_to_flag: HashMap::new(),
-            move_modifier: false,
-            rotate_modifier: false,
+            alt_modifier: false,
+            shift_modifier: false,
             control_modifier: false,
         };
         //Tools
@@ -51,10 +51,10 @@ impl KeyInputManager {
     pub fn modifier_inputs(&mut self, key: KeyCode, pressed: bool) {
         match key {
             KeyCode::ShiftLeft => {
-                self.rotate_modifier = pressed;
+                self.shift_modifier = pressed;
             }
             KeyCode::AltLeft => {
-                self.move_modifier = pressed;
+                self.alt_modifier = pressed;
             }
             KeyCode::ControlLeft => {
                 self.control_modifier = pressed;
@@ -68,8 +68,8 @@ impl KeyInputManager {
     pub fn tool_selection_inputs(&mut self, key: KeyCode, pressed: bool) -> Option<Box<dyn Tool>> {
         if let Some(name) = self.keycode_to_mapping.get(&key)
             && let Some(flag) = self.keycode_to_flag.get_mut(&key)
-            && !self.move_modifier
-            && !self.rotate_modifier
+            && !self.alt_modifier
+            && !self.shift_modifier
             && !self.control_modifier
         {
             if !*flag && pressed {
@@ -89,8 +89,8 @@ impl KeyInputManager {
     ) -> Option<Box<dyn SelectMode>> {
         if let Some(name) = self.keycode_to_mapping.get(&key)
             && let Some(flag) = self.keycode_to_flag.get_mut(&key)
-            && !self.move_modifier
-            && !self.rotate_modifier
+            && !self.alt_modifier
+            && !self.shift_modifier
             && !self.control_modifier
         {
             if !*flag && pressed {
@@ -149,10 +149,10 @@ impl KeyInputManager {
         scene: &mut VoxelScene,
         camera: &Camera,
     ) {
-        if self.move_modifier {
+        if self.alt_modifier {
             self.center_input(key, pressed, scene, camera);
             self.move_inputs(key, pressed, scene, camera);
-        } else if self.rotate_modifier {
+        } else if self.shift_modifier {
             self.rotate_inputs(key, pressed, scene, camera);
         }
     }
@@ -205,8 +205,8 @@ impl KeyInputManager {
     }
     pub fn get_modifier_keys_status(&self) -> ModifierKeysStatus {
         ModifierKeysStatus {
-            move_modifier: self.move_modifier,
-            rotate_modifier: self.rotate_modifier,
+            alt_modifier: self.alt_modifier,
+            shift_modifier: self.shift_modifier,
             control_modifier: self.control_modifier,
         }
     }

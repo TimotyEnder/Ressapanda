@@ -1,4 +1,4 @@
-use std::{collections::HashSet, path::PathBuf};
+use std::path::PathBuf;
 
 use egui::Color32;
 use egui_file_dialog::FileDialog;

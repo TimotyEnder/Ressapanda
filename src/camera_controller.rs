@@ -14,6 +14,7 @@ pub struct CameraController {
     pub yaw: f64,
     pub pitch: f64,
     pub radius: f64,
+    initial_radius: f64,
     pub pan_offset: Vector3<f32>,
 }
 impl CameraController {
@@ -23,6 +24,7 @@ impl CameraController {
             + camera.get_eye_position().z.powf(2.0))
         .sqrt();
         Self {
+            initial_radius: radius as f64,
             sensitivity_rad_per_pixel: rotation_sensitivity as f64,
             rotate_started: false,
             pan_started: false,
@@ -107,6 +109,11 @@ impl CameraController {
     pub fn update_camera(&self, camera: &mut Camera) {
         let target = Point3::from_vec(self.pan_offset);
         let orbit = spherical_to_cartesian(self.radius, self.yaw, self.pitch).to_vec();
+        camera.set_position(target, target + orbit);
+    }
+    pub fn update_orienting_cross_camera(&self, camera: &mut Camera) {
+        let target = Point3::from_vec(self.pan_offset);
+        let orbit = spherical_to_cartesian(self.initial_radius, self.yaw, self.pitch).to_vec();
         camera.set_position(target, target + orbit);
     }
 }

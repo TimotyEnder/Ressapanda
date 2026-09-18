@@ -24,10 +24,7 @@ use crate::{
     voxel_scene::{VoxelScene, VoxelSceneDirection},
 };
 use cgmath::Point3;
-use egui::{
-    Align, Align2, Color32, FontId, Image, Panel, Rect, WidgetType::TextEdit, epaint,
-    load::SizedTexture, menu,
-};
+use egui::{Align2, Color32, FontId, Frame, Image, Panel, Rect, epaint, load::SizedTexture, menu};
 use std::{iter, sync::Arc};
 use wgpu::util::DeviceExt;
 use winit::{
@@ -52,9 +49,15 @@ pub struct State {
     pub camera: Camera,
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
+    pub orienting_cross_camera: Camera,
+    orienting_cross_camera_uniform: CameraUniform,
+    orienting_cross_camera_buffer: wgpu::Buffer,
+    orienting_cross_camera_bind_group: wgpu::BindGroup,
     camera_bind_group: wgpu::BindGroup,
     pub voxel_scene: VoxelScene,
+    pub orienting_cross_scene: VoxelScene,
     voxel_instance_buffer: wgpu::Buffer,
+    orienting_cross_instance_buffer: wgpu::Buffer,
     depth_texture: DepthTexture,
     camera_controller: CameraController,
     key_input_manager: KeyInputManager,
@@ -170,6 +173,15 @@ impl State {
             0.1,
             200.0,
         );
+        let orienting_cross_camera = Camera::new(
+            (0.0, 5.0, 10.0).into(),
+            (0.0, 0.0, 0.0).into(),
+            cgmath::Vector3::unit_y(),
+            config.width as f32 / config.height as f32,
+            45.0,
+            0.1,
+            200.0,
+        );
         let camera_controller = CameraController::new(0.01, &camera);
         let mut camera_uniform = CameraUniform::new();
         camera_uniform.update_view_proj(&camera);
@@ -178,6 +190,14 @@ impl State {
             contents: bytemuck::cast_slice(&[camera_uniform]),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
+        let mut orienting_cross_camera_uniform = CameraUniform::new();
+        orienting_cross_camera_uniform.update_view_proj(&orienting_cross_camera);
+        let orienting_cross_camera_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Camera Buffer"),
+                contents: bytemuck::cast_slice(&[orienting_cross_camera_uniform]),
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            });
         let camera_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[wgpu::BindGroupLayoutEntry {
@@ -201,13 +221,29 @@ impl State {
             }],
             label: Some("camera_bind_group"),
         });
+        let orienting_cross_camera_bind_group =
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: &camera_bind_group_layout,
+                entries: &[wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: orienting_cross_camera_buffer.as_entire_binding(),
+                }],
+                label: Some("camera_bind_group"),
+            });
 
         let mut voxel_scene = VoxelScene::new();
+        let mut orienting_cross_scene = VoxelScene::orientating_cross_scene();
         let voxel_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Instance Buffer"),
             contents: bytemuck::cast_slice(voxel_scene.prepare_buffer_contents()),
             usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         });
+        let orienting_cross_instance_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Orienting Cross Instance Buffer"),
+                contents: bytemuck::cast_slice(orienting_cross_scene.prepare_buffer_contents()),
+                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+            });
         let next_frame_instance_count = voxel_scene.get_voxel_instance_count();
         let depth_texture = DepthTexture::create_depth_texture(&device, &config, "depth_texture");
 
@@ -321,7 +357,9 @@ impl State {
             camera_uniform,
             camera_bind_group,
             voxel_instance_buffer,
+            orienting_cross_instance_buffer,
             voxel_scene,
+            orienting_cross_scene,
             depth_texture,
             camera_controller,
             key_input_manager: tool_selector,
@@ -337,6 +375,10 @@ impl State {
             egui_paint_jobs: Vec::new(),
             egui_textures_delta: egui::TexturesDelta::default(),
             ui_info: UIData::new(egui_ctx.clone()),
+            orienting_cross_camera_uniform,
+            orienting_cross_camera,
+            orienting_cross_camera_buffer,
+            orienting_cross_camera_bind_group,
         })
     }
     pub fn window(&self) -> &Window {
@@ -424,6 +466,8 @@ impl State {
     pub fn update(&mut self) {
         self.window.set_title(&self.get_window_name());
         self.camera_controller.update_camera(&mut self.camera);
+        self.camera_controller
+            .update_orienting_cross_camera(&mut self.orienting_cross_camera);
         self.update_camera();
         self.update_temporary_voxel_generation_on_hover();
         self.update_voxel_buffers();
@@ -492,7 +536,7 @@ impl State {
             });
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
+                label: Some(" Main Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
                     resolve_target: None,
@@ -528,6 +572,47 @@ impl State {
                 0..CUBE_INDICES.len() as u32,
                 0,
                 0..self.next_frame_instance_count as u32,
+            );
+        }
+        {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some(" Orienting Cross Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Load,
+                        store: wgpu::StoreOp::Store,
+                    },
+                    depth_slice: None,
+                })],
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.depth_texture.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }),
+                occlusion_query_set: None,
+                timestamp_writes: None,
+                multiview_mask: None,
+            });
+            let size = 100.0;
+            let margin = 10.0;
+            let offset = 10.0;
+            let vx = self.config.width as f32 - size - margin + offset;
+            let vy = self.config.height as f32 - size - margin - offset;
+            render_pass.set_viewport(vx, vy, size, size, 0.0, 1.0);
+            render_pass.set_vertex_buffer(1, self.orienting_cross_instance_buffer.slice(..));
+            render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.set_bind_group(0, &self.orienting_cross_camera_bind_group, &[]);
+            render_pass.draw_indexed(
+                0..CUBE_INDICES.len() as u32,
+                0,
+                0..self.orienting_cross_scene.get_voxel_instance_count() as u32,
             );
         }
 
@@ -600,6 +685,13 @@ impl State {
             0,
             bytemuck::cast_slice(&[self.camera_uniform]),
         );
+        self.orienting_cross_camera_uniform
+            .update_view_proj(&self.orienting_cross_camera);
+        self.queue.write_buffer(
+            &self.orienting_cross_camera_buffer,
+            0,
+            bytemuck::cast_slice(&[self.orienting_cross_camera_uniform]),
+        );
     }
     fn update_voxel_buffers(&mut self) {
         if !self.voxel_scene.is_voxel_scene_changed() {
@@ -631,6 +723,29 @@ impl State {
             self.ui_info.file_dialog.save_file();
         }
         self.voxel_scene.set_saved();
+    }
+    fn orientation_legend(&self, ui: &mut egui::Ui) {
+        let mut job = egui::text::LayoutJob::default();
+        let fmt = |color| egui::TextFormat {
+            font_id: FontId::proportional(30.0),
+            color,
+            ..Default::default()
+        };
+
+        job.append("X", 0.0, fmt(egui::Color32::from_rgb(255, 0, 0)));
+        job.append(" ", 0.0, fmt(WHITE));
+        job.append("Y", 0.0, fmt(egui::Color32::from_rgb(0, 255, 0)));
+        job.append(" ", 0.0, fmt(WHITE));
+        job.append("Z", 0.0, fmt(egui::Color32::from_rgb(0, 0, 255)));
+
+        egui::Window::new("Orientation Legend")
+            .title_bar(false)
+            .resizable(false)
+            .anchor(egui::Align2::RIGHT_BOTTOM, [-15.0, 0.0])
+            .frame(Frame::NONE)
+            .show(ui, |ui| {
+                ui.label(job);
+            });
     }
     fn ui(&mut self, ui: &mut egui::Ui) {
         let version = env!("CARGO_PKG_VERSION");
@@ -985,6 +1100,7 @@ impl State {
             });
         self.popups(ui);
         self.file_save_dialog(ui);
+        self.orientation_legend(ui);
     }
     fn file_save_dialog(&mut self, ui: &mut egui::Ui) {
         self.ui_info.file_dialog.update(ui.ctx());

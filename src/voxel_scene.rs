@@ -19,6 +19,33 @@ struct VoxelGroup {
     pub center: Vector3<f32>,
 }
 impl VoxelGroup {
+    pub fn orientation_cross() -> Self {
+        let voxels = vec![
+            VoxelInstance::new(vec3(2.0, 0.0, 0.0), VoxelColor::new(1.0, 0.0, 0.0, 1.0)),
+            VoxelInstance::new(vec3(3.0, 0.0, 0.0), VoxelColor::new(1.0, 0.0, 0.0, 1.0)),
+            VoxelInstance::new(vec3(4.0, 0.0, 0.0), VoxelColor::new(1.0, 0.0, 0.0, 1.0)),
+            VoxelInstance::new(vec3(0.0, 2.0, 0.0), VoxelColor::new(0.0, 1.0, 0.0, 1.0)),
+            VoxelInstance::new(vec3(0.0, 3.0, 0.0), VoxelColor::new(0.0, 1.0, 0.0, 1.0)),
+            VoxelInstance::new(vec3(0.0, 4.0, 0.0), VoxelColor::new(0.0, 1.0, 0.0, 1.0)),
+            VoxelInstance::new(vec3(0.0, 0.0, 2.0), VoxelColor::new(0.0, 0.0, 1.0, 1.0)),
+            VoxelInstance::new(vec3(0.0, 0.0, 3.0), VoxelColor::new(0.0, 0.0, 1.0, 1.0)),
+            VoxelInstance::new(vec3(0.0, 0.0, 4.0), VoxelColor::new(0.0, 0.0, 1.0, 1.0)),
+        ];
+        let mut position_to_voxel = BTreeMap::new();
+        for voxel in voxels {
+            position_to_voxel.insert(
+                VoxelScenePosition::from_voxel_position(voxel.get_position()),
+                voxel,
+            );
+        }
+        Self {
+            position_to_voxel: position_to_voxel,
+            name: String::from("OrientationCross"),
+            visible: true,
+            editing_name: false,
+            center: vec3(0.0, 0.0, 0.0),
+        }
+    }
     pub fn to_saved(&self) -> SavedVoxelGroup {
         SavedVoxelGroup {
             visible: self.visible,
@@ -61,7 +88,7 @@ impl VoxelGroup {
     pub fn merge_with(&mut self, other: VoxelGroup) {
         self.position_to_voxel.extend(other.position_to_voxel);
     }
-    pub fn as_a_copy_of(other: &VoxelGroup, counter: usize, name: String) -> Self {
+    pub fn as_a_copy_of(other: &VoxelGroup, name: String) -> Self {
         Self {
             position_to_voxel: BTreeMap::clone(&other.position_to_voxel),
             name: name,
@@ -113,6 +140,19 @@ pub struct VoxelScene {
     saved: bool,
 }
 impl VoxelScene {
+    pub fn orientating_cross_scene() -> Self {
+        let orientation_cross = VoxelGroup::orientation_cross();
+
+        Self {
+            voxel_groups: vec![orientation_cross],
+            current_voxel_groups_selected: vec![0],
+            temporary_voxels: vec![],
+            raw_voxel_instance_list: vec![],
+            voxels_changed: true,
+            voxel_group_name_counter: 0,
+            saved: false,
+        }
+    }
     pub fn to_saved(&self) -> SaveFile {
         SaveFile {
             panda: String::from("RESSA!"),
@@ -549,11 +589,7 @@ impl VoxelScene {
         let mut duplicates = Vec::new();
         for i in self.current_voxel_groups_selected.clone() {
             let unique_name = self.turn_name_unique(String::from(&self.voxel_groups[i].name), None);
-            let duplicate = VoxelGroup::as_a_copy_of(
-                &self.voxel_groups[i],
-                self.voxel_group_name_counter,
-                unique_name,
-            );
+            let duplicate = VoxelGroup::as_a_copy_of(&self.voxel_groups[i], unique_name);
             duplicates.push(duplicate);
         }
         let mut insertion_index = *self
@@ -562,7 +598,7 @@ impl VoxelScene {
             .max()
             .unwrap_or(&0)
             + 1;
-        for i in 0..duplicates.len() {
+        for _ in 0..duplicates.len() {
             self.voxel_groups
                 .insert(insertion_index, duplicates.remove(0));
             insertion_index += 1;
