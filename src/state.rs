@@ -171,7 +171,7 @@ impl State {
             config.width as f32 / config.height as f32,
             45.0,
             0.1,
-            200.0,
+            1000.0,
         );
         let orienting_cross_camera = Camera::new(
             (0.0, 5.0, 10.0).into(),
@@ -180,7 +180,7 @@ impl State {
             config.width as f32 / config.height as f32,
             45.0,
             0.1,
-            200.0,
+            20.0,
         );
         let camera_controller = CameraController::new(0.01, &camera);
         let mut camera_uniform = CameraUniform::new();
@@ -388,6 +388,9 @@ impl State {
         self.key_input_manager.modifier_inputs(key, pressed);
         if self.key_input_manager.save_input(key, pressed) {
             self.conditional_save();
+        }
+        if self.key_input_manager.resize_input(key, pressed) {
+            self.ui_info.voxel_grid_resize_popup = !self.ui_info.voxel_grid_resize_popup;
         }
         self.key_input_manager.camera_preset_positions_inputs(
             key,
@@ -1088,7 +1091,7 @@ impl State {
         if let Some(inner) = selection_mode_window {
             top_offset = inner.response.rect.max.y + spacing;
         }
-        let _tools_window = egui::Window::new("Tools")
+        let tools_window = egui::Window::new("Tools")
             .title_bar(false)
             .anchor(egui::Align2::LEFT_TOP, [0.0, top_offset])
             .collapsible(false)
@@ -1098,10 +1101,22 @@ impl State {
                     .iter()
                     .for_each(|name| self.tool_toggle_button(ui, *name));
             });
+        if let Some(inner) = tools_window {
+            top_offset = inner.response.rect.max.y + spacing;
+        }
+        let _actions_window = egui::Window::new("Actions")
+            .title_bar(false)
+            .anchor(egui::Align2::LEFT_TOP, [0.0, top_offset])
+            .collapsible(false)
+            .auto_sized()
+            .show(ui, |ui| {
+                self.resize_voxel_grid_button(ui);
+            });
         self.popups(ui);
         self.file_save_dialog(ui);
         self.orientation_legend(ui);
     }
+
     fn file_save_dialog(&mut self, ui: &mut egui::Ui) {
         self.ui_info.file_dialog.update(ui.ctx());
         if let Some(path) = self.ui_info.file_dialog.take_picked() {
@@ -1200,6 +1215,47 @@ impl State {
                     .push(self.ui_info.ui_brush_color);
                 self.ui_info.last_color_added = self.ui_info.ui_brush_color;
             }
+        }
+        if self.ui_info.voxel_grid_resize_popup {
+            egui::Window::new("Resize Voxel Grid")
+                .fixed_size([200.0, 50.0])
+                .title_frame(self.styled_title_frame(ui))
+                .collapsible(false)
+                .open(&mut self.ui_info.voxel_grid_resize_popup)
+                .show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        let responce_width = ui.add_sized(
+                            [80.0, 15.0],
+                            egui::TextEdit::singleline(
+                                &mut self.ui_info.voxel_grid_resize_width_string,
+                            ),
+                        );
+                        ui.label("X");
+                        let responce_height = ui.add_sized(
+                            [80.0, 15.0],
+                            egui::TextEdit::singleline(
+                                &mut self.ui_info.voxel_grid_resize_length_string,
+                            ),
+                        );
+                        if self.ui_info.voxel_grid_resize_focus_flag {
+                            self.ui_info.voxel_grid_resize_focus_flag = false;
+                            responce_width.request_focus();
+                        }
+                        if responce_height.changed() || responce_width.changed() {
+                            self.voxel_scene.resize_voxel_grid_dimensions(
+                                &self.ui_info.voxel_grid_resize_width_string,
+                                &self.ui_info.voxel_grid_resize_length_string,
+                            );
+                        }
+                    })
+                });
+        } else {
+            let (width, length) = self.voxel_scene.get_voxel_grid_dimensions();
+            self.ui_info.voxel_grid_resize_width_string = width.to_string();
+            self.ui_info.voxel_grid_resize_length_string = length.to_string();
+        }
+        if !self.ui_info.voxel_grid_resize_popup && !self.ui_info.voxel_grid_resize_focus_flag {
+            self.ui_info.voxel_grid_resize_focus_flag = true;
         }
     }
     fn styled_title_frame(&self, ui: &mut egui::Ui) -> egui::Frame {
@@ -1385,5 +1441,24 @@ impl State {
         let sized = SizedTexture::new(texture.id(), [25.0, 25.0]);
         let img = Image::new(sized);
         Some(egui::Button::image(img).fill(Color32::from_white_alpha(0)))
+    }
+    fn resize_voxel_grid_button(&mut self, ui: &mut egui::Ui) {
+        let Some(texture) = self
+            .ui_info
+            .icon_loader
+            .get_icon_texture("Resize_Voxel_Grid")
+        else {
+            return;
+        };
+        let sized = SizedTexture::new(texture.id(), [50.0, 50.0]);
+        let img = Image::new(sized);
+        let button = egui::Button::image(img);
+        let responce = ui.add(button);
+        if responce
+            .on_hover_text("Resize the voxel grid (Shortcut:Z)")
+            .clicked()
+        {
+            self.ui_info.voxel_grid_resize_popup = !self.ui_info.voxel_grid_resize_popup;
+        }
     }
 }

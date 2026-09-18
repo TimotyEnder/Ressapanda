@@ -19,6 +19,10 @@ pub struct UIData {
     pub color_hex_input_string: String,
     pub icon_loader: IconLoader,
     pub voxel_group_removal_popup: bool,
+    pub voxel_grid_resize_popup: bool,
+    pub voxel_grid_resize_width_string: String,
+    pub voxel_grid_resize_length_string: String,
+    pub voxel_grid_resize_focus_flag: bool,
     pub voxel_group_rename_request_focus_flag: bool,
     pub current_save_path: Option<PathBuf>,
     pub file_dialog: egui_file_dialog::FileDialog,
@@ -34,8 +38,11 @@ impl UIData {
             color_hex_input_string: Color32::from_rgb(255, 255, 255).to_hex(),
             icon_loader: IconLoader::new(ctx),
             voxel_group_removal_popup: false,
+            voxel_grid_resize_popup: false,
             voxel_group_rename_request_focus_flag: false,
             current_save_path: None,
+            voxel_grid_resize_length_string: String::new(),
+            voxel_grid_resize_width_string: String::new(),
             file_dialog: FileDialog::new()
                 .add_file_filter_extensions("Ressapanda Scene", vec!["rspnd"])
                 .default_file_filter("Ressapanda Scene")
@@ -43,6 +50,7 @@ impl UIData {
                 .add_save_extension("Ressapanda Scene", "rspnd")
                 .default_save_extension("rspnd")
                 .allow_file_overwrite(true),
+            voxel_grid_resize_focus_flag: true,
         }
     }
 }

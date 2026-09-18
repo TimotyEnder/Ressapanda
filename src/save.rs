@@ -26,6 +26,8 @@ pub struct SaveFile {
     pub version: String,
     pub groups: Vec<SavedVoxelGroup>,
     pub name_counter: usize,
+    pub grid_voxel_dimensions_width: f32,
+    pub grid_voxel_dimensions_length: f32,
 }
 pub fn save_to_file(scene: &VoxelScene, path: &Path) -> anyhow::Result<()> {
     let json = serde_json::to_string_pretty(&scene.to_saved())?;

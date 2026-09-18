@@ -1,6 +1,7 @@
 use cgmath::{Deg, Quaternion, Vector3};
 use cgmath::{prelude::*, vec3};
 use std::collections::BTreeMap;
+use std::usize;
 
 use crate::camera::Camera;
 use crate::conversion_utils::snap_vector_to_flat_direction;
@@ -10,6 +11,10 @@ use crate::{
     color::VoxelColor,
     voxel_instance::{RawVoxelInstance, VoxelInstance},
 };
+pub struct GridVoxelDimensions {
+    pub width: f32,  //x coord size
+    pub length: f32, //z coord size
+}
 #[derive(Clone)]
 struct VoxelGroup {
     pub position_to_voxel: BTreeMap<VoxelScenePosition, VoxelInstance>,
@@ -76,9 +81,9 @@ impl VoxelGroup {
             center: vec3(0.0, 0.0, 0.0),
         }
     }
-    pub fn grid_voxel() -> Self {
+    pub fn grid_voxel(dimensions: &GridVoxelDimensions) -> Self {
         Self {
-            position_to_voxel: Self::axis_grid(),
+            position_to_voxel: Self::axis_grid(dimensions),
             name: String::from("Grid Voxel Group"),
             visible: true,
             editing_name: false,
@@ -106,18 +111,18 @@ impl VoxelGroup {
             center: vec3(0.0, 0.0, 0.0),
         }
     }
-    fn axis_grid() -> BTreeMap<VoxelScenePosition, VoxelInstance> {
+    fn axis_grid(dimensions: &GridVoxelDimensions) -> BTreeMap<VoxelScenePosition, VoxelInstance> {
         let mut map = BTreeMap::new();
         for position in fill_positions_from_a_to_b(
             Vector3 {
-                x: -16.0,
+                x: -(dimensions.width / 2.0),
                 y: 0.0,
-                z: -16.0,
+                z: -(dimensions.length / 2.0),
             },
             Vector3 {
-                x: 16.0,
+                x: dimensions.width / 2.0,
                 y: 0.0,
-                z: 16.0,
+                z: dimensions.length / 2.0,
             },
         ) {
             let voxel_scene_position = VoxelScenePosition::from_voxel_position(position);
@@ -138,6 +143,7 @@ pub struct VoxelScene {
     voxels_changed: bool,
     voxel_group_name_counter: usize,
     saved: bool,
+    grid_voxel_dimensions: GridVoxelDimensions,
 }
 impl VoxelScene {
     pub fn orientating_cross_scene() -> Self {
@@ -151,6 +157,10 @@ impl VoxelScene {
             voxels_changed: true,
             voxel_group_name_counter: 0,
             saved: false,
+            grid_voxel_dimensions: GridVoxelDimensions {
+                width: 32.0,
+                length: 32.0,
+            },
         }
     }
     pub fn to_saved(&self) -> SaveFile {
@@ -166,10 +176,16 @@ impl VoxelScene {
                 .map(|group| group.to_saved())
                 .collect(),
             name_counter: self.voxel_group_name_counter,
+            grid_voxel_dimensions_length: self.grid_voxel_dimensions.length,
+            grid_voxel_dimensions_width: self.grid_voxel_dimensions.width,
         }
     }
     pub fn from_saved(save: SaveFile) -> Self {
-        let mut voxel_groups = vec![VoxelGroup::grid_voxel()];
+        let grid_dim = GridVoxelDimensions {
+            length: save.grid_voxel_dimensions_length,
+            width: save.grid_voxel_dimensions_width,
+        };
+        let mut voxel_groups = vec![VoxelGroup::grid_voxel(&grid_dim)];
         for group in save.groups {
             voxel_groups.push(VoxelGroup::from_saved(group));
         }
@@ -181,11 +197,16 @@ impl VoxelScene {
             voxels_changed: true,
             voxel_group_name_counter: save.name_counter,
             saved: true,
+            grid_voxel_dimensions: grid_dim,
         }
     }
     pub fn new() -> Self {
         let mut voxel_groups = Vec::new();
-        voxel_groups.push(VoxelGroup::grid_voxel());
+        let grid_dim = GridVoxelDimensions {
+            length: 32.0,
+            width: 32.0,
+        };
+        voxel_groups.push(VoxelGroup::grid_voxel(&grid_dim));
         voxel_groups.push(VoxelGroup::new(format!("Voxel Group:{}", 1)));
         voxel_groups[1].editing_name = false;
         Self {
@@ -196,6 +217,7 @@ impl VoxelScene {
             temporary_voxels: Vec::new(),
             voxel_group_name_counter: 2,
             saved: false,
+            grid_voxel_dimensions: grid_dim,
         }
     }
 
@@ -231,6 +253,33 @@ impl VoxelScene {
     }
     pub fn force_voxel_scene_update(&mut self) {
         self.voxels_changed = true;
+    }
+    pub fn get_voxel_grid_dimensions(&self) -> (f32, f32) {
+        (
+            self.grid_voxel_dimensions.width,
+            self.grid_voxel_dimensions.length,
+        )
+    }
+    pub fn resize_voxel_grid_dimensions(&mut self, width: &str, length: &str) {
+        let width_num_opt = width.parse::<f32>().ok();
+        let length_num_opt = length.parse::<f32>().ok();
+        if let Some(length_num) = length_num_opt
+            && let Some(width_num) = width_num_opt
+        {
+            let new_dim = GridVoxelDimensions {
+                length: length_num,
+                width: width_num,
+            };
+            if (length_num, width_num)
+                != (
+                    self.grid_voxel_dimensions.length,
+                    self.grid_voxel_dimensions.width,
+                )
+            {
+                self.grid_voxel_dimensions = new_dim;
+                self.voxel_groups[0] = VoxelGroup::grid_voxel(&self.grid_voxel_dimensions);
+            }
+        }
     }
     pub fn get_saved(&self) -> bool {
         self.saved

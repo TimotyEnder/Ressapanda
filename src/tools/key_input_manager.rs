@@ -65,6 +65,13 @@ impl KeyInputManager {
     pub fn save_input(&mut self, key: KeyCode, pressed: bool) -> bool {
         return self.control_modifier && key == KeyCode::KeyS && pressed;
     }
+    pub fn resize_input(&mut self, key: KeyCode, pressed: bool) -> bool {
+        return key == KeyCode::KeyR
+            && pressed
+            && !self.alt_modifier
+            && !self.control_modifier
+            && !self.shift_modifier;
+    }
     pub fn tool_selection_inputs(&mut self, key: KeyCode, pressed: bool) -> Option<Box<dyn Tool>> {
         if let Some(name) = self.keycode_to_mapping.get(&key)
             && let Some(flag) = self.keycode_to_flag.get_mut(&key)
