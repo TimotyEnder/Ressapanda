@@ -157,6 +157,6 @@ impl SelectMode for SingleSelectMode {
     }
 
     fn tooltip(&self) -> &'static str {
-        "Single Select Mode (Shortcut:Q). For continuous drawing, hold (Shift)"
+        "Single Select Mode (Shortcut:Q). For continuous operation, hold (Shift)"
     }
 }
