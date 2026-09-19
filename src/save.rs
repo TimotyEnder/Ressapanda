@@ -18,6 +18,7 @@ pub struct SavedVoxel {
 pub struct SavedVoxelGroup {
     pub visible: bool,
     pub name: String,
+    pub id: u64,
     pub voxels: Vec<SavedVoxel>,
 }
 #[derive(Serialize, Deserialize)]
@@ -26,6 +27,7 @@ pub struct SaveFile {
     pub version: String,
     pub groups: Vec<SavedVoxelGroup>,
     pub name_counter: usize,
+    pub id_counter: u64,
     pub grid_voxel_dimensions_width: f32,
     pub grid_voxel_dimensions_length: f32,
 }

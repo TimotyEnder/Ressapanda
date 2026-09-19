@@ -1247,7 +1247,7 @@ impl State {
                             self.ui_info.voxel_grid_resize_focus_flag = false;
                             responce_width.request_focus();
                         }
-                        if responce_height.changed() || responce_width.changed() {
+                        if responce_height.union(responce_width).lost_focus() {
                             self.voxel_scene.resize_voxel_grid_dimensions(
                                 &self.ui_info.voxel_grid_resize_width_string,
                                 &self.ui_info.voxel_grid_resize_length_string,

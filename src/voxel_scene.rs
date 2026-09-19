@@ -15,10 +15,12 @@ pub struct GridVoxelDimensions {
     pub width: f32,  //x coord size
     pub length: f32, //z coord size
 }
+pub type VoxelGroupId = u64;
 #[derive(Clone)]
 struct VoxelGroup {
     pub position_to_voxel: BTreeMap<VoxelScenePosition, VoxelInstance>,
     pub name: String,
+    pub id: u64,
     pub visible: bool,
     pub editing_name: bool,
     pub center: Vector3<f32>,
@@ -49,6 +51,7 @@ impl VoxelGroup {
             visible: true,
             editing_name: false,
             center: vec3(0.0, 0.0, 0.0),
+            id: 0,
         }
     }
     pub fn to_saved(&self) -> SavedVoxelGroup {
@@ -60,6 +63,7 @@ impl VoxelGroup {
                 .values()
                 .map(|voxel| voxel.to_saved())
                 .collect(),
+            id: self.id,
         }
     }
     pub fn from_saved(save: SavedVoxelGroup) -> Self {
@@ -79,39 +83,45 @@ impl VoxelGroup {
             visible: save.visible,
             editing_name: false,
             center: vec3(0.0, 0.0, 0.0),
+            id: save.id,
         }
     }
-    pub fn grid_voxel(dimensions: &GridVoxelDimensions) -> Self {
+    pub fn voxel_grid_group(dimensions: &GridVoxelDimensions) -> Self {
         Self {
-            position_to_voxel: Self::axis_grid(dimensions),
+            position_to_voxel: Self::voxel_grid_with_dimensions(dimensions),
             name: String::from("Grid Voxel Group"),
             visible: true,
             editing_name: false,
             center: vec3(0.0, 0.0, 0.0),
+            id: 0,
         }
     }
     pub fn merge_with(&mut self, other: VoxelGroup) {
         self.position_to_voxel.extend(other.position_to_voxel);
     }
-    pub fn as_a_copy_of(other: &VoxelGroup, name: String) -> Self {
+    pub fn as_a_copy_of(other: &VoxelGroup, name: String, id_counter: u64) -> Self {
         Self {
             position_to_voxel: BTreeMap::clone(&other.position_to_voxel),
             name: name,
             visible: other.visible,
             editing_name: true,
             center: other.center,
+            id: id_counter,
         }
     }
-    pub fn new(name: String) -> Self {
+    pub fn new(name: String, id_counter: u64) -> Self {
         Self {
             position_to_voxel: BTreeMap::new(),
             name: name,
             visible: true,
             editing_name: true,
             center: vec3(0.0, 0.0, 0.0),
+            id: id_counter,
         }
     }
-    fn axis_grid(dimensions: &GridVoxelDimensions) -> BTreeMap<VoxelScenePosition, VoxelInstance> {
+    fn voxel_grid_with_dimensions(
+        dimensions: &GridVoxelDimensions,
+    ) -> BTreeMap<VoxelScenePosition, VoxelInstance> {
         let mut map = BTreeMap::new();
         for position in fill_positions_from_a_to_b(
             Vector3 {
@@ -149,6 +159,7 @@ pub struct VoxelScene {
     voxels_changed: bool,
     voxels_added_or_removed: bool,
     voxel_group_name_counter: usize,
+    voxel_group_id_counter: u64,
     saved: bool,
     grid_voxel_dimensions: GridVoxelDimensions,
 }
@@ -170,6 +181,7 @@ impl VoxelScene {
                 length: 32.0,
             },
             shift_selected_voxel_group: None,
+            voxel_group_id_counter: 0,
         }
     }
     pub fn to_saved(&self) -> SaveFile {
@@ -185,6 +197,7 @@ impl VoxelScene {
                 .map(|group| group.to_saved())
                 .collect(),
             name_counter: self.voxel_group_name_counter,
+            id_counter: self.voxel_group_id_counter,
             grid_voxel_dimensions_length: self.grid_voxel_dimensions.length,
             grid_voxel_dimensions_width: self.grid_voxel_dimensions.width,
         }
@@ -194,7 +207,7 @@ impl VoxelScene {
             length: save.grid_voxel_dimensions_length,
             width: save.grid_voxel_dimensions_width,
         };
-        let mut voxel_groups = vec![VoxelGroup::grid_voxel(&grid_dim)];
+        let mut voxel_groups = vec![VoxelGroup::voxel_grid_group(&grid_dim)];
         for group in save.groups {
             voxel_groups.push(VoxelGroup::from_saved(group));
         }
@@ -209,6 +222,7 @@ impl VoxelScene {
             saved: true,
             grid_voxel_dimensions: grid_dim,
             shift_selected_voxel_group: None,
+            voxel_group_id_counter: save.id_counter,
         }
     }
     pub fn new() -> Self {
@@ -217,8 +231,8 @@ impl VoxelScene {
             length: 32.0,
             width: 32.0,
         };
-        voxel_groups.push(VoxelGroup::grid_voxel(&grid_dim));
-        voxel_groups.push(VoxelGroup::new(format!("Voxel Group:{}", 1)));
+        voxel_groups.push(VoxelGroup::voxel_grid_group(&grid_dim));
+        voxel_groups.push(VoxelGroup::new(format!("Voxel Group:{}", 1), 1));
         voxel_groups[1].editing_name = false;
         Self {
             voxel_groups: voxel_groups,
@@ -231,6 +245,7 @@ impl VoxelScene {
             saved: false,
             grid_voxel_dimensions: grid_dim,
             shift_selected_voxel_group: None,
+            voxel_group_id_counter: 2,
         }
     }
 
@@ -294,7 +309,7 @@ impl VoxelScene {
                 )
             {
                 self.grid_voxel_dimensions = new_dim;
-                self.voxel_groups[0] = VoxelGroup::grid_voxel(&self.grid_voxel_dimensions);
+                self.voxel_groups[0] = VoxelGroup::voxel_grid_group(&self.grid_voxel_dimensions);
             }
         }
     }
@@ -579,7 +594,7 @@ impl VoxelScene {
                 self.shift_selected_voxel_group = None;
             } else if self.current_voxel_groups_selected.len() <= 1 {
                 self.current_voxel_groups_selected.extend(
-                    self.current_voxel_groups_selected[0].min(additional_selection)
+                    self.current_voxel_groups_selected[0].min(additional_selection) + 1
                         ..=additional_selection.max(self.current_voxel_groups_selected[0]),
                 );
             } else {
@@ -627,19 +642,21 @@ impl VoxelScene {
             format!("Voxel Group:{}", self.voxel_group_name_counter),
             None,
         );
-        self.voxel_groups.push(VoxelGroup::new(unique_name));
+        self.voxel_groups
+            .push(VoxelGroup::new(unique_name, self.voxel_group_id_counter));
+        self.voxel_group_id_counter += 1;
         self.voxel_group_name_counter += 1;
     }
     pub fn remove_voxel_group(&mut self) {
-        let selected_names = self
+        let selected_ids = self
             .voxel_groups
             .iter()
             .enumerate()
             .filter(|(index, _)| !self.current_voxel_groups_selected.contains(index))
-            .map(|(_, voxel)| voxel.name.clone())
-            .collect::<Vec<String>>();
+            .map(|(_, voxel)| voxel.id)
+            .collect::<Vec<u64>>();
         self.voxel_groups
-            .retain(|element| return selected_names.contains(&element.name));
+            .retain(|element| return selected_ids.contains(&element.id));
         self.current_voxel_groups_selected = vec![1];
         if self.voxel_groups.len() <= 1 {
             self.add_voxel_group();
@@ -655,17 +672,17 @@ impl VoxelScene {
             [(largest_index + 1).min(self.voxel_groups.len() - 1)]
         .name
         .clone();
-        let selected_names: Vec<String> = self
+        let selected_ids: Vec<u64> = self
             .voxel_groups
             .iter()
             .enumerate()
             .filter(|(index, _)| self.current_voxel_groups_selected.contains(index))
-            .map(|(_, group)| group.name.clone())
+            .map(|(_, group)| group.id)
             .collect();
         let to_shift: Vec<VoxelGroup> = self
             .voxel_groups
             .extract_if(0..self.voxel_groups.len(), |element| {
-                selected_names.contains(&element.name)
+                selected_ids.contains(&element.id)
             })
             .collect();
         let insert_index = self
@@ -679,7 +696,7 @@ impl VoxelScene {
             .voxel_groups
             .iter()
             .enumerate()
-            .filter(|(_, group)| selected_names.contains(&group.name))
+            .filter(|(_, group)| selected_ids.contains(&group.id))
             .map(|(index, _)| index.clone())
             .collect::<Vec<usize>>();
     }
@@ -690,17 +707,17 @@ impl VoxelScene {
             .min()
             .unwrap_or(&0));
         let insertion_name = self.voxel_groups[(smallest_index - 1).max(1)].name.clone();
-        let selected_names: Vec<String> = self
+        let selected_ids: Vec<u64> = self
             .voxel_groups
             .iter()
             .enumerate()
             .filter(|(index, _)| self.current_voxel_groups_selected.contains(index))
-            .map(|(_, group)| group.name.clone())
+            .map(|(_, group)| group.id)
             .collect();
         let to_shift: Vec<VoxelGroup> = self
             .voxel_groups
             .extract_if(0..self.voxel_groups.len(), |element| {
-                selected_names.contains(&element.name)
+                selected_ids.contains(&element.id)
             })
             .collect();
         let insert_index = self
@@ -714,7 +731,7 @@ impl VoxelScene {
             .voxel_groups
             .iter()
             .enumerate()
-            .filter(|(_, group)| selected_names.contains(&group.name))
+            .filter(|(_, group)| selected_ids.contains(&group.id))
             .map(|(index, _)| index.clone())
             .collect::<Vec<usize>>();
     }
@@ -738,7 +755,12 @@ impl VoxelScene {
         let mut duplicates = Vec::new();
         for i in self.current_voxel_groups_selected.clone() {
             let unique_name = self.turn_name_unique(String::from(&self.voxel_groups[i].name), None);
-            let duplicate = VoxelGroup::as_a_copy_of(&self.voxel_groups[i], unique_name);
+            let duplicate = VoxelGroup::as_a_copy_of(
+                &self.voxel_groups[i],
+                unique_name,
+                self.voxel_group_id_counter,
+            );
+            self.voxel_group_id_counter += 1;
             duplicates.push(duplicate);
         }
         let mut insertion_index = *self
