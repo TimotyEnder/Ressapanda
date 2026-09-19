@@ -56,3 +56,13 @@ pub fn select_mode_from_name(name: &'static str) -> Option<Box<dyn SelectMode>> 
         _ => return None,
     };
 }
+pub fn select_mode_tooltip_from_name(name: &str) -> Option<&str> {
+    match name {
+        "Single" => {
+            return Some("Single Select Mode (Shortcut:Q). For continuous operation, hold (Shift)");
+        }
+        "Area" => return Some("Area Select Mode (Shortcut:W)"),
+        "Extended" => return Some("Extended Area Select(Shortcut:E)"),
+        _ => return None,
+    };
+}

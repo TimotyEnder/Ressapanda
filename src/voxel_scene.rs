@@ -143,9 +143,11 @@ impl VoxelGroup {
 pub struct VoxelScene {
     voxel_groups: Vec<VoxelGroup>,
     current_voxel_groups_selected: Vec<usize>,
+    shift_selected_voxel_group: Option<usize>,
     temporary_voxels: Vec<VoxelInstance>,
     raw_voxel_instance_list: Vec<RawVoxelInstance>,
     voxels_changed: bool,
+    voxels_added_or_removed: bool,
     voxel_group_name_counter: usize,
     saved: bool,
     grid_voxel_dimensions: GridVoxelDimensions,
@@ -160,12 +162,14 @@ impl VoxelScene {
             temporary_voxels: vec![],
             raw_voxel_instance_list: vec![],
             voxels_changed: true,
+            voxels_added_or_removed: true,
             voxel_group_name_counter: 0,
             saved: false,
             grid_voxel_dimensions: GridVoxelDimensions {
                 width: 32.0,
                 length: 32.0,
             },
+            shift_selected_voxel_group: None,
         }
     }
     pub fn to_saved(&self) -> SaveFile {
@@ -200,9 +204,11 @@ impl VoxelScene {
             temporary_voxels: Vec::new(),
             raw_voxel_instance_list: Vec::new(),
             voxels_changed: true,
+            voxels_added_or_removed: true,
             voxel_group_name_counter: save.name_counter,
             saved: true,
             grid_voxel_dimensions: grid_dim,
+            shift_selected_voxel_group: None,
         }
     }
     pub fn new() -> Self {
@@ -219,16 +225,22 @@ impl VoxelScene {
             current_voxel_groups_selected: vec![1],
             raw_voxel_instance_list: Vec::new(),
             voxels_changed: true,
+            voxels_added_or_removed: true,
             temporary_voxels: Vec::new(),
             voxel_group_name_counter: 2,
             saved: false,
             grid_voxel_dimensions: grid_dim,
+            shift_selected_voxel_group: None,
         }
     }
 
     pub fn prepare_buffer_contents(&mut self) -> &Vec<RawVoxelInstance> {
         if self.voxels_changed {
             self.voxels_changed = false;
+            if self.voxels_added_or_removed {
+                self.find_center();
+            }
+            self.voxels_added_or_removed = false;
             self.raw_voxel_instance_list.clear();
             for i in (0..self.voxel_groups.len()).rev() {
                 if self.voxel_groups[i].visible {
@@ -349,15 +361,7 @@ impl VoxelScene {
                 .position_to_voxel
                 .contains_key(&voxel_scene_position)
             {
-                let voxel_to_add = VoxelInstance::new(
-                    position,
-                    VoxelColor {
-                        r: color.r,
-                        g: color.g,
-                        b: color.b,
-                        a: color.a,
-                    },
-                );
+                let voxel_to_add = VoxelInstance::new(position, *color);
                 self.voxels_changed = true;
                 self.saved = false;
                 self.voxel_groups[*i]
@@ -365,7 +369,7 @@ impl VoxelScene {
                     .insert(voxel_scene_position, voxel_to_add);
             }
         }
-        self.find_center();
+        self.voxels_added_or_removed = true;
     }
     pub fn remove_voxel(&mut self, position: Vector3<f32>) -> bool {
         let voxel_scene_position = VoxelScenePosition::from_voxel_position(position);
@@ -388,6 +392,7 @@ impl VoxelScene {
         if at_least_one_deletion {
             self.find_center();
         }
+        self.voxels_added_or_removed = true;
         return at_least_one_deletion;
     }
     pub fn get_all_voxels(&self) -> Vec<&VoxelInstance> {
@@ -459,7 +464,7 @@ impl VoxelScene {
             }
         }
     }
-    pub fn rotate_around_center(&mut self, axis: Vector3<f32>, deg: cgmath::Deg<f32>) -> bool {
+    pub fn rotate_around_center(&mut self, axis: Vector3<f32>, deg: cgmath::Deg<f32>) {
         for i in self.current_voxel_groups_selected.clone() {
             let center = self.voxel_groups[i].center;
             let rotation = Quaternion::from_axis_angle(axis.normalize(), deg);
@@ -506,7 +511,6 @@ impl VoxelScene {
             self.voxels_changed = true;
             self.saved = false;
         }
-        return true;
     }
     pub fn move_by_vector(&mut self, move_vector: Vector3<f32>) {
         let move_scene_vector = VoxelScenePosition::from_voxel_position(move_vector);
@@ -545,31 +549,65 @@ impl VoxelScene {
         self.voxels_changed = true;
         self.saved = false;
     }
-    pub fn set_current_voxel_group(&mut self, working_set: Vec<usize>) {
-        self.current_voxel_groups_selected = working_set;
+    pub fn set_current_voxel_group(&mut self, working_selection: Vec<usize>) {
+        self.current_voxel_groups_selected = working_selection;
     }
-    pub fn toggle_presence_in_current_voxel_group_selection(&mut self, additional_set: usize) {
-        if !self.current_voxel_groups_selected.contains(&additional_set) {
-            self.current_voxel_groups_selected.push(additional_set);
+    pub fn toggle_presence_in_current_voxel_group_selection(
+        &mut self,
+        additional_selection: usize,
+    ) {
+        if !self
+            .current_voxel_groups_selected
+            .contains(&additional_selection)
+        {
+            self.current_voxel_groups_selected
+                .push(additional_selection);
         } else if self.current_voxel_groups_selected.len() > 1 {
-            self.current_voxel_groups_selected = self
-                .current_voxel_groups_selected
-                .clone()
-                .into_iter()
-                .filter(|element| *element != additional_set)
-                .collect();
+            self.current_voxel_groups_selected
+                .retain(|element| *element != additional_selection);
+        }
+    }
+    pub fn shift_select_toggle_presence(&mut self, additional_selection: usize) {
+        if !self
+            .current_voxel_groups_selected
+            .contains(&additional_selection)
+        {
+            if let Some(shift_group) = self.shift_selected_voxel_group {
+                self.current_voxel_groups_selected.extend(
+                    shift_group.min(additional_selection)..=additional_selection.max(shift_group),
+                );
+                self.shift_selected_voxel_group = None;
+            } else if self.current_voxel_groups_selected.len() <= 1 {
+                self.current_voxel_groups_selected.extend(
+                    self.current_voxel_groups_selected[0].min(additional_selection)
+                        ..=additional_selection.max(self.current_voxel_groups_selected[0]),
+                );
+            } else {
+                self.current_voxel_groups_selected
+                    .push(additional_selection);
+                self.shift_selected_voxel_group = Some(additional_selection);
+            }
+        } else if self.current_voxel_groups_selected.len() > 1 {
+            self.current_voxel_groups_selected
+                .retain(|element| *element != additional_selection);
         }
     }
     pub fn get_current_voxel_groups(&self) -> &Vec<usize> {
         &self.current_voxel_groups_selected
     }
-    pub fn get_voxel_group_names_and_indexes(&self) -> Vec<(usize, String, bool)> {
+    pub fn get_voxel_group_edit_flags_and_indexes(&self) -> Vec<(usize, bool)> {
         self.voxel_groups
             .iter()
             .enumerate()
             .filter(|(index, _)| *index > 0)
-            .map(|(index, set)| (index, set.name.clone(), set.editing_name))
-            .collect()
+            .map(|(index, set)| (index, set.editing_name))
+            .collect::<Vec<(usize, bool)>>()
+    }
+    pub fn get_voxel_group_name_ref(&self, voxel_group: usize) -> Option<&String> {
+        if voxel_group > 0 && voxel_group < self.voxel_groups.len() {
+            return Some(&self.voxel_groups[voxel_group].name);
+        }
+        None
     }
     pub fn is_voxel_group_visible(&self, group: usize) -> bool {
         if group > 0 && !self.voxel_groups.is_empty() && self.voxel_groups.len() > group {
@@ -709,9 +747,8 @@ impl VoxelScene {
             .max()
             .unwrap_or(&0)
             + 1;
-        for _ in 0..duplicates.len() {
-            self.voxel_groups
-                .insert(insertion_index, duplicates.remove(0));
+        for group in duplicates.drain(0..duplicates.len()) {
+            self.voxel_groups.insert(insertion_index, group);
             insertion_index += 1;
         }
     }

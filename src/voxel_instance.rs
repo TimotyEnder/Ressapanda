@@ -1,4 +1,4 @@
-use cgmath::{Deg, Point3, Quaternion, Vector3, Vector4, prelude::*, vec3};
+use cgmath::{Point3, Vector3, Vector4, prelude::*, vec3};
 
 use crate::{color::VoxelColor, save::SavedVoxel, voxel_scene::VoxelScenePosition};
 #[derive(Clone, Copy)]
@@ -53,9 +53,7 @@ impl VoxelInstance {
             0.0,
         );
         RawVoxelInstance {
-            matrix: (cgmath::Matrix4::from_translation(self.position)
-                * cgmath::Matrix4::from(Quaternion::from_angle_z(Deg(0.0))))
-            .into(),
+            matrix: (cgmath::Matrix4::from_translation(self.position)).into(),
             color: self.color.to_vector_4().into(),
             info_vec: info_vec.into(),
         }
@@ -64,7 +62,7 @@ impl VoxelInstance {
         &self,
         comparison_point: Point3<f32>,
     ) -> Vector3<f32> {
-        let mut points = vec![
+        let mut points = [
             Point3 {
                 x: self.position.x,
                 y: self.position.y + 1.0,

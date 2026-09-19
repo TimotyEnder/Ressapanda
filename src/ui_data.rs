@@ -68,10 +68,10 @@ impl LastUsedColorsQueue {
     pub fn push(&mut self, color: Color32) {
         self.queue.push(color);
         while self.queue.len() > self.max_cap {
-            self.queue.remove(self.queue.len() - 1);
+            self.queue.remove(0);
         }
     }
-    pub fn get_colors_mut(&mut self) -> &mut Vec<Color32> {
-        &mut self.queue
+    pub fn get_colors_ref(&self) -> &Vec<Color32> {
+        &self.queue
     }
 }

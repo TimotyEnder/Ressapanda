@@ -32,3 +32,11 @@ pub fn tool_from_name(name: &'static str) -> Option<Box<dyn Tool>> {
         _ => return None,
     };
 }
+pub fn tool_tooltip_from_name(name: &str) -> Option<&str> {
+    match name {
+        "Add" => Some("Add (Shorcut:A)"),
+        "Del" => Some("Delete (Shorcut:D)"),
+        "Subs" => Some("Substitute/Paint (Shorcut:S)"),
+        _ => return None,
+    }
+}

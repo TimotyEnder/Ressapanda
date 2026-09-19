@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 use winit::window::{Cursor, CustomCursor, Window};
 
@@ -48,7 +48,7 @@ impl CursorLoader {
     }
     pub fn change_cursor(
         &self,
-        window: Arc<Window>,
+        window: &Window,
         current_select_mode: &Box<dyn SelectMode>,
         current_tool: &Box<dyn Tool>,
     ) {

@@ -10,13 +10,13 @@ use crate::{
     depth_texture::DepthTexture,
     save::{load_from_file, save_to_file},
     select_mode::{
-        select_mode::{SelectMode, select_mode_from_name},
+        select_mode::{SelectMode, select_mode_from_name, select_mode_tooltip_from_name},
         single_select_mode::SingleSelectMode,
     },
     tools::{
         add::Add,
         key_input_manager::KeyInputManager,
-        tool::{Tool, tool_from_name},
+        tool::{Tool, tool_from_name, tool_tooltip_from_name},
     },
     ui_data::{FileAction, UIData},
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
@@ -464,7 +464,7 @@ impl State {
     }
     pub fn handle_focus(&mut self) {
         self.cursor_loader.change_cursor(
-            self.window.clone(),
+            self.window.as_ref(),
             &self.current_select_mode,
             &self.current_tool,
         );
@@ -479,7 +479,7 @@ impl State {
         self.update_voxel_buffers();
         self.ui_update();
         self.cursor_loader.change_cursor(
-            self.window.clone(),
+            self.window.as_ref(),
             &self.current_select_mode,
             &self.current_tool,
         );
@@ -722,14 +722,15 @@ impl State {
     fn conditional_save(&mut self) {
         if let Some(ref path) = self.ui_info.current_save_path {
             match save_to_file(&self.voxel_scene, &path) {
-                Err(e) => log::error!("Open failed: {e}"),
-                _ => {}
+                Err(e) => log::error!("Save failed: {e}"),
+                _ => {
+                    self.voxel_scene.set_saved();
+                }
             }
         } else {
             self.ui_info.file_dialog.set_user_data(FileAction::Save);
             self.ui_info.file_dialog.save_file();
         }
-        self.voxel_scene.set_saved();
     }
     fn orientation_legend(&self, ui: &mut egui::Ui) {
         let mut job = egui::text::LayoutJob::default();
@@ -778,7 +779,6 @@ impl State {
                             if ui.button("Save As").clicked() {
                                 self.ui_info.file_dialog.set_user_data(FileAction::Save);
                                 self.ui_info.file_dialog.save_file();
-                                self.voxel_scene.set_saved();
                             }
                         });
                         ui.menu_button("Model", |ui| {
@@ -1070,10 +1070,10 @@ impl State {
                     .max_height(self.config.height as f32 * 0.3)
                     .show(ui, |ui| {
                         ui.vertical_centered(|ui| {
-                            let indexes_and_names =
-                                self.voxel_scene.get_voxel_group_names_and_indexes();
-                            for (index, name, editable) in indexes_and_names {
-                                self.voxel_group_menu_element(ui, &name, index, editable);
+                            for (index, editable) in
+                                self.voxel_scene.get_voxel_group_edit_flags_and_indexes()
+                            {
+                                self.voxel_group_menu_element(ui, index, editable);
                                 ui.add_space(10.0);
                             }
                         });
@@ -1132,6 +1132,8 @@ impl State {
                 Some(FileAction::Save) => {
                     if let Err(e) = save_to_file(&self.voxel_scene, &path) {
                         log::error!("Save failed: {e}");
+                    } else {
+                        self.voxel_scene.set_saved();
                     }
                 }
                 _ => {}
@@ -1192,12 +1194,12 @@ impl State {
                         }
                     }
                     ui.label("Recent Colors:");
-                    let colors: Vec<Color32> = self
+                    let colors: Vec<&Color32> = self
                         .ui_info
                         .last_used_colors
-                        .get_colors_mut()
+                        .get_colors_ref()
                         .iter()
-                        .copied()
+                        .rev()
                         .collect();
                     ui.horizontal(|ui| {
                         for color in colors {
@@ -1276,11 +1278,7 @@ impl State {
         let img = Image::new(sized);
         let button = egui::Button::image(img);
         let mut response = ui.add(button);
-        response = response.on_hover_text(
-            tool_from_name(tool_name)
-                .and_then(|tool| Some(tool.tooltip()))
-                .unwrap_or(""),
-        );
+        response = response.on_hover_text(tool_tooltip_from_name(tool_name).unwrap_or_default());
         if response.clicked() {
             if let Some(tool) = tool_from_name(tool_name) {
                 self.current_tool = tool;
@@ -1298,11 +1296,8 @@ impl State {
         let img = Image::new(sized);
         let button = egui::Button::image(img);
         let mut response = ui.add(button);
-        response = response.on_hover_text(
-            select_mode_from_name(mode_name)
-                .and_then(|mode| Some(mode.tooltip()))
-                .unwrap_or(""),
-        );
+        response =
+            response.on_hover_text(select_mode_tooltip_from_name(mode_name).unwrap_or_default());
         if response.clicked() {
             if let Some(mode) = select_mode_from_name(mode_name) {
                 self.current_select_mode = mode;
@@ -1314,21 +1309,21 @@ impl State {
     }
     fn last_used_color_button(
         ui: &mut egui::Ui,
-        color: Color32,
+        color: &Color32,
         brush: &mut Brush,
         ui_brush_color: &mut Color32,
         last_color_added: &mut Color32,
     ) {
         let last_color_button = egui::Button::new("")
-            .fill(color)
+            .fill(*color)
             .corner_radius(0)
             .stroke(egui::Stroke::new(1.0, egui::Color32::WHITE));
         if ui.add_sized([25.0, 25.0], last_color_button).clicked() {
             *brush = Brush {
-                color: VoxelColor::from_egui_color(color),
+                color: VoxelColor::from_egui_color(*color),
             };
-            *ui_brush_color = color;
-            *last_color_added = color;
+            *ui_brush_color = *color;
+            *last_color_added = *color;
         }
     }
     fn voxel_group_control_button_with_name(
@@ -1342,24 +1337,20 @@ impl State {
         let img = Image::new(sized);
         Some(egui::Button::image(img))
     }
-    fn voxel_group_menu_element(
-        &mut self,
-        ui: &mut egui::Ui,
-        group_name: &str,
-        index: usize,
-        editable: bool,
-    ) {
+    fn voxel_group_menu_element(&mut self, ui: &mut egui::Ui, index: usize, editable: bool) {
         let (rect, response) =
             ui.allocate_exact_size(egui::vec2(260.0, 50.0), egui::Sense::click());
         ui.painter().rect_filled(rect, 0, SUB_PANEL_FILL);
         if !editable {
-            ui.painter().text(
-                rect.center(),
-                Align2::CENTER_CENTER,
-                group_name,
-                FontId::proportional(15.0),
-                WHITE,
-            );
+            if let Some(name) = self.voxel_scene.get_voxel_group_name_ref(index) {
+                ui.painter().text(
+                    rect.center(),
+                    Align2::CENTER_CENTER,
+                    name,
+                    FontId::proportional(15.0),
+                    WHITE,
+                );
+            }
         } else {
             if let Some(input) = self.voxel_scene.get_voxel_group_name_ref_mut(index) {
                 let size = egui::vec2(150.0, 20.0);
@@ -1405,13 +1396,12 @@ impl State {
             );
         }
         if response.clicked() {
-            if self
-                .key_input_manager
-                .get_modifier_keys_status()
-                .control_modifier
-            {
+            let mod_stat = self.key_input_manager.get_modifier_keys_status();
+            if mod_stat.control_modifier {
                 self.voxel_scene
                     .toggle_presence_in_current_voxel_group_selection(index);
+            } else if mod_stat.shift_modifier {
+                self.voxel_scene.shift_select_toggle_presence(index);
             } else {
                 self.voxel_scene.set_current_voxel_group(vec![index]);
             }
@@ -1419,6 +1409,7 @@ impl State {
         }
         if response.double_clicked() {
             self.voxel_scene.make_voxel_group_name_editable(index);
+            self.ui_info.voxel_group_rename_request_focus_flag = true;
         }
         let Some(button) = self.voxel_group_visibility_button(index).take() else {
             return;

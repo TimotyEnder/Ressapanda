@@ -56,10 +56,6 @@ impl IconLoader {
         Self { icons }
     }
     pub fn get_icon_texture(&self, name: &str) -> Option<&TextureHandle> {
-        if let Some(texture) = self.icons.get(name) {
-            return Some(texture);
-        } else {
-            return None;
-        }
+        self.icons.get(name)
     }
 }
