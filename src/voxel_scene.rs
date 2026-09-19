@@ -20,7 +20,7 @@ pub type VoxelGroupId = u64;
 struct VoxelGroup {
     pub position_to_voxel: BTreeMap<VoxelScenePosition, VoxelInstance>,
     pub name: String,
-    pub id: u64,
+    pub id: VoxelGroupId,
     pub visible: bool,
     pub editing_name: bool,
     pub center: Vector3<f32>,
@@ -99,7 +99,7 @@ impl VoxelGroup {
     pub fn merge_with(&mut self, other: VoxelGroup) {
         self.position_to_voxel.extend(other.position_to_voxel);
     }
-    pub fn as_a_copy_of(other: &VoxelGroup, name: String, id_counter: u64) -> Self {
+    pub fn as_a_copy_of(other: &VoxelGroup, name: String, id_counter: VoxelGroupId) -> Self {
         Self {
             position_to_voxel: BTreeMap::clone(&other.position_to_voxel),
             name: name,
@@ -109,7 +109,7 @@ impl VoxelGroup {
             id: id_counter,
         }
     }
-    pub fn new(name: String, id_counter: u64) -> Self {
+    pub fn new(name: String, id_counter: VoxelGroupId) -> Self {
         Self {
             position_to_voxel: BTreeMap::new(),
             name: name,
@@ -159,7 +159,7 @@ pub struct VoxelScene {
     voxels_changed: bool,
     voxels_added_or_removed: bool,
     voxel_group_name_counter: usize,
-    voxel_group_id_counter: u64,
+    voxel_group_id_counter: VoxelGroupId,
     saved: bool,
     grid_voxel_dimensions: GridVoxelDimensions,
 }
@@ -654,7 +654,7 @@ impl VoxelScene {
             .enumerate()
             .filter(|(index, _)| !self.current_voxel_groups_selected.contains(index))
             .map(|(_, voxel)| voxel.id)
-            .collect::<Vec<u64>>();
+            .collect::<Vec<VoxelGroupId>>();
         self.voxel_groups
             .retain(|element| return selected_ids.contains(&element.id));
         self.current_voxel_groups_selected = vec![1];
@@ -672,7 +672,7 @@ impl VoxelScene {
             [(largest_index + 1).min(self.voxel_groups.len() - 1)]
         .name
         .clone();
-        let selected_ids: Vec<u64> = self
+        let selected_ids: Vec<VoxelGroupId> = self
             .voxel_groups
             .iter()
             .enumerate()
@@ -707,7 +707,7 @@ impl VoxelScene {
             .min()
             .unwrap_or(&0));
         let insertion_name = self.voxel_groups[(smallest_index - 1).max(1)].name.clone();
-        let selected_ids: Vec<u64> = self
+        let selected_ids: Vec<VoxelGroupId> = self
             .voxel_groups
             .iter()
             .enumerate()
