@@ -130,7 +130,7 @@ impl VoxelInstance {
 pub struct RawVoxelInstance {
     matrix: [[f32; 4]; 4],
     color: [f32; 4],
-    info_vec: [f32; 4], //x selected bool f32 / y grid voxel f32
+    info_vec: [f32; 4], //x selected bool f32 / y grid voxel bool f32
 }
 impl RawVoxelInstance {
     pub fn desc() -> wgpu::VertexBufferLayout<'static> {
