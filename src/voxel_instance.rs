@@ -1,6 +1,9 @@
 use cgmath::{Point3, Vector3, Vector4, prelude::*, vec3};
 
-use crate::{color::VoxelColor, save::SavedVoxel, voxel_scene::VoxelScenePosition};
+use crate::{
+    change::change::VoxelSnapshot, color::VoxelColor, save::SavedVoxel,
+    voxel_scene::VoxelScenePosition,
+};
 #[derive(Clone, Copy)]
 pub struct VoxelInstance {
     position: cgmath::Vector3<f32>,
@@ -12,6 +15,18 @@ impl VoxelInstance {
     pub fn to_saved(&self) -> SavedVoxel {
         let position = VoxelScenePosition::from_voxel_position(self.position);
         SavedVoxel {
+            x: position.x,
+            y: position.y,
+            z: position.z,
+            r: self.color.r,
+            g: self.color.g,
+            b: self.color.b,
+            a: self.color.a,
+        }
+    }
+    pub fn to_snapshot(&self) -> VoxelSnapshot {
+        let position = VoxelScenePosition::from_voxel_position(self.position);
+        VoxelSnapshot {
             x: position.x,
             y: position.y,
             z: position.z,

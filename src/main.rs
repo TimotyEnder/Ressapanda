@@ -4,6 +4,7 @@ pub mod app;
 pub mod brushes;
 pub mod camera;
 pub mod camera_controller;
+pub mod change;
 pub mod color;
 pub mod conversion_utils;
 pub mod cursor_loader;
