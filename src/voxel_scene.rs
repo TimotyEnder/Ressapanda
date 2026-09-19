@@ -593,13 +593,15 @@ impl VoxelScene {
         self.voxel_group_name_counter += 1;
     }
     pub fn remove_voxel_group(&mut self) {
-        self.voxel_groups = self
+        let selected_names = self
             .voxel_groups
             .iter()
             .enumerate()
             .filter(|(index, _)| !self.current_voxel_groups_selected.contains(index))
-            .map(|(_, voxel)| voxel.clone())
-            .collect();
+            .map(|(_, voxel)| voxel.name.clone())
+            .collect::<Vec<String>>();
+        self.voxel_groups
+            .retain(|element| return selected_names.contains(&element.name));
         self.current_voxel_groups_selected = vec![1];
         if self.voxel_groups.len() <= 1 {
             self.add_voxel_group();
