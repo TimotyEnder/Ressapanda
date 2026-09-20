@@ -1,7 +1,6 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, VecDeque};
 
 use cgmath::{Vector3, vec3};
-use egui::accesskit::Role::Grid;
 
 use crate::{
     change::change::Step::{
@@ -272,4 +271,48 @@ impl Step {
 }
 pub struct Change {
     steps: Vec<Step>,
+}
+impl Change {
+    pub fn unde(&self, scene: &mut VoxelScene) {
+        for step in self.steps.iter() {
+            step.undo(scene);
+        }
+    }
+    pub fn redo(&self, scene: &mut VoxelScene) {
+        for step in self.steps.iter() {
+            step.redo(scene);
+        }
+    }
+}
+pub struct History {
+    history: VecDeque<Change>,
+    past_future: VecDeque<Change>,
+}
+impl History {
+    pub fn new() -> Self {
+        Self {
+            history: VecDeque::new(),
+            past_future: VecDeque::new(),
+        }
+    }
+    pub fn add_cnahge(&mut self, change: Change) {
+        self.history.push_front(change);
+        self.past_future.clear();
+    }
+    pub fn undo(&mut self) -> Option<&Change> {
+        let top_opt = self.history.pop_front();
+        if let Some(top) = top_opt {
+            self.past_future.push_front(top);
+            return self.past_future.front();
+        }
+        return None;
+    }
+    pub fn redo(&mut self) -> Option<&Change> {
+        let top_opt = self.past_future.pop_front();
+        if let Some(top) = top_opt {
+            self.history.push_front(top);
+            return self.history.front();
+        }
+        return None;
+    }
 }

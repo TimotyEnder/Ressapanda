@@ -4,6 +4,7 @@ use std::collections::BTreeMap;
 use std::usize;
 
 use crate::camera::Camera;
+use crate::change::change::History;
 use crate::conversion_utils::snap_vector_to_flat_direction;
 use crate::filler::fill_positions_from_a_to_b;
 use crate::save::{SaveFile, SavedVoxelGroup};
@@ -162,6 +163,7 @@ pub struct VoxelScene {
     voxel_group_id_counter: VoxelGroupId,
     saved: bool,
     grid_voxel_dimensions: GridVoxelDimensions,
+    history: History,
 }
 impl VoxelScene {
     pub fn orientating_cross_scene() -> Self {
@@ -182,6 +184,7 @@ impl VoxelScene {
             },
             shift_selected_voxel_group: None,
             voxel_group_id_counter: 0,
+            history: History::new(),
         }
     }
     pub fn to_saved(&self) -> SaveFile {
@@ -223,6 +226,7 @@ impl VoxelScene {
             grid_voxel_dimensions: grid_dim,
             shift_selected_voxel_group: None,
             voxel_group_id_counter: save.id_counter,
+            history: History::new(),
         }
     }
     pub fn new() -> Self {
@@ -246,9 +250,15 @@ impl VoxelScene {
             grid_voxel_dimensions: grid_dim,
             shift_selected_voxel_group: None,
             voxel_group_id_counter: 2,
+            history: History::new(),
         }
     }
-
+    pub fn undo(&mut self) {
+        self.history.undo(self);
+    }
+    pub fn redo(&mut self) {
+        self.history.redo(self)
+    }
     pub fn prepare_buffer_contents(&mut self) -> &Vec<RawVoxelInstance> {
         if self.voxels_changed {
             self.voxels_changed = false;
