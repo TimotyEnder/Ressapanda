@@ -72,6 +72,12 @@ impl KeyInputManager {
             && !self.control_modifier
             && !self.shift_modifier;
     }
+    pub fn undo_input(&mut self, key: KeyCode, pressed: bool) -> bool {
+        return self.control_modifier && key == KeyCode::KeyZ && pressed;
+    }
+    pub fn redo_input(&mut self, key: KeyCode, pressed: bool) -> bool {
+        return self.control_modifier && key == KeyCode::KeyY && pressed;
+    }
     pub fn tool_selection_inputs(&mut self, key: KeyCode, pressed: bool) -> Option<Box<dyn Tool>> {
         if let Some(name) = self.keycode_to_mapping.get(&key)
             && let Some(flag) = self.keycode_to_flag.get_mut(&key)

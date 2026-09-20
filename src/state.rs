@@ -393,6 +393,11 @@ impl State {
         if self.key_input_manager.resize_input(key, pressed) {
             self.ui_info.voxel_grid_resize_popup = !self.ui_info.voxel_grid_resize_popup;
         }
+        if self.key_input_manager.undo_input(key, pressed) {
+            self.voxel_scene.undo();
+        } else if self.key_input_manager.redo_input(key, pressed) {
+            self.voxel_scene.redo();
+        }
         self.key_input_manager.camera_preset_positions_inputs(
             key,
             pressed,
@@ -951,6 +956,42 @@ impl State {
             });
         let spacing = self.config.height as f32 * 0.05;
         let mut top_offset = top_panel_width;
+        let undo_redo_windo = egui::Window::new("Undo/Redo Window")
+            .title_bar(false)
+            .anchor(Align2::LEFT_TOP, [0.0, top_offset])
+            .collapsible(false)
+            .auto_sized()
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    let Some(texture) = self.ui_info.icon_loader.get_icon_texture("Undo") else {
+                        return;
+                    };
+                    let sized = SizedTexture::new(texture.id(), [25.0, 25.0]);
+                    let img = Image::new(sized);
+                    let undo_button = egui::Button::image(img);
+                    let response = ui
+                        .add(undo_button)
+                        .on_hover_text("Undo last action (Shorcut:Shift+Z)");
+                    if response.clicked() {
+                        self.voxel_scene.undo();
+                    }
+                    let Some(texture) = self.ui_info.icon_loader.get_icon_texture("Redo") else {
+                        return;
+                    };
+                    let sized = SizedTexture::new(texture.id(), [25.0, 25.0]);
+                    let img = Image::new(sized);
+                    let undo_button = egui::Button::image(img);
+                    let response = ui
+                        .add(undo_button)
+                        .on_hover_text("Redo ndo last action (Shorcut:Shift+Y)");
+                    if response.clicked() {
+                        self.voxel_scene.redo();
+                    }
+                });
+            });
+        if let Some(inner) = undo_redo_windo {
+            top_offset = inner.response.rect.max.y + spacing;
+        }
         let brush_window = egui::Window::new("Brush")
             .title_bar(false)
             .anchor(egui::Align2::LEFT_TOP, [0.0, top_offset])
