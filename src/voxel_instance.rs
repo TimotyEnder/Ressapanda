@@ -44,6 +44,14 @@ impl VoxelInstance {
             grid_voxel: false,
         }
     }
+    pub fn from_snapshot(snap: &VoxelSnapshot) -> Self {
+        Self {
+            position: vec3(snap.x as f32, snap.y as f32, snap.z as f32),
+            color: VoxelColor::new(snap.r, snap.g, snap.b, snap.a),
+            selected: false,
+            grid_voxel: false,
+        }
+    }
     pub fn new(position: cgmath::Vector3<f32>, color: VoxelColor) -> Self {
         Self {
             position,

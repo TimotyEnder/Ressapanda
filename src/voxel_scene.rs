@@ -17,7 +17,7 @@ pub struct GridVoxelDimensions {
 }
 pub type VoxelGroupId = u64;
 #[derive(Clone)]
-struct VoxelGroup {
+pub struct VoxelGroup {
     pub position_to_voxel: BTreeMap<VoxelScenePosition, VoxelInstance>,
     pub name: String,
     pub id: VoxelGroupId,
@@ -418,6 +418,9 @@ impl VoxelScene {
             }
         }
         all_voxels
+    }
+    pub fn voxel_groups_ref_mut(&mut self) -> &mut Vec<VoxelGroup> {
+        &mut self.voxel_groups
     }
     fn find_center(&mut self) {
         for i in self.current_voxel_groups_selected.iter() {
