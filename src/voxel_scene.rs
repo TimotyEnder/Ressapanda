@@ -1,6 +1,7 @@
 use cgmath::{Deg, Quaternion, Vector3};
 use cgmath::{prelude::*, vec3};
 use std::collections::BTreeMap;
+use std::sync::{Arc, Mutex};
 use std::usize;
 
 use crate::camera::Camera;
@@ -163,7 +164,7 @@ pub struct VoxelScene {
     voxel_group_id_counter: VoxelGroupId,
     saved: bool,
     grid_voxel_dimensions: GridVoxelDimensions,
-    history: History,
+    history: Arc<Mutex<History>>,
 }
 impl VoxelScene {
     pub fn orientating_cross_scene() -> Self {
@@ -184,7 +185,7 @@ impl VoxelScene {
             },
             shift_selected_voxel_group: None,
             voxel_group_id_counter: 0,
-            history: History::new(),
+            history: Arc::new(Mutex::new(History::new())),
         }
     }
     pub fn to_saved(&self) -> SaveFile {
@@ -226,7 +227,7 @@ impl VoxelScene {
             grid_voxel_dimensions: grid_dim,
             shift_selected_voxel_group: None,
             voxel_group_id_counter: save.id_counter,
-            history: History::new(),
+            history: Arc::new(Mutex::new(History::new())),
         }
     }
     pub fn new() -> Self {
@@ -250,14 +251,20 @@ impl VoxelScene {
             grid_voxel_dimensions: grid_dim,
             shift_selected_voxel_group: None,
             voxel_group_id_counter: 2,
-            history: History::new(),
+            history: Arc::new(Mutex::new(History::new())),
         }
     }
     pub fn undo(&mut self) {
-        self.history.undo(self);
+        let history = Arc::clone(&self.history);
+        if let Some(change) = history.lock().unwrap().undo() {
+            change.unde(self);
+        }
     }
     pub fn redo(&mut self) {
-        self.history.redo(self)
+        let history = Arc::clone(&self.history);
+        if let Some(change) = history.lock().unwrap().redo() {
+            change.redo(self);
+        }
     }
     pub fn prepare_buffer_contents(&mut self) -> &Vec<RawVoxelInstance> {
         if self.voxels_changed {

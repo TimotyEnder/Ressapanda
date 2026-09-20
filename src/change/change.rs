@@ -11,6 +11,7 @@ use crate::{
     voxel_scene::{VoxelGroup, VoxelGroupId, VoxelScene, VoxelScenePosition},
 };
 
+#[derive(Clone)]
 pub struct VoxelSnapshot {
     pub x: i32,
     pub y: i32,
@@ -20,6 +21,7 @@ pub struct VoxelSnapshot {
     pub b: f32,
     pub a: f32,
 }
+#[derive(Clone)]
 pub enum Step {
     VoxelChange {
         // position-level delta (cheap hot path)
@@ -269,6 +271,7 @@ impl Step {
         }
     }
 }
+#[derive(Clone)]
 pub struct Change {
     steps: Vec<Step>,
 }
@@ -299,19 +302,19 @@ impl History {
         self.history.push_front(change);
         self.past_future.clear();
     }
-    pub fn undo(&mut self) -> Option<&Change> {
+    pub fn undo(&mut self) -> Option<Change> {
         let top_opt = self.history.pop_front();
         if let Some(top) = top_opt {
-            self.past_future.push_front(top);
-            return self.past_future.front();
+            self.past_future.push_front(top.clone());
+            return Some(top);
         }
         return None;
     }
-    pub fn redo(&mut self) -> Option<&Change> {
+    pub fn redo(&mut self) -> Option<Change> {
         let top_opt = self.past_future.pop_front();
         if let Some(top) = top_opt {
-            self.history.push_front(top);
-            return self.history.front();
+            self.history.push_front(top.clone());
+            return Some(top);
         }
         return None;
     }
