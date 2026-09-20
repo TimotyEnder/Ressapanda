@@ -966,7 +966,7 @@ impl State {
                     let Some(texture) = self.ui_info.icon_loader.get_icon_texture("Undo") else {
                         return;
                     };
-                    let sized = SizedTexture::new(texture.id(), [25.0, 25.0]);
+                    let sized = SizedTexture::new(texture.id(), [40.0, 40.0]);
                     let img = Image::new(sized);
                     let undo_button = egui::Button::image(img);
                     let response = ui
@@ -978,7 +978,7 @@ impl State {
                     let Some(texture) = self.ui_info.icon_loader.get_icon_texture("Redo") else {
                         return;
                     };
-                    let sized = SizedTexture::new(texture.id(), [25.0, 25.0]);
+                    let sized = SizedTexture::new(texture.id(), [40.0, 40.0]);
                     let img = Image::new(sized);
                     let undo_button = egui::Button::image(img);
                     let response = ui
@@ -989,30 +989,6 @@ impl State {
                     }
                 });
             });
-        if let Some(inner) = undo_redo_windo {
-            top_offset = inner.response.rect.max.y + spacing;
-        }
-        let brush_window = egui::Window::new("Brush")
-            .title_bar(false)
-            .anchor(egui::Align2::LEFT_TOP, [0.0, top_offset])
-            .collapsible(false)
-            .auto_sized()
-            .show(ui, |ui| {
-                let brush_color_button = egui::Button::new("")
-                    .fill(self.ui_info.ui_brush_color)
-                    .corner_radius(0)
-                    .stroke(egui::Stroke::new(1.0, egui::Color32::WHITE));
-                let size = 50.0;
-                if ui
-                    .add_sized([size, size], brush_color_button)
-                    .on_hover_text("Brush Color")
-                    .clicked()
-                {
-                    self.ui_info.show_color_picker = !self.ui_info.show_color_picker;
-                    self.ui_info.color_selected = true;
-                }
-            });
-
         let _voxel_set_window = egui::Window::new("Voxel Groups")
             .title_frame(self.styled_title_frame(ui))
             .default_width(280.0)
@@ -1120,6 +1096,30 @@ impl State {
                         });
                     });
             });
+        if let Some(inner) = undo_redo_windo {
+            top_offset = inner.response.rect.max.y + spacing;
+        }
+        let brush_window = egui::Window::new("Brush")
+            .title_bar(false)
+            .anchor(egui::Align2::LEFT_TOP, [0.0, top_offset])
+            .collapsible(false)
+            .auto_sized()
+            .show(ui, |ui| {
+                let brush_color_button = egui::Button::new("")
+                    .fill(self.ui_info.ui_brush_color)
+                    .corner_radius(0)
+                    .stroke(egui::Stroke::new(1.0, egui::Color32::WHITE));
+                let size = 50.0;
+                if ui
+                    .add_sized([size, size], brush_color_button)
+                    .on_hover_text("Brush Color")
+                    .clicked()
+                {
+                    self.ui_info.show_color_picker = !self.ui_info.show_color_picker;
+                    self.ui_info.color_selected = true;
+                }
+            });
+
         if let Some(inner) = brush_window {
             top_offset = inner.response.rect.max.y + spacing;
         }
