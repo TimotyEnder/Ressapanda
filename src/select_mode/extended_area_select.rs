@@ -127,19 +127,12 @@ impl SelectMode for ExtendedAreaSelectMode {
                     {
                         prev_operating_point = prev_voxel
                             .point_on_voxel_grid_closest_to_point(prev_intersect_position);
-
-                        tool.operate_with_position(prev_operating_point, scene, brush);
                     }
                     if let Some(voxel) = scene
                         .get_voxel_from_position_prioritizing_first_selected_set(voxel_position)
                     {
                         operating_point =
                             voxel.point_on_voxel_grid_closest_to_point(intersect_position);
-                        tool.operate_with_position(
-                            Vector3::new(operating_point.x, operating_point.y, operating_point.z),
-                            scene,
-                            brush,
-                        );
                     }
                 }
                 self.base_voxel = Some(operating_point);

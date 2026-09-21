@@ -8,7 +8,7 @@ use crate::{
         VoxelGroupUpShift,
     },
     voxel_instance::VoxelInstance,
-    voxel_scene::{VoxelGroup, VoxelGroupId, VoxelScene, VoxelScenePosition},
+    voxel_scene::{GridVoxelDimensions, VoxelGroup, VoxelGroupId, VoxelScene, VoxelScenePosition},
 };
 
 #[derive(Clone)]
@@ -154,10 +154,17 @@ impl Step {
                     });
                 voxel_group.visible = *visible;
                 voxel_group.center = *center;
+                voxel_group.editing_name = false;
                 scene.voxel_groups_ref_mut().push(voxel_group);
             }
             VoxelGridResize { diff } => {
                 let ((before_w, before_l), (_)) = diff;
+                scene.grid_voxel_dimensions = GridVoxelDimensions {
+                    width: *before_w,
+                    length: *before_l,
+                };
+                scene.voxel_groups_ref_mut()[0] =
+                    VoxelGroup::voxel_grid_group(&scene.grid_voxel_dimensions);
                 scene.resize_voxel_grid_dimensions(&before_w.to_string(), &before_l.to_string());
             }
             VoxelGroupUpShift { indices } => {
@@ -237,6 +244,7 @@ impl Step {
                 let mut voxel_group = VoxelGroup::new(String::from(name), *group_id);
                 voxel_group.center = *center;
                 voxel_group.visible = *visible;
+                voxel_group.editing_name = false;
                 scene.voxel_groups_ref_mut().push(voxel_group);
             }
             RemoveGroup {
@@ -258,7 +266,12 @@ impl Step {
             }
             VoxelGridResize { diff } => {
                 let ((_, _), (after_w, after_l)) = diff;
-                scene.resize_voxel_grid_dimensions(&after_w.to_string(), &after_l.to_string());
+                scene.grid_voxel_dimensions = GridVoxelDimensions {
+                    width: *after_w,
+                    length: *after_l,
+                };
+                scene.voxel_groups_ref_mut()[0] =
+                    VoxelGroup::voxel_grid_group(&scene.grid_voxel_dimensions);
             }
             VoxelGroupUpShift { indices } => {
                 scene.set_current_voxel_group(indices.clone());
