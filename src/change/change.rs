@@ -5,7 +5,7 @@ use cgmath::{Vector3, vec3};
 use crate::{
     change::change::Step::{
         AddGroup, GroupInfoChange, RemoveGroup, VoxelChange, VoxelGridResize, VoxelGroupDownShift,
-        VoxelGroupUpShift, VoxelMove,
+        VoxelGroupUpShift, VoxelMove, VoxelRotate,
     },
     voxel_instance::VoxelInstance,
     voxel_scene::{GridVoxelDimensions, VoxelGroup, VoxelGroupId, VoxelScene, VoxelScenePosition},
@@ -59,6 +59,11 @@ pub enum Step {
     VoxelMove {
         group_id: VoxelGroupId,
         move_vector: Vector3<f32>,
+    },
+    VoxelRotate {
+        group_id: VoxelGroupId,
+        axis: Vector3<f32>,
+        deg: cgmath::Deg<f32>,
     },
 }
 impl Step {
@@ -195,6 +200,19 @@ impl Step {
                     scene.move_voxel_group_by_vector(move_vector.clone() * -1.0, working_index);
                 }
             }
+            VoxelRotate {
+                group_id,
+                axis,
+                deg,
+            } => {
+                let working_index_opt = scene
+                    .voxel_groups_ref_mut()
+                    .iter_mut()
+                    .position(|group| group.id == *group_id);
+                if let Some(working_index) = working_index_opt {
+                    scene.rotate_voxel_group_around_center(*axis, *deg * -1.0, working_index);
+                }
+            }
         }
     }
     pub fn redo(&self, scene: &mut VoxelScene) {
@@ -311,6 +329,19 @@ impl Step {
                     .position(|group| group.id == *group_id);
                 if let Some(working_index) = working_index_opt {
                     scene.move_voxel_group_by_vector(move_vector.clone(), working_index);
+                }
+            }
+            VoxelRotate {
+                group_id,
+                axis,
+                deg,
+            } => {
+                let working_index_opt = scene
+                    .voxel_groups_ref_mut()
+                    .iter_mut()
+                    .position(|group| group.id == *group_id);
+                if let Some(working_index) = working_index_opt {
+                    scene.rotate_voxel_group_around_center(*axis, *deg, working_index);
                 }
             }
         }

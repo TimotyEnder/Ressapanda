@@ -542,60 +542,80 @@ impl VoxelScene {
     }
     pub fn rotate_around_center(&mut self, axis: Vector3<f32>, deg: cgmath::Deg<f32>) {
         for i in self.current_voxel_groups_selected.clone() {
-            let center = self.voxel_groups[i].center;
-            let rotation = Quaternion::from_axis_angle(axis.normalize(), deg);
-            let old_keys: Vec<VoxelScenePosition> = self.voxel_groups[i]
-                .position_to_voxel
-                .iter()
-                .filter_map(|(k, v)| (!v.is_grid()).then_some(*k))
-                .collect();
-            let mut smallest_y = f32::INFINITY;
-            let group_id = self.voxel_groups[i].id;
-            for voxel in self.voxel_groups[i].position_to_voxel.values_mut() {
-                if !voxel.is_grid() {
-                    let computed_float_pos = center + rotation * (voxel.get_position() - center);
-                    smallest_y = smallest_y.min(computed_float_pos.y.round());
-                    let old_snap = voxel.to_snapshot();
-                    voxel.set_position(vec3(
-                        computed_float_pos.x.round(),
-                        computed_float_pos.y.round(),
-                        computed_float_pos.z.round(),
-                    ));
-                    let new_snap = voxel.to_snapshot();
-                    self.current_change
-                        .get_or_insert_with(Change::new)
-                        .add_step(crate::change::change::Step::VoxelChange {
-                            group_id: group_id,
-                            changes: vec![(Some(old_snap), Some(new_snap))],
-                        });
-                }
-            }
-            let necessary_lift_overlap_prevention = (1.0 - smallest_y).max(0.0);
-            if smallest_y <= 0.0 {
-                for voxel in self.voxel_groups[i].position_to_voxel.values_mut() {
-                    if !voxel.is_grid() {
-                        voxel.move_position_by_vector(vec3(
-                            0.0,
-                            necessary_lift_overlap_prevention,
-                            0.0,
-                        ));
-                    }
-                }
-            }
-            let voxels: Vec<VoxelInstance> = old_keys
-                .iter()
-                .map(|k| self.voxel_groups[i].position_to_voxel.remove(k).unwrap())
-                .collect();
-
-            for (_, voxel) in old_keys.into_iter().zip(voxels) {
-                self.voxel_groups[i].position_to_voxel.insert(
-                    VoxelScenePosition::from_voxel_position(voxel.get_position()),
-                    voxel,
-                );
-            }
-            self.voxels_changed = true;
-            self.saved = false;
+            self.rotate_voxel_group_around_center(axis, deg, i);
+            self.current_change
+                .get_or_insert_with(Change::new)
+                .add_step(crate::change::change::Step::VoxelRotate {
+                    group_id: self.voxel_groups[i].id,
+                    axis,
+                    deg,
+                });
         }
+    }
+    pub fn rotate_voxel_group_around_center(
+        &mut self,
+        axis: Vector3<f32>,
+        deg: cgmath::Deg<f32>,
+        index: usize,
+    ) {
+        let center = self.voxel_groups[index].center;
+        let rotation = Quaternion::from_axis_angle(axis.normalize(), deg);
+        let old_keys: Vec<VoxelScenePosition> = self.voxel_groups[index]
+            .position_to_voxel
+            .iter()
+            .filter_map(|(k, v)| (!v.is_grid()).then_some(*k))
+            .collect();
+        let mut smallest_y = f32::INFINITY;
+        let group_id = self.voxel_groups[index].id;
+        for voxel in self.voxel_groups[index].position_to_voxel.values_mut() {
+            if !voxel.is_grid() {
+                let computed_float_pos = center + rotation * (voxel.get_position() - center);
+                smallest_y = smallest_y.min(computed_float_pos.y.round());
+                let old_snap = voxel.to_snapshot();
+                voxel.set_position(vec3(
+                    computed_float_pos.x.round(),
+                    computed_float_pos.y.round(),
+                    computed_float_pos.z.round(),
+                ));
+                let new_snap = voxel.to_snapshot();
+                self.current_change
+                    .get_or_insert_with(Change::new)
+                    .add_step(crate::change::change::Step::VoxelChange {
+                        group_id: group_id,
+                        changes: vec![(Some(old_snap), Some(new_snap))],
+                    });
+            }
+        }
+        let necessary_lift_overlap_prevention = (1.0 - smallest_y).max(0.0);
+        if smallest_y <= 0.0 {
+            for voxel in self.voxel_groups[index].position_to_voxel.values_mut() {
+                if !voxel.is_grid() {
+                    voxel.move_position_by_vector(vec3(
+                        0.0,
+                        necessary_lift_overlap_prevention,
+                        0.0,
+                    ));
+                }
+            }
+        }
+        let voxels: Vec<VoxelInstance> = old_keys
+            .iter()
+            .map(|k| {
+                self.voxel_groups[index]
+                    .position_to_voxel
+                    .remove(k)
+                    .unwrap()
+            })
+            .collect();
+
+        for (_, voxel) in old_keys.into_iter().zip(voxels) {
+            self.voxel_groups[index].position_to_voxel.insert(
+                VoxelScenePosition::from_voxel_position(voxel.get_position()),
+                voxel,
+            );
+        }
+        self.voxels_changed = true;
+        self.saved = false;
     }
     pub fn move_by_vector(&mut self, move_vector: Vector3<f32>) {
         for i in self.current_voxel_groups_selected.clone() {
