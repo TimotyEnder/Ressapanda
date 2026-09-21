@@ -542,13 +542,15 @@ impl VoxelScene {
     }
     pub fn rotate_around_center(&mut self, axis: Vector3<f32>, deg: cgmath::Deg<f32>) {
         for i in self.current_voxel_groups_selected.clone() {
-            self.rotate_voxel_group_around_center(axis, deg, i);
+            let center = self.voxel_groups[i].center.clone();
+            self.rotate_voxel_group_around_center(axis, deg, i, center);
             self.current_change
                 .get_or_insert_with(Change::new)
                 .add_step(crate::change::change::Step::VoxelRotate {
                     group_id: self.voxel_groups[i].id,
                     axis,
                     deg,
+                    center,
                 });
         }
     }
@@ -557,8 +559,8 @@ impl VoxelScene {
         axis: Vector3<f32>,
         deg: cgmath::Deg<f32>,
         index: usize,
+        center: Vector3<f32>,
     ) {
-        let center = self.voxel_groups[index].center;
         let rotation = Quaternion::from_axis_angle(axis.normalize(), deg);
         let old_keys: Vec<VoxelScenePosition> = self.voxel_groups[index]
             .position_to_voxel

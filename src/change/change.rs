@@ -63,6 +63,7 @@ pub enum Step {
     VoxelRotate {
         group_id: VoxelGroupId,
         axis: Vector3<f32>,
+        center: Vector3<f32>,
         deg: cgmath::Deg<f32>,
     },
 }
@@ -203,6 +204,7 @@ impl Step {
             VoxelRotate {
                 group_id,
                 axis,
+                center,
                 deg,
             } => {
                 let working_index_opt = scene
@@ -210,7 +212,12 @@ impl Step {
                     .iter_mut()
                     .position(|group| group.id == *group_id);
                 if let Some(working_index) = working_index_opt {
-                    scene.rotate_voxel_group_around_center(*axis, *deg * -1.0, working_index);
+                    scene.rotate_voxel_group_around_center(
+                        *axis,
+                        *deg * -1.0,
+                        working_index,
+                        *center,
+                    );
                 }
             }
         }
@@ -334,6 +341,7 @@ impl Step {
             VoxelRotate {
                 group_id,
                 axis,
+                center,
                 deg,
             } => {
                 let working_index_opt = scene
@@ -341,7 +349,7 @@ impl Step {
                     .iter_mut()
                     .position(|group| group.id == *group_id);
                 if let Some(working_index) = working_index_opt {
-                    scene.rotate_voxel_group_around_center(*axis, *deg, working_index);
+                    scene.rotate_voxel_group_around_center(*axis, *deg, working_index, *center);
                 }
             }
         }
