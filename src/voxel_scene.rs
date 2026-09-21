@@ -598,49 +598,60 @@ impl VoxelScene {
         }
     }
     pub fn move_by_vector(&mut self, move_vector: Vector3<f32>) {
-        let move_scene_vector = VoxelScenePosition::from_voxel_position(move_vector);
         for i in self.current_voxel_groups_selected.clone() {
-            let mut old_keys: Vec<VoxelScenePosition> = Vec::new();
-            old_keys.extend(
-                self.voxel_groups[i]
-                    .position_to_voxel
-                    .iter()
-                    .filter_map(|(k, v)| (!v.is_grid()).then_some(*k)),
-            );
-            let group_id = self.voxel_groups[i].id;
-            for voxel in self.voxel_groups[i].position_to_voxel.values_mut() {
-                if !voxel.is_grid() {
-                    let old_snap = voxel.to_snapshot();
-                    voxel.move_position_by_vector(move_vector);
-                    let new_snap = voxel.to_snapshot();
-                    self.current_change
-                        .get_or_insert_with(Change::new)
-                        .add_step(crate::change::change::Step::VoxelChange {
-                            group_id: group_id,
-                            changes: vec![(Some(old_snap), Some(new_snap))],
-                        });
-                }
-            }
-
-            let voxels: Vec<VoxelInstance> = old_keys
-                .iter()
-                .map(|k| self.voxel_groups[i].position_to_voxel.remove(k).unwrap())
-                .collect();
-
-            for (old, voxel) in old_keys.into_iter().zip(voxels) {
-                self.voxel_groups[i].position_to_voxel.insert(
-                    VoxelScenePosition {
-                        x: old.x + move_scene_vector.x,
-                        y: old.y + move_scene_vector.y,
-                        z: old.z + move_scene_vector.z,
-                    },
-                    voxel,
-                );
-            }
+            self.move_voxel_group_by_vector(move_vector, i);
+            self.current_change
+                .get_or_insert_with(Change::new)
+                .add_step(crate::change::change::Step::VoxelMove {
+                    group_id: self.voxel_groups[i].id,
+                    move_vector,
+                });
         }
         self.find_center();
         self.voxels_changed = true;
         self.saved = false;
+    }
+    pub fn move_voxel_group_by_vector(&mut self, move_vector: Vector3<f32>, index: usize) {
+        let move_scene_vector = VoxelScenePosition::from_voxel_position(move_vector);
+        let mut old_keys: Vec<VoxelScenePosition> = Vec::new();
+        old_keys.extend(
+            self.voxel_groups[index]
+                .position_to_voxel
+                .iter()
+                .filter_map(|(k, v)| (!v.is_grid()).then_some(*k)),
+        );
+        let group_id = self.voxel_groups[index].id;
+        let mut changes: Vec<(VoxelScenePosition, Vector3<f32>)> = Vec::new();
+        for voxel in self.voxel_groups[index].position_to_voxel.values_mut() {
+            if !voxel.is_grid() {
+                voxel.move_position_by_vector(move_vector);
+            }
+            changes.push((
+                VoxelScenePosition::from_voxel_position(voxel.get_position()),
+                move_vector,
+            ));
+        }
+
+        let voxels: Vec<VoxelInstance> = old_keys
+            .iter()
+            .map(|k| {
+                self.voxel_groups[index]
+                    .position_to_voxel
+                    .remove(k)
+                    .unwrap()
+            })
+            .collect();
+
+        for (old, voxel) in old_keys.into_iter().zip(voxels) {
+            self.voxel_groups[index].position_to_voxel.insert(
+                VoxelScenePosition {
+                    x: old.x + move_scene_vector.x,
+                    y: old.y + move_scene_vector.y,
+                    z: old.z + move_scene_vector.z,
+                },
+                voxel,
+            );
+        }
     }
     pub fn set_current_voxel_group(&mut self, working_selection: Vec<usize>) {
         self.current_voxel_groups_selected = working_selection;

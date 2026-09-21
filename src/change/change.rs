@@ -1,11 +1,11 @@
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::{BTreeSet, VecDeque};
 
 use cgmath::{Vector3, vec3};
 
 use crate::{
     change::change::Step::{
         AddGroup, GroupInfoChange, RemoveGroup, VoxelChange, VoxelGridResize, VoxelGroupDownShift,
-        VoxelGroupUpShift,
+        VoxelGroupUpShift, VoxelMove,
     },
     voxel_instance::VoxelInstance,
     voxel_scene::{GridVoxelDimensions, VoxelGroup, VoxelGroupId, VoxelScene, VoxelScenePosition},
@@ -56,11 +56,16 @@ pub enum Step {
     VoxelGroupUpShift {
         indices: Vec<usize>,
     },
+    VoxelMove {
+        group_id: VoxelGroupId,
+        move_vector: Vector3<f32>,
+    },
 }
 impl Step {
     pub fn undo(&self, scene: &mut VoxelScene) {
         match self {
             VoxelChange { group_id, changes } => {
+                let mut new_positions = BTreeSet::<VoxelScenePosition>::new();
                 for (before_opt, after_opt) in changes.iter() {
                     if let Some(after) = after_opt {
                         let working_group_opt = scene
@@ -73,7 +78,9 @@ impl Step {
                                 y: after.y,
                                 z: after.z,
                             };
-                            working_group.position_to_voxel.remove(&delete_pos);
+                            if new_positions.contains(&delete_pos) {
+                                working_group.position_to_voxel.remove(&delete_pos);
+                            }
                         }
                     }
                     if let Some(before) = before_opt {
@@ -90,6 +97,7 @@ impl Step {
                             group
                                 .position_to_voxel
                                 .insert(insert_pos, VoxelInstance::from_snapshot(before));
+                            new_positions.insert(insert_pos);
                         }
                     }
                 }
@@ -174,6 +182,18 @@ impl Step {
             VoxelGroupDownShift { indices } => {
                 scene.set_current_voxel_group(indices.clone());
                 scene.shift_voxel_group_up();
+            }
+            VoxelMove {
+                group_id,
+                move_vector,
+            } => {
+                let working_index_opt = scene
+                    .voxel_groups_ref_mut()
+                    .iter_mut()
+                    .position(|group| group.id == *group_id);
+                if let Some(working_index) = working_index_opt {
+                    scene.move_voxel_group_by_vector(move_vector.clone() * -1.0, working_index);
+                }
             }
         }
     }
@@ -280,6 +300,18 @@ impl Step {
             VoxelGroupDownShift { indices } => {
                 scene.set_current_voxel_group(indices.clone());
                 scene.shift_voxel_group_down();
+            }
+            VoxelMove {
+                group_id,
+                move_vector,
+            } => {
+                let working_index_opt = scene
+                    .voxel_groups_ref_mut()
+                    .iter_mut()
+                    .position(|group| group.id == *group_id);
+                if let Some(working_index) = working_index_opt {
+                    scene.move_voxel_group_by_vector(move_vector.clone(), working_index);
+                }
             }
         }
     }
