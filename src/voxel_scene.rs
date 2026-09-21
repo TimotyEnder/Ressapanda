@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use std::usize;
 
 use crate::camera::Camera;
-use crate::change::change::History;
+use crate::change::change::{Change, History, VoxelSnapshot};
 use crate::conversion_utils::snap_vector_to_flat_direction;
 use crate::filler::fill_positions_from_a_to_b;
 use crate::save::{SaveFile, SavedVoxelGroup};
@@ -165,6 +165,7 @@ pub struct VoxelScene {
     saved: bool,
     grid_voxel_dimensions: GridVoxelDimensions,
     history: Arc<Mutex<History>>,
+    current_change: Option<Change>,
 }
 impl VoxelScene {
     pub fn orientating_cross_scene() -> Self {
@@ -186,6 +187,7 @@ impl VoxelScene {
             shift_selected_voxel_group: None,
             voxel_group_id_counter: 0,
             history: Arc::new(Mutex::new(History::new())),
+            current_change: None,
         }
     }
     pub fn to_saved(&self) -> SaveFile {
@@ -228,6 +230,7 @@ impl VoxelScene {
             shift_selected_voxel_group: None,
             voxel_group_id_counter: save.id_counter,
             history: Arc::new(Mutex::new(History::new())),
+            current_change: None,
         }
     }
     pub fn new() -> Self {
@@ -252,12 +255,13 @@ impl VoxelScene {
             shift_selected_voxel_group: None,
             voxel_group_id_counter: 2,
             history: Arc::new(Mutex::new(History::new())),
+            current_change: None,
         }
     }
     pub fn undo(&mut self) {
         let history = Arc::clone(&self.history);
         if let Some(change) = history.lock().unwrap().undo() {
-            change.unde(self);
+            change.undo(self);
         }
     }
     pub fn redo(&mut self) {
@@ -273,6 +277,10 @@ impl VoxelScene {
                 self.find_center();
             }
             self.voxels_added_or_removed = false;
+            if let Some(change) = self.current_change.take() {
+                self.history.lock().unwrap().add_change(change);
+            }
+            self.current_change = Some(Change::new());
             self.raw_voxel_instance_list.clear();
             for i in (0..self.voxel_groups.len()).rev() {
                 if self.voxel_groups[i].visible {
@@ -325,6 +333,17 @@ impl VoxelScene {
                     self.grid_voxel_dimensions.width,
                 )
             {
+                self.current_change
+                    .get_or_insert_with(Change::new)
+                    .add_step(crate::change::change::Step::VoxelGridResize {
+                        diff: (
+                            (
+                                self.grid_voxel_dimensions.width,
+                                self.grid_voxel_dimensions.length,
+                            ),
+                            (width_num, length_num),
+                        ),
+                    });
                 self.grid_voxel_dimensions = new_dim;
                 self.voxel_groups[0] = VoxelGroup::voxel_grid_group(&self.grid_voxel_dimensions);
             }
@@ -399,6 +418,12 @@ impl VoxelScene {
                 self.voxel_groups[*i]
                     .position_to_voxel
                     .insert(voxel_scene_position, voxel_to_add);
+                self.current_change
+                    .get_or_insert_with(Change::new)
+                    .add_step(crate::change::change::Step::VoxelChange {
+                        group_id: self.voxel_groups[*i].id,
+                        changes: vec![(None, Some(voxel_to_add.to_snapshot()))],
+                    });
             }
         }
         self.voxels_added_or_removed = true;
@@ -414,15 +439,20 @@ impl VoxelScene {
                 if !voxel.is_grid() {
                     self.voxels_changed = true;
                     self.saved = false;
-                    self.voxel_groups[*i]
+                    let removed_voxel_opt = self.voxel_groups[*i]
                         .position_to_voxel
                         .remove(&voxel_scene_position);
                     at_least_one_deletion = true;
+                    if let Some(removed_voxel) = removed_voxel_opt {
+                        self.current_change
+                            .get_or_insert_with(Change::new)
+                            .add_step(crate::change::change::Step::VoxelChange {
+                                group_id: self.voxel_groups[*i].id,
+                                changes: vec![(Some(removed_voxel.to_snapshot()), None)],
+                            });
+                    }
                 }
             }
-        }
-        if at_least_one_deletion {
-            self.find_center();
         }
         self.voxels_added_or_removed = true;
         return at_least_one_deletion;
@@ -441,7 +471,16 @@ impl VoxelScene {
     }
     fn find_center(&mut self) {
         for i in self.current_voxel_groups_selected.iter() {
-            self.voxel_groups[*i].center = self.find_center_for_voxel_group(*i);
+            let calc_center = self.find_center_for_voxel_group(*i);
+            self.current_change
+                .get_or_insert_with(Change::new)
+                .add_step(crate::change::change::Step::GroupInfoChange {
+                    group_id: self.voxel_groups[*i].id,
+                    name: None,
+                    visible: None,
+                    center: Some((self.voxel_groups[*i].center.clone(), calc_center)),
+                });
+            self.voxel_groups[*i].center = calc_center;
         }
     }
     fn find_center_for_voxel_group(&self, index: usize) -> Vector3<f32> {
@@ -509,15 +548,24 @@ impl VoxelScene {
                 .filter_map(|(k, v)| (!v.is_grid()).then_some(*k))
                 .collect();
             let mut smallest_y = f32::INFINITY;
+            let group_id = self.voxel_groups[i].id;
             for voxel in self.voxel_groups[i].position_to_voxel.values_mut() {
                 if !voxel.is_grid() {
                     let computed_float_pos = center + rotation * (voxel.get_position() - center);
                     smallest_y = smallest_y.min(computed_float_pos.y.round());
+                    let old_snap = voxel.to_snapshot();
                     voxel.set_position(vec3(
                         computed_float_pos.x.round(),
                         computed_float_pos.y.round(),
                         computed_float_pos.z.round(),
                     ));
+                    let new_snap = voxel.to_snapshot();
+                    self.current_change
+                        .get_or_insert_with(Change::new)
+                        .add_step(crate::change::change::Step::VoxelChange {
+                            group_id: group_id,
+                            changes: vec![(Some(old_snap), Some(new_snap))],
+                        });
                 }
             }
             let necessary_lift_overlap_prevention = (1.0 - smallest_y).max(0.0);
@@ -557,10 +605,18 @@ impl VoxelScene {
                     .iter()
                     .filter_map(|(k, v)| (!v.is_grid()).then_some(*k)),
             );
-
+            let group_id = self.voxel_groups[i].id;
             for voxel in self.voxel_groups[i].position_to_voxel.values_mut() {
                 if !voxel.is_grid() {
+                    let old_snap = voxel.to_snapshot();
                     voxel.move_position_by_vector(move_vector);
+                    let new_snap = voxel.to_snapshot();
+                    self.current_change
+                        .get_or_insert_with(Change::new)
+                        .add_step(crate::change::change::Step::VoxelChange {
+                            group_id: group_id,
+                            changes: vec![(Some(old_snap), Some(new_snap))],
+                        });
                 }
             }
 
@@ -662,6 +718,14 @@ impl VoxelScene {
             format!("Voxel Group:{}", self.voxel_group_name_counter),
             None,
         );
+        self.current_change
+            .get_or_insert_with(Change::new)
+            .add_step(crate::change::change::Step::AddGroup {
+                group_id: self.voxel_group_id_counter,
+                name: String::from(&unique_name),
+                visible: true,
+                center: vec3(0.0, 0.0, 0.0),
+            });
         self.voxel_groups
             .push(VoxelGroup::new(unique_name, self.voxel_group_id_counter));
         self.voxel_group_id_counter += 1;
@@ -675,8 +739,26 @@ impl VoxelScene {
             .filter(|(index, _)| !self.current_voxel_groups_selected.contains(index))
             .map(|(_, voxel)| voxel.id)
             .collect::<Vec<VoxelGroupId>>();
-        self.voxel_groups
-            .retain(|element| return selected_ids.contains(&element.id));
+
+        let removed_groups = self
+            .voxel_groups
+            .extract_if(.., |element| return selected_ids.contains(&element.id))
+            .into_iter();
+        for group in removed_groups {
+            self.current_change
+                .get_or_insert_with(Change::new)
+                .add_step(crate::change::change::Step::RemoveGroup {
+                    group_id: group.id,
+                    name: group.name,
+                    visible: group.visible,
+                    center: group.center,
+                    voxels: group
+                        .position_to_voxel
+                        .values()
+                        .map(|val| val.to_snapshot())
+                        .collect::<Vec<VoxelSnapshot>>(),
+                });
+        }
         self.current_voxel_groups_selected = vec![1];
         if self.voxel_groups.len() <= 1 {
             self.add_voxel_group();
@@ -719,6 +801,11 @@ impl VoxelScene {
             .filter(|(_, group)| selected_ids.contains(&group.id))
             .map(|(index, _)| index.clone())
             .collect::<Vec<usize>>();
+        self.current_change
+            .get_or_insert_with(Change::new)
+            .add_step(crate::change::change::Step::VoxelGroupDownShift {
+                indices: self.current_voxel_groups_selected.clone(),
+            });
     }
     pub fn shift_voxel_group_up(&mut self) {
         let smallest_index = *(self
@@ -754,19 +841,81 @@ impl VoxelScene {
             .filter(|(_, group)| selected_ids.contains(&group.id))
             .map(|(index, _)| index.clone())
             .collect::<Vec<usize>>();
+        self.current_change
+            .get_or_insert_with(Change::new)
+            .add_step(crate::change::change::Step::VoxelGroupUpShift {
+                indices: self.current_voxel_groups_selected.clone(),
+            });
     }
     pub fn merge_voxel_group(&mut self) {
-        let shift_index = self.current_voxel_groups_selected[0] + 1;
-        if shift_index > 0 && shift_index < self.voxel_groups.len() {
-            let to_merge = self.voxel_groups.remove(shift_index);
-            self.voxel_groups[self.current_voxel_groups_selected[0]].merge_with(to_merge);
-        }
-        if let Some(shift_pos) = self
-            .current_voxel_groups_selected
-            .iter()
-            .position(|element| *element == shift_index)
-        {
-            self.current_voxel_groups_selected.remove(shift_pos);
+        if self.current_voxel_groups_selected.len() == 1 {
+            let shift_index = self.current_voxel_groups_selected[0] + 1;
+            if shift_index > 0 && shift_index < self.voxel_groups.len() {
+                let to_merge = self.voxel_groups.remove(shift_index);
+                self.current_change
+                    .get_or_insert_with(Change::new)
+                    .add_step(crate::change::change::Step::RemoveGroup {
+                        group_id: to_merge.id,
+                        name: String::from(&to_merge.name),
+                        visible: to_merge.visible,
+                        center: to_merge.center,
+                        voxels: to_merge
+                            .position_to_voxel
+                            .values()
+                            .map(|voxel| voxel.to_snapshot())
+                            .collect::<Vec<VoxelSnapshot>>(),
+                    });
+                self.current_change
+                    .get_or_insert_with(Change::new)
+                    .add_step(crate::change::change::Step::VoxelChange {
+                        group_id: self.voxel_groups[self.current_voxel_groups_selected[0]].id,
+                        changes: to_merge
+                            .position_to_voxel
+                            .values()
+                            .map(|voxel| (None, Some(voxel.to_snapshot())))
+                            .collect::<Vec<(Option<VoxelSnapshot>, Option<VoxelSnapshot>)>>(),
+                    });
+                self.voxel_groups[self.current_voxel_groups_selected[0]].merge_with(to_merge);
+            }
+            if let Some(shift_pos) = self
+                .current_voxel_groups_selected
+                .iter()
+                .position(|element| *element == shift_index)
+            {
+                self.current_voxel_groups_selected.remove(shift_pos);
+            }
+        } else {
+            let last_index = *(self
+                .current_voxel_groups_selected
+                .iter()
+                .max()
+                .unwrap_or(&0));
+            let last_index_id = self.voxel_groups[last_index].id;
+            let insert_index_id = self.voxel_groups[(last_index - 1).min(0)].id;
+            let mut last_group = self.voxel_groups.remove(last_index);
+            let selected_ids: Vec<VoxelGroupId> = self
+                .voxel_groups
+                .iter()
+                .enumerate()
+                .filter(|(index, _)| self.current_voxel_groups_selected.contains(index))
+                .map(|(_, group)| group.id)
+                .collect();
+            let groups_to_merge = self
+                .voxel_groups
+                .extract_if(.., |group| {
+                    selected_ids.contains(&group.id) && group.id != last_index_id
+                })
+                .collect::<Vec<VoxelGroup>>();
+            for group in groups_to_merge {
+                last_group.merge_with(group);
+            }
+            let insert_index_opt = self
+                .voxel_groups
+                .iter()
+                .position(|group| group.id == insert_index_id);
+            if let Some(insert_index) = insert_index_opt {
+                self.voxel_groups.insert(insert_index, last_group);
+            }
         }
         self.voxels_changed = true;
         self.saved = false;

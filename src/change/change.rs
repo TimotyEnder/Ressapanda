@@ -26,7 +26,7 @@ pub enum Step {
     VoxelChange {
         // position-level delta (cheap hot path)
         group_id: VoxelGroupId,
-        changes: BTreeMap<VoxelScenePosition, (Option<VoxelSnapshot>, Option<VoxelSnapshot>)>, // before, after
+        changes: Vec<(Option<VoxelSnapshot>, Option<VoxelSnapshot>)>, // before, after
     },
     GroupInfoChange {
         group_id: VoxelGroupId,
@@ -61,7 +61,7 @@ impl Step {
     pub fn undo(&self, scene: &mut VoxelScene) {
         match self {
             VoxelChange { group_id, changes } => {
-                for (pos, (before_opt, after_opt)) in changes.iter() {
+                for (before_opt, after_opt) in changes.iter() {
                     if let Some(after) = after_opt {
                         let working_group_opt = scene
                             .voxel_groups_ref_mut()
@@ -173,7 +173,7 @@ impl Step {
     pub fn redo(&self, scene: &mut VoxelScene) {
         match self {
             VoxelChange { group_id, changes } => {
-                for (pos, (before_opt, after_opt)) in changes.iter() {
+                for (before_opt, after_opt) in changes.iter() {
                     if let Some(before) = before_opt {
                         let working_group_opt = scene
                             .voxel_groups_ref_mut()
@@ -276,8 +276,14 @@ pub struct Change {
     steps: Vec<Step>,
 }
 impl Change {
-    pub fn unde(&self, scene: &mut VoxelScene) {
-        for step in self.steps.iter() {
+    pub fn new() -> Self {
+        Self { steps: Vec::new() }
+    }
+    pub fn is_empty(&self) -> bool {
+        self.steps.is_empty()
+    }
+    pub fn undo(&self, scene: &mut VoxelScene) {
+        for step in self.steps.iter().rev() {
             step.undo(scene);
         }
     }
@@ -285,6 +291,9 @@ impl Change {
         for step in self.steps.iter() {
             step.redo(scene);
         }
+    }
+    pub fn add_step(&mut self, step: Step) {
+        self.steps.push(step);
     }
 }
 pub struct History {
@@ -298,7 +307,7 @@ impl History {
             past_future: VecDeque::new(),
         }
     }
-    pub fn add_cnahge(&mut self, change: Change) {
+    pub fn add_change(&mut self, change: Change) {
         self.history.push_front(change);
         self.past_future.clear();
     }
