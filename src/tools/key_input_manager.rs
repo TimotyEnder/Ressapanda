@@ -8,8 +8,17 @@ use crate::{
     camera_controller::CameraController,
     select_mode::select_mode::{SelectMode, select_mode_from_name},
     tools::tool::{Tool, tool_from_name},
-    voxel_scene::{VoxelScene, VoxelSceneDirection},
+    voxel_scene::{self, VoxelScene, VoxelSceneDirection},
 };
+pub enum VoxelGroupAction {
+    Create,
+    Delete,
+    Merge,
+    Duplicate,
+    MoveUp,
+    MoveDown,
+    None,
+}
 pub struct ModifierKeysStatus {
     pub alt_modifier: bool,
     pub shift_modifier: bool,
@@ -78,6 +87,20 @@ impl KeyInputManager {
     pub fn redo_input(&mut self, key: KeyCode, pressed: bool) -> bool {
         return self.control_modifier && key == KeyCode::KeyY && pressed;
     }
+    pub fn voxel_group_action_inputs(&mut self, key: KeyCode, pressed: bool) -> VoxelGroupAction {
+        if self.shift_modifier && pressed {
+            match key {
+                KeyCode::Digit1 => return VoxelGroupAction::Create,
+                KeyCode::Digit2 => return VoxelGroupAction::Delete,
+                KeyCode::Digit3 => return VoxelGroupAction::Merge,
+                KeyCode::Digit4 => return VoxelGroupAction::Duplicate,
+                KeyCode::Digit5 => return VoxelGroupAction::MoveUp,
+                KeyCode::Digit6 => return VoxelGroupAction::MoveDown,
+                _ => return VoxelGroupAction::None,
+            }
+        }
+        return VoxelGroupAction::None;
+    }
     pub fn tool_selection_inputs(&mut self, key: KeyCode, pressed: bool) -> Option<Box<dyn Tool>> {
         if let Some(name) = self.keycode_to_mapping.get(&key)
             && let Some(flag) = self.keycode_to_flag.get_mut(&key)
@@ -123,7 +146,7 @@ impl KeyInputManager {
         camera: &mut Camera,
         camera_controller: &mut CameraController,
     ) {
-        if pressed {
+        if pressed && !self.alt_modifier && !self.control_modifier && !self.shift_modifier {
             let target = Point3::new(0.0, 0.0, 0.0);
             let look_direction = match key {
                 KeyCode::Digit1 => {

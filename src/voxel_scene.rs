@@ -764,7 +764,7 @@ impl VoxelScene {
         self.voxel_group_id_counter += 1;
         self.voxel_group_name_counter += 1;
     }
-    pub fn remove_voxel_group(&mut self) {
+    pub fn remove_voxel_groups(&mut self) {
         let selected_ids = self
             .voxel_groups
             .iter()
@@ -797,7 +797,7 @@ impl VoxelScene {
             self.add_voxel_group();
         }
     }
-    pub fn shift_voxel_group_down(&mut self) {
+    pub fn shift_voxel_groups_down(&mut self) {
         let largest_index = *(self
             .current_voxel_groups_selected
             .iter()
@@ -840,7 +840,7 @@ impl VoxelScene {
                 indices: self.current_voxel_groups_selected.clone(),
             });
     }
-    pub fn shift_voxel_group_up(&mut self) {
+    pub fn shift_voxel_groups_up(&mut self) {
         let smallest_index = *(self
             .current_voxel_groups_selected
             .iter()
@@ -961,7 +961,7 @@ impl VoxelScene {
             self.saved = false;
         }
     }
-    pub fn duplicate_voxel_group(&mut self) {
+    pub fn duplicate_voxel_groups(&mut self) {
         let mut duplicates = Vec::new();
         for i in self.current_voxel_groups_selected.clone() {
             let unique_name = self.turn_name_unique(String::from(&self.voxel_groups[i].name), None);

@@ -183,11 +183,11 @@ impl Step {
             }
             VoxelGroupUpShift { indices } => {
                 scene.set_current_voxel_group(indices.clone());
-                scene.shift_voxel_group_down();
+                scene.shift_voxel_groups_down();
             }
             VoxelGroupDownShift { indices } => {
                 scene.set_current_voxel_group(indices.clone());
-                scene.shift_voxel_group_up();
+                scene.shift_voxel_groups_up();
             }
             VoxelMove {
                 group_id,
@@ -320,11 +320,11 @@ impl Step {
             }
             VoxelGroupUpShift { indices } => {
                 scene.set_current_voxel_group(indices.clone());
-                scene.shift_voxel_group_up();
+                scene.shift_voxel_groups_up();
             }
             VoxelGroupDownShift { indices } => {
                 scene.set_current_voxel_group(indices.clone());
-                scene.shift_voxel_group_down();
+                scene.shift_voxel_groups_down();
             }
             VoxelMove {
                 group_id,

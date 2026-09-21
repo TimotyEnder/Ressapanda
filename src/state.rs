@@ -15,7 +15,7 @@ use crate::{
     },
     tools::{
         add::Add,
-        key_input_manager::KeyInputManager,
+        key_input_manager::{KeyInputManager, VoxelGroupAction},
         tool::{Tool, tool_from_name, tool_tooltip_from_name},
     },
     ui_data::{FileAction, UIData},
@@ -387,6 +387,30 @@ impl State {
     }
     pub fn handle_key(&mut self, _event_loop: &ActiveEventLoop, key: KeyCode, pressed: bool) {
         self.key_input_manager.modifier_inputs(key, pressed);
+        match self
+            .key_input_manager
+            .voxel_group_action_inputs(key, pressed)
+        {
+            VoxelGroupAction::Create => {
+                self.voxel_scene.add_voxel_group();
+            }
+            VoxelGroupAction::Delete => {
+                self.voxel_scene.remove_voxel_groups();
+            }
+            VoxelGroupAction::Merge => {
+                self.voxel_scene.merge_voxel_group();
+            }
+            VoxelGroupAction::Duplicate => {
+                self.voxel_scene.duplicate_voxel_groups();
+            }
+            VoxelGroupAction::MoveDown => {
+                self.voxel_scene.shift_voxel_groups_down();
+            }
+            VoxelGroupAction::MoveUp => {
+                self.voxel_scene.shift_voxel_groups_up();
+            }
+            _ => {}
+        }
         if self.key_input_manager.save_input(key, pressed) {
             self.conditional_save();
         }
@@ -1005,7 +1029,7 @@ impl State {
                         };
                         if ui
                             .add(button)
-                            .on_hover_text("Add another voxel group to the scene")
+                            .on_hover_text("Add another voxel group to the scene (Shortcut:Shift+1)")
                             .clicked()
                         {
                             self.voxel_scene.reset_input_state();
@@ -1019,7 +1043,7 @@ impl State {
                         };
                         if ui
                             .add(button)
-                            .on_hover_text("Remove the selected voxel group")
+                            .on_hover_text("Remove the selected voxel group (Shortcut:Shift+2)")
                             .clicked()
                         {
                             self.ui_info.voxel_group_removal_popup = true;
@@ -1032,7 +1056,7 @@ impl State {
                         };
                         if ui
                             .add(button)
-                            .on_hover_text("Merge the selected vertex group to the one below it")
+                            .on_hover_text("Merge the selected vertex group to the one below it (Shortcut:Shift+3)")
                             .clicked()
                         {
                             self.voxel_scene.merge_voxel_group();
@@ -1044,11 +1068,11 @@ impl State {
                         };
                         if ui
                             .add(button)
-                            .on_hover_text("Duplicate the selected voxel group.")
+                            .on_hover_text("Duplicate the selected voxel group. (Shortcut:Shift+4)")
                             .clicked()
                         {
                             self.voxel_scene.reset_input_state();
-                            self.voxel_scene.duplicate_voxel_group();
+                            self.voxel_scene.duplicate_voxel_groups();
                         }
 
                         let Some(button) =
@@ -1059,11 +1083,11 @@ impl State {
                         if ui
                             .add(button)
                             .on_hover_text(
-                                "Move the selected vertex group up one place in the hierarchy",
+                                "Move the selected vertex group up one place in the hierarchy (Shortcut:Shift+5)",
                             )
                             .clicked()
                         {
-                            self.voxel_scene.shift_voxel_group_up();
+                            self.voxel_scene.shift_voxel_groups_up();
                         }
 
                         let Some(button) =
@@ -1074,11 +1098,11 @@ impl State {
                         if ui
                             .add(button)
                             .on_hover_text(
-                                "Move the selected vertex group down one place in the hierarchy",
+                                "Move the selected vertex group down one place in the hierarchy (Shortcut:Shift+6)",
                             )
                             .clicked()
                         {
-                            self.voxel_scene.shift_voxel_group_down();
+                            self.voxel_scene.shift_voxel_groups_down();
                         }
                     });
                 });
@@ -1193,7 +1217,7 @@ impl State {
                     ));
                     ui.horizontal(|ui| {
                         if ui.button("Yes").clicked() {
-                            self.voxel_scene.remove_voxel_group();
+                            self.voxel_scene.remove_voxel_groups();
                             self.ui_info.voxel_group_removal_popup = false;
                         }
                         if ui.button("No").clicked() {
