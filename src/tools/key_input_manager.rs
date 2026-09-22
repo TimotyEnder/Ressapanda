@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use cgmath::Point3;
-use winit::keyboard::KeyCode;
+use winit::keyboard::{Key, KeyCode};
 
 use crate::{
     camera::{Camera, CameraLookDirection},
@@ -70,6 +70,13 @@ impl KeyInputManager {
             }
             _ => {}
         };
+    }
+    pub fn choose_color_input(&mut self, key: KeyCode, pressed: bool) -> bool {
+        return key == KeyCode::KeyC
+            && pressed
+            && !self.alt_modifier
+            && !self.shift_modifier
+            && !self.control_modifier;
     }
     pub fn save_input(&mut self, key: KeyCode, pressed: bool) -> bool {
         return self.control_modifier && key == KeyCode::KeyS && pressed;

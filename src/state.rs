@@ -387,6 +387,9 @@ impl State {
     }
     pub fn handle_key(&mut self, _event_loop: &ActiveEventLoop, key: KeyCode, pressed: bool) {
         self.key_input_manager.modifier_inputs(key, pressed);
+        if self.key_input_manager.choose_color_input(key, pressed) {
+            self.ui_info.show_color_picker = !self.ui_info.show_color_picker;
+        }
         match self
             .key_input_manager
             .voxel_group_action_inputs(key, pressed)
@@ -1136,7 +1139,7 @@ impl State {
                 let size = 50.0;
                 if ui
                     .add_sized([size, size], brush_color_button)
-                    .on_hover_text("Brush Color")
+                    .on_hover_text("Brush color select (Shortcut:C)")
                     .clicked()
                 {
                     self.ui_info.show_color_picker = !self.ui_info.show_color_picker;
