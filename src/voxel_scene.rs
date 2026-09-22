@@ -247,7 +247,7 @@ impl VoxelScene {
             current_voxel_groups_selected: vec![1],
             raw_voxel_instance_list: Vec::new(),
             voxels_changed: true,
-            voxels_added_or_removed: true,
+            voxels_added_or_removed: false,
             temporary_voxels: Vec::new(),
             voxel_group_name_counter: 2,
             saved: false,

@@ -84,9 +84,7 @@ impl Step {
                                 y: after.y,
                                 z: after.z,
                             };
-                            if new_positions.contains(&delete_pos) {
-                                working_group.position_to_voxel.remove(&delete_pos);
-                            }
+                            working_group.position_to_voxel.remove(&delete_pos);
                         }
                     }
                     if let Some(before) = before_opt {
@@ -257,6 +255,7 @@ impl Step {
                         }
                     }
                 }
+                scene.force_voxel_scene_update();
             }
             GroupInfoChange {
                 group_id,
@@ -291,6 +290,7 @@ impl Step {
                 voxel_group.visible = *visible;
                 voxel_group.editing_name = false;
                 scene.voxel_groups_ref_mut().push(voxel_group);
+                scene.force_voxel_scene_update();
             }
             RemoveGroup {
                 group_id,
@@ -308,6 +308,7 @@ impl Step {
                         .voxel_groups_ref_mut()
                         .remove(index_of_group_to_remove);
                 }
+                scene.force_voxel_scene_update();
             }
             VoxelGridResize { diff } => {
                 let ((_, _), (after_w, after_l)) = diff;
@@ -317,6 +318,7 @@ impl Step {
                 };
                 scene.voxel_groups_ref_mut()[0] =
                     VoxelGroup::voxel_grid_group(&scene.grid_voxel_dimensions);
+                scene.force_voxel_scene_update();
             }
             VoxelGroupUpShift { indices } => {
                 scene.set_current_voxel_group(indices.clone());
