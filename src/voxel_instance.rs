@@ -155,6 +155,9 @@ impl VoxelInstance {
     pub fn fragment_unselect(&mut self) {
         self.fragment_voxel = false;
     }
+    pub fn is_fragment_selected(&self) -> bool {
+        self.fragment_voxel
+    }
     pub fn is_grid(&self) -> bool {
         self.grid_voxel
     }

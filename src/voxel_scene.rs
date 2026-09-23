@@ -324,25 +324,52 @@ impl VoxelScene {
     }
     pub fn cut_operate_on_voxel_pos(&mut self, position: Vector3<f32>) {
         for voxel_group in self.voxel_groups.iter_mut() {
-            let fragment = self.current_fragment.get_or_insert_default();
-            if !fragment.contains_key(&voxel_group.id) {
-                fragment.insert(voxel_group.id, BTreeSet::new());
-            }
-            if let Some(voxels) = fragment.get_mut(&voxel_group.id) {
-                let voxel_scene_pos = VoxelScenePosition::from_voxel_position(position);
-                if let Some(voxel_to_cut) = voxel_group.position_to_voxel.get_mut(&voxel_scene_pos)
-                {
-                    if voxels.contains(&voxel_scene_pos) {
-                        voxels.remove(&voxel_scene_pos);
-                        voxel_to_cut.fragment_unselect();
-                    } else {
-                        voxels.insert(voxel_scene_pos);
-                        voxel_to_cut.fragment_select();
+            Self::cut_operate_on_voxel_pos_with_group(
+                self.current_fragment.get_or_insert_default(),
+                voxel_group,
+                position,
+            );
+            self.voxels_changed = true;
+        }
+    }
+    pub fn cut_operate_on_voxel_pos_with_group(
+        fragment: &mut BTreeMap<VoxelGroupId, BTreeSet<VoxelScenePosition>>,
+        voxel_group: &mut VoxelGroup,
+        position: Vector3<f32>,
+    ) {
+        if !fragment.contains_key(&voxel_group.id) {
+            fragment.insert(voxel_group.id, BTreeSet::new());
+        }
+        if let Some(voxels) = fragment.get_mut(&voxel_group.id) {
+            let voxel_scene_pos = VoxelScenePosition::from_voxel_position(position);
+            if let Some(voxel_to_cut) = voxel_group.position_to_voxel.get_mut(&voxel_scene_pos) {
+                if voxels.contains(&voxel_scene_pos) {
+                    voxels.remove(&voxel_scene_pos);
+                    voxel_to_cut.fragment_unselect();
+                    if voxels.is_empty() {
+                        fragment.remove(&voxel_group.id);
                     }
-                    self.voxels_changed = true;
+                } else {
+                    voxels.insert(voxel_scene_pos);
+                    voxel_to_cut.fragment_select();
                 }
             }
         }
+    }
+    pub fn get_fragment_voxel_counter_per_group(&self) -> Option<Vec<(String, usize)>> {
+        if let Some(ref fragment) = self.current_fragment {
+            let mut to_ret = Vec::new();
+            for voxel_group in self.voxel_groups.iter().filter(|group| group.id != 0) {
+                if let Some(voxels) = fragment.get(&voxel_group.id) {
+                    to_ret.push((String::from(&voxel_group.name), voxels.len()));
+                }
+            }
+            if to_ret.len() < 1 {
+                return None;
+            }
+            return Some(to_ret);
+        }
+        return None;
     }
     pub fn get_voxel_grid_dimensions(&self) -> (f32, f32) {
         (
@@ -470,6 +497,13 @@ impl VoxelScene {
                 .get(&voxel_scene_position)
             {
                 if !voxel.is_grid() {
+                    if voxel.is_fragment_selected() {
+                        Self::cut_operate_on_voxel_pos_with_group(
+                            self.current_fragment.get_or_insert_default(),
+                            &mut self.voxel_groups[*i],
+                            position,
+                        );
+                    }
                     self.voxels_changed = true;
                     self.saved = false;
                     let removed_voxel_opt = self.voxel_groups[*i]

@@ -983,6 +983,36 @@ impl State {
             });
         let spacing = self.config.height as f32 * 0.05;
         let mut top_offset = top_panel_width;
+        if let Some(fragment_data) = self.voxel_scene.get_fragment_voxel_counter_per_group() {
+            let fragment_window = egui::Window::new("Current Fragment")
+                .anchor(Align2::CENTER_TOP, [0.0, 0.0])
+                .collapsible(false)
+                .fixed_size([300.0, 200.0])
+                .resizable(false)
+                .show(ui, |ui| {
+                    egui::ScrollArea::vertical()
+                        .max_height(self.config.height as f32 * 0.3)
+                        .show(ui, |ui| {
+                            ui.vertical_centered(|ui| {
+                                let mut full_string = String::new();
+                                for (name, count) in fragment_data {
+                                    full_string += &format!("{}:{}\n", name, count);
+                                }
+                                ui.label(full_string);
+                            });
+                        });
+                    ui.vertical_centered(|ui| {
+                        ui.horizontal(|ui| {
+                            if ui.button("Add to Separate Group").clicked() {
+                                //ad to separate group
+                            }
+                            if ui.button("Cancel Selection").clicked() {
+                                //cancel selection
+                            }
+                        });
+                    });
+                });
+        }
         let undo_redo_windo = egui::Window::new("Undo/Redo Window")
             .title_bar(false)
             .anchor(Align2::LEFT_TOP, [0.0, top_offset])
