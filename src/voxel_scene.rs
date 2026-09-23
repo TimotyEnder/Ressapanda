@@ -333,12 +333,23 @@ impl VoxelScene {
                     .voxel_groups
                     .iter_mut()
                     .find(|group| group.id == *group_id);
+                let mut voxel_snapshots = Vec::new();
                 if let Some(working_group) = working_group_opt {
                     for pos in voxels.iter() {
                         if let Some(voxel) = working_group.position_to_voxel.remove(pos) {
                             all_voxels.push(voxel);
+                            voxel_snapshots.push(voxel.to_snapshot());
                         }
                     }
+                    self.current_change
+                        .get_or_insert_with(Change::new)
+                        .add_step(crate::change::change::Step::VoxelChange {
+                            group_id: *group_id,
+                            changes: voxel_snapshots
+                                .into_iter()
+                                .map(|snap| (Some(snap), None))
+                                .collect::<Vec<(Option<VoxelSnapshot>, Option<VoxelSnapshot>)>>(),
+                        });
                 }
             }
             let unique_name = self.turn_name_unique(
@@ -354,8 +365,10 @@ impl VoxelScene {
                     center: vec3(0.0, 0.0, 0.0),
                 });
             let mut new_group = VoxelGroup::new(unique_name, self.voxel_group_id_counter);
+            let mut snapshots = Vec::new();
             for voxel in all_voxels.iter_mut() {
                 voxel.fragment_unselect();
+                snapshots.push(voxel.to_snapshot());
             }
             for voxel in all_voxels {
                 new_group.position_to_voxel.insert(
@@ -363,6 +376,15 @@ impl VoxelScene {
                     voxel,
                 );
             }
+            self.current_change
+                .get_or_insert_with(Change::new)
+                .add_step(crate::change::change::Step::VoxelChange {
+                    group_id: new_group.id,
+                    changes: snapshots
+                        .into_iter()
+                        .map(|snap| (None, Some(snap)))
+                        .collect::<Vec<(Option<VoxelSnapshot>, Option<VoxelSnapshot>)>>(),
+                });
             self.voxel_groups.push(new_group);
             self.voxel_group_id_counter += 1;
             self.voxel_group_name_counter += 1;
@@ -376,6 +398,12 @@ impl VoxelScene {
                 voxel_group,
                 position,
             );
+            self.current_change
+                .get_or_insert_with(Change::new)
+                .add_step(crate::change::change::Step::VoxelFragmentSelect {
+                    group_id: voxel_group.id,
+                    position: VoxelScenePosition::from_voxel_position(position),
+                });
             self.voxels_changed = true;
         }
     }
@@ -582,6 +610,14 @@ impl VoxelScene {
     }
     pub fn voxel_groups_ref_mut(&mut self) -> &mut Vec<VoxelGroup> {
         &mut self.voxel_groups
+    }
+    pub fn current_fragment_ref_mut(
+        &mut self,
+    ) -> &mut Option<BTreeMap<VoxelGroupId, BTreeSet<VoxelScenePosition>>> {
+        &mut self.current_fragment
+    }
+    pub fn current_voxel_group_selected_ref_mut(&mut self) -> &mut Vec<usize> {
+        &mut self.current_voxel_groups_selected
     }
     fn find_center(&mut self) {
         for i in self.current_voxel_groups_selected.iter() {

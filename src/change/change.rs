@@ -4,9 +4,10 @@ use cgmath::{Vector3, vec3};
 
 use crate::{
     change::change::Step::{
-        AddGroup, GroupInfoChange, RemoveGroup, VoxelChange, VoxelGridResize, VoxelGroupDownShift,
-        VoxelGroupUpShift, VoxelMove, VoxelRotate,
+        AddGroup, GroupInfoChange, RemoveGroup, VoxelChange, VoxelFragmentSelect, VoxelGridResize,
+        VoxelGroupDownShift, VoxelGroupUpShift, VoxelMove, VoxelRotate,
     },
+    tools::fragment,
     voxel_instance::VoxelInstance,
     voxel_scene::{GridVoxelDimensions, VoxelGroup, VoxelGroupId, VoxelScene, VoxelScenePosition},
 };
@@ -65,6 +66,10 @@ pub enum Step {
         axis: Vector3<f32>,
         center: Vector3<f32>,
         deg: cgmath::Deg<f32>,
+    },
+    VoxelFragmentSelect {
+        group_id: VoxelGroupId,
+        position: VoxelScenePosition,
     },
 }
 impl Step {
@@ -142,6 +147,12 @@ impl Step {
                     scene
                         .voxel_groups_ref_mut()
                         .remove(index_of_group_to_remove);
+                    scene
+                        .current_voxel_group_selected_ref_mut()
+                        .retain(|index| *index != index_of_group_to_remove);
+                    if scene.current_voxel_group_selected_ref_mut().is_empty() {
+                        scene.current_voxel_group_selected_ref_mut().push(1);
+                    }
                 }
             }
             RemoveGroup {
@@ -217,6 +228,25 @@ impl Step {
                         *center,
                     );
                 }
+            }
+            VoxelFragmentSelect { group_id, position } => {
+                let fragment = scene.current_fragment_ref_mut().get_or_insert_default();
+                if let Some(voxels) = fragment.get_mut(group_id) {
+                    voxels.remove(position);
+                    if voxels.len() < 1 {
+                        fragment.remove(group_id);
+                    }
+                }
+                if let Some(voxel_group) = scene
+                    .voxel_groups_ref_mut()
+                    .iter_mut()
+                    .find(|group| group.id == *group_id)
+                {
+                    if let Some(unselect_voxel) = voxel_group.position_to_voxel.get_mut(position) {
+                        unselect_voxel.fragment_unselect();
+                    }
+                }
+                scene.force_voxel_scene_update();
             }
         }
     }
@@ -353,6 +383,25 @@ impl Step {
                 if let Some(working_index) = working_index_opt {
                     scene.rotate_voxel_group_around_center(*axis, *deg, working_index, *center);
                 }
+            }
+            VoxelFragmentSelect { group_id, position } => {
+                let fragment = scene.current_fragment_ref_mut().get_or_insert_default();
+                if !fragment.contains_key(group_id) {
+                    fragment.insert(*group_id, BTreeSet::new());
+                }
+                if let Some(voxels) = fragment.get_mut(group_id) {
+                    voxels.insert(*position);
+                }
+                if let Some(voxel_group) = scene
+                    .voxel_groups_ref_mut()
+                    .iter_mut()
+                    .find(|group| group.id == *group_id)
+                {
+                    if let Some(unselect_voxel) = voxel_group.position_to_voxel.get_mut(position) {
+                        unselect_voxel.fragment_select();
+                    }
+                }
+                scene.force_voxel_scene_update();
             }
         }
     }
