@@ -47,6 +47,8 @@ impl KeyInputManager {
         ret.keycode_to_flag.insert(KeyCode::KeyD, false);
         ret.keycode_to_mapping.insert(KeyCode::KeyS, "Subs");
         ret.keycode_to_flag.insert(KeyCode::KeyS, false);
+        ret.keycode_to_mapping.insert(KeyCode::KeyF, "Cut");
+        ret.keycode_to_flag.insert(KeyCode::KeyF, false);
 
         //selection modes
         ret.keycode_to_mapping.insert(KeyCode::KeyQ, "Single");

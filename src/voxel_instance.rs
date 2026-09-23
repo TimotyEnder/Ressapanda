@@ -10,6 +10,7 @@ pub struct VoxelInstance {
     color: VoxelColor,
     selected: bool,
     grid_voxel: bool,
+    fragment_voxel: bool,
 }
 impl VoxelInstance {
     pub fn to_saved(&self) -> SavedVoxel {
@@ -50,6 +51,7 @@ impl VoxelInstance {
             color: VoxelColor::new(snap.r, snap.g, snap.b, snap.a),
             selected: false,
             grid_voxel: false,
+            fragment_voxel: false,
         }
     }
     pub fn new(position: cgmath::Vector3<f32>, color: VoxelColor) -> Self {
@@ -58,6 +60,7 @@ impl VoxelInstance {
             color,
             selected: false,
             grid_voxel: false,
+            fragment_voxel: false,
         }
     }
     pub fn new_grid_voxel(position: cgmath::Vector3<f32>, color: VoxelColor) -> Self {
@@ -66,13 +69,14 @@ impl VoxelInstance {
             color,
             selected: false,
             grid_voxel: true,
+            fragment_voxel: false,
         }
     }
     pub fn to_raw(&self) -> RawVoxelInstance {
         let info_vec = Vector4::new(
             if self.selected { 1.0 } else { 0.0 },
             if self.grid_voxel { 1.0 } else { 0.0 },
-            0.0,
+            if self.fragment_voxel { 1.0 } else { 0.0 },
             0.0,
         );
         RawVoxelInstance {
@@ -144,6 +148,12 @@ impl VoxelInstance {
     pub fn unselect(&mut self) {
         self.selected = false;
     }
+    pub fn fragment_select(&mut self) {
+        self.fragment_voxel = true;
+    }
+    pub fn fragment_unselect(&mut self) {
+        self.fragment_voxel = false;
+    }
     pub fn is_grid(&self) -> bool {
         self.grid_voxel
     }
@@ -153,7 +163,7 @@ impl VoxelInstance {
 pub struct RawVoxelInstance {
     matrix: [[f32; 4]; 4],
     color: [f32; 4],
-    info_vec: [f32; 4], //x selected bool f32 / y grid voxel bool f32
+    info_vec: [f32; 4], //x selected bool-> f32 / y grid voxel bool-> f32 / z fragment voxel bool-> f32
 }
 impl RawVoxelInstance {
     pub fn desc() -> wgpu::VertexBufferLayout<'static> {

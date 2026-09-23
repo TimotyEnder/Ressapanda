@@ -8,7 +8,7 @@ impl Tool for FragmentCut {
         scene: &mut crate::voxel_scene::VoxelScene,
         brush: &crate::brushes::brush::Brush,
     ) {
-        todo!()
+        scene.cut_operate_on_voxel_pos(operating_position);
     }
 
     fn temp_operate_with_position(
@@ -17,7 +17,7 @@ impl Tool for FragmentCut {
         scene: &mut crate::voxel_scene::VoxelScene,
         brush: &crate::brushes::brush::Brush,
     ) {
-        todo!()
+        scene.select_voxel_at_position(operating_position);
     }
 
     fn name(&self) -> &'static str {

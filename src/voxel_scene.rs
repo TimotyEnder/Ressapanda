@@ -1,6 +1,6 @@
 use cgmath::{Deg, Quaternion, Vector3};
 use cgmath::{prelude::*, vec3};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex};
 use std::usize;
 
@@ -166,6 +166,7 @@ pub struct VoxelScene {
     pub grid_voxel_dimensions: GridVoxelDimensions,
     history: Arc<Mutex<History>>,
     current_change: Option<Change>,
+    current_fragment: Option<BTreeMap<VoxelGroupId, BTreeSet<VoxelScenePosition>>>,
 }
 impl VoxelScene {
     pub fn orientating_cross_scene() -> Self {
@@ -188,6 +189,7 @@ impl VoxelScene {
             voxel_group_id_counter: 0,
             history: Arc::new(Mutex::new(History::new())),
             current_change: None,
+            current_fragment: None,
         }
     }
     pub fn to_saved(&self) -> SaveFile {
@@ -231,6 +233,7 @@ impl VoxelScene {
             voxel_group_id_counter: save.id_counter,
             history: Arc::new(Mutex::new(History::new())),
             current_change: None,
+            current_fragment: None,
         }
     }
     pub fn new() -> Self {
@@ -256,6 +259,7 @@ impl VoxelScene {
             voxel_group_id_counter: 2,
             history: Arc::new(Mutex::new(History::new())),
             current_change: None,
+            current_fragment: None,
         }
     }
     pub fn undo(&mut self) {
@@ -271,6 +275,11 @@ impl VoxelScene {
         }
     }
     pub fn prepare_buffer_contents(&mut self) -> &Vec<RawVoxelInstance> {
+        if let Some(ref fragment) = self.current_fragment {
+            if fragment.is_empty() {
+                self.current_fragment = None;
+            }
+        }
         if self.voxels_changed {
             self.voxels_changed = false;
             if self.voxels_added_or_removed {
@@ -312,6 +321,24 @@ impl VoxelScene {
     }
     pub fn force_voxel_scene_update(&mut self) {
         self.voxels_changed = true;
+    }
+    pub fn cut_operate_on_voxel_pos(&mut self, position: Vector3<f32>) {
+        for voxel_group in self.voxel_groups.iter_mut() {
+            if let Some(voxels) = self
+                .current_fragment
+                .get_or_insert_default()
+                .get_mut(&voxel_group.id)
+            {
+                let voxel_scene_pos = VoxelScenePosition::from_voxel_position(position);
+                if let Some(voxel_to_cut) = voxel_group.position_to_voxel.get(&voxel_scene_pos) {
+                    if voxels.contains(&voxel_scene_pos) {
+                        voxels.remove(&voxel_scene_pos);
+                    } else {
+                        voxels.insert(voxel_scene_pos);
+                    }
+                }
+            }
+        }
     }
     pub fn get_voxel_grid_dimensions(&self) -> (f32, f32) {
         (

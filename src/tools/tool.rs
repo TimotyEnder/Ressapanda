@@ -2,7 +2,7 @@ use cgmath::Vector3;
 
 use crate::{
     brushes::brush::Brush,
-    tools::{add::Add, del::Del, subs::Subs},
+    tools::{add::Add, del::Del, fragment::FragmentCut, subs::Subs},
     voxel_scene::VoxelScene,
 };
 
@@ -29,6 +29,7 @@ pub fn tool_from_name(name: &'static str) -> Option<Box<dyn Tool>> {
         "Add" => return Some(Box::new(Add {})),
         "Del" => return Some(Box::new(Del {})),
         "Subs" => return Some(Box::new(Subs {})),
+        "Cut" => return Some(Box::new(FragmentCut {})),
         _ => return None,
     };
 }
@@ -37,6 +38,9 @@ pub fn tool_tooltip_from_name(name: &str) -> Option<&str> {
         "Add" => Some("Add (Shorcut:A)"),
         "Del" => Some("Delete (Shorcut:D)"),
         "Subs" => Some("Substitute/Paint (Shorcut:S)"),
+        "Cut" => Some(
+            "Fragment cut: add selected  voxels into a fragment that can  be made  into a separate voxel group (Shortcut:F)",
+        ),
         _ => return None,
     }
 }

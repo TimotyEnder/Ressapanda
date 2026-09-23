@@ -69,7 +69,7 @@ fn fs_main(in:VertexOutput)->@location(0) vec4<f32>
   let lit_color = in.color.rgb * (ambient + diffuse * 0.6);
   var final_color=lit_color;
   //selection logic
-  if in.info_vec.x>0.5 || in.info_vec.y>0.5
+  if in.info_vec.x>0.5 || in.info_vec.y>0.5 || in.info_vec.z>0.5
   {
     let s = abs(in.local_pos);
     let max_s= max(s.x,max(s.y,s.z));
