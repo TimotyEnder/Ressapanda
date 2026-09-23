@@ -1128,6 +1128,24 @@ impl VoxelScene {
             .unwrap_or(&0)
             + 1;
         for group in duplicates.drain(0..duplicates.len()) {
+            self.current_change
+                .get_or_insert_with(Change::new)
+                .add_step(crate::change::change::Step::AddGroup {
+                    group_id: group.id,
+                    name: String::from(&group.name),
+                    visible: group.visible,
+                    center: group.center.clone(),
+                });
+            self.current_change
+                .get_or_insert_with(Change::new)
+                .add_step(crate::change::change::Step::VoxelChange {
+                    group_id: group.id,
+                    changes: group
+                        .position_to_voxel
+                        .values()
+                        .map(|voxel| (None, Some(voxel.to_snapshot())))
+                        .collect::<Vec<(Option<VoxelSnapshot>, Option<VoxelSnapshot>)>>(),
+                });
             self.voxel_groups.insert(insertion_index, group);
             insertion_index += 1;
         }
