@@ -322,6 +322,53 @@ impl VoxelScene {
     pub fn force_voxel_scene_update(&mut self) {
         self.voxels_changed = true;
     }
+    pub fn reset_fragment(&mut self) {
+        self.current_fragment = None;
+    }
+    pub fn make_voxel_group_from_fragment(&mut self) {
+        if let Some(ref fragment) = self.current_fragment {
+            let mut all_voxels = Vec::new();
+            for (group_id, voxels) in fragment {
+                let working_group_opt = self
+                    .voxel_groups
+                    .iter_mut()
+                    .find(|group| group.id == *group_id);
+                if let Some(working_group) = working_group_opt {
+                    for pos in voxels.iter() {
+                        if let Some(voxel) = working_group.position_to_voxel.remove(pos) {
+                            all_voxels.push(voxel);
+                        }
+                    }
+                }
+            }
+            let unique_name = self.turn_name_unique(
+                format!("Fragment Group:{}", self.voxel_group_name_counter),
+                None,
+            );
+            self.current_change
+                .get_or_insert_with(Change::new)
+                .add_step(crate::change::change::Step::AddGroup {
+                    group_id: self.voxel_group_id_counter,
+                    name: String::from(&unique_name),
+                    visible: true,
+                    center: vec3(0.0, 0.0, 0.0),
+                });
+            let mut new_group = VoxelGroup::new(unique_name, self.voxel_group_id_counter);
+            for voxel in all_voxels.iter_mut() {
+                voxel.fragment_unselect();
+            }
+            for voxel in all_voxels {
+                new_group.position_to_voxel.insert(
+                    VoxelScenePosition::from_voxel_position(voxel.get_position()),
+                    voxel,
+                );
+            }
+            self.voxel_groups.push(new_group);
+            self.voxel_group_id_counter += 1;
+            self.voxel_group_name_counter += 1;
+            self.reset_fragment();
+        }
+    }
     pub fn cut_operate_on_voxel_pos(&mut self, position: Vector3<f32>) {
         for voxel_group in self.voxel_groups.iter_mut() {
             Self::cut_operate_on_voxel_pos_with_group(

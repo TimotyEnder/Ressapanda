@@ -1004,10 +1004,10 @@ impl State {
                     ui.vertical_centered(|ui| {
                         ui.horizontal(|ui| {
                             if ui.button("Add to Separate Group").clicked() {
-                                //ad to separate group
+                                self.voxel_scene.make_voxel_group_from_fragment();
                             }
                             if ui.button("Cancel Selection").clicked() {
-                                //cancel selection
+                                self.voxel_scene.reset_fragment();
                             }
                         });
                     });
