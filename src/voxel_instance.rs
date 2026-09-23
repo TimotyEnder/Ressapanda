@@ -43,6 +43,7 @@ impl VoxelInstance {
             color: VoxelColor::new(save.r, save.g, save.b, save.a),
             selected: false,
             grid_voxel: false,
+            fragment_voxel: false,
         }
     }
     pub fn from_snapshot(snap: &VoxelSnapshot) -> Self {

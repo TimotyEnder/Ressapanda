@@ -78,6 +78,7 @@ fn fs_main(in:VertexOutput)->@location(0) vec4<f32>
     let t = 1.0 - smoothstep(0.0, 0.03, edge_dist);
     var edge_color=vec3(1.0, 1.0 , 1.0);
     if in.info_vec.x>0.5{edge_color=vec3(0.0, 0.0 , 0.0);}
+    else if in.info_vec.z>0.5{edge_color=vec3(0.708376, 0.242281 , 0.097587);}
     final_color = mix(final_color,edge_color , t);
   }
   return vec4<f32>(final_color, in.color.a);

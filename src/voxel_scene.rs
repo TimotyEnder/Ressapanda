@@ -324,18 +324,22 @@ impl VoxelScene {
     }
     pub fn cut_operate_on_voxel_pos(&mut self, position: Vector3<f32>) {
         for voxel_group in self.voxel_groups.iter_mut() {
-            if let Some(voxels) = self
-                .current_fragment
-                .get_or_insert_default()
-                .get_mut(&voxel_group.id)
-            {
+            let fragment = self.current_fragment.get_or_insert_default();
+            if !fragment.contains_key(&voxel_group.id) {
+                fragment.insert(voxel_group.id, BTreeSet::new());
+            }
+            if let Some(voxels) = fragment.get_mut(&voxel_group.id) {
                 let voxel_scene_pos = VoxelScenePosition::from_voxel_position(position);
-                if let Some(voxel_to_cut) = voxel_group.position_to_voxel.get(&voxel_scene_pos) {
+                if let Some(voxel_to_cut) = voxel_group.position_to_voxel.get_mut(&voxel_scene_pos)
+                {
                     if voxels.contains(&voxel_scene_pos) {
                         voxels.remove(&voxel_scene_pos);
+                        voxel_to_cut.fragment_unselect();
                     } else {
                         voxels.insert(voxel_scene_pos);
+                        voxel_to_cut.fragment_select();
                     }
+                    self.voxels_changed = true;
                 }
             }
         }
