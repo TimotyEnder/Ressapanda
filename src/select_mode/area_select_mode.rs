@@ -181,7 +181,7 @@ impl SelectMode for AreaSelectMode {
         }
     }
     fn cursor_name(&self) -> &'static str {
-        "xn_"
+        "xn"
     }
     fn name(&self) -> &'static str {
         "Area"

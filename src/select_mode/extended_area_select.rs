@@ -264,7 +264,7 @@ impl SelectMode for ExtendedAreaSelectMode {
         }
     }
     fn cursor_name(&self) -> &'static str {
-        if self.area_selected { "xee_" } else { "xe_" }
+        if self.area_selected { "xee" } else { "xe" }
     }
 
     fn name(&self) -> &'static str {

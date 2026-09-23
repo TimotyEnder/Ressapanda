@@ -7,15 +7,19 @@ use crate::{select_mode::select_mode::SelectMode, tools::tool::Tool};
 const X1_ADD: &[u8] = include_bytes!("../Assets/Cursors/x1add.png");
 const X1_SUBS: &[u8] = include_bytes!("../Assets/Cursors/x1subs.png");
 const X1_DEL: &[u8] = include_bytes!("../Assets/Cursors/x1del.png");
+const X1_CUT: &[u8] = include_bytes!("../Assets/Cursors/x1cut.png");
 const XN_ADD: &[u8] = include_bytes!("../Assets/Cursors/xnadd.png");
 const XN_SUBS: &[u8] = include_bytes!("../Assets/Cursors/xnsubs.png");
 const XN_DEL: &[u8] = include_bytes!("../Assets/Cursors/xndel.png");
+const XN_CUT: &[u8] = include_bytes!("../Assets/Cursors/xncut.png");
 const XE_ADD: &[u8] = include_bytes!("../Assets/Cursors/xeadd.png");
 const XE_SUBS: &[u8] = include_bytes!("../Assets/Cursors/xesubs.png");
 const XE_DEL: &[u8] = include_bytes!("../Assets/Cursors/xedel.png");
+const XE_CUT: &[u8] = include_bytes!("../Assets/Cursors/xecut.png");
 const XEE_ADD: &[u8] = include_bytes!("../Assets/Cursors/xeeadd.png");
 const XEE_SUBS: &[u8] = include_bytes!("../Assets/Cursors/xeesubs.png");
 const XEE_DEL: &[u8] = include_bytes!("../Assets/Cursors/xeedel.png");
+const XEE_CUT: &[u8] = include_bytes!("../Assets/Cursors/xeecut.png");
 
 pub struct CursorLoader {
     cursors: HashMap<String, CustomCursor>,
@@ -27,15 +31,19 @@ impl CursorLoader {
             (X1_ADD, "x1_add"),
             (X1_DEL, "x1_del"),
             (X1_SUBS, "x1_subs"),
+            (X1_CUT, "x1_cut"),
             (XN_ADD, "xn_add"),
             (XN_DEL, "xn_del"),
             (XN_SUBS, "xn_subs"),
+            (XN_CUT, "xn_cut"),
             (XE_ADD, "xe_add"),
             (XE_DEL, "xe_del"),
             (XE_SUBS, "xe_subs"),
+            (XE_CUT, "xe_cut"),
             (XEE_ADD, "xee_add"),
             (XEE_DEL, "xee_del"),
             (XEE_SUBS, "xee_subs"),
+            (XEE_CUT, "xee_cut"),
         ]
         .iter()
         .for_each(|(cursor_const, name)| {
@@ -53,7 +61,7 @@ impl CursorLoader {
         current_tool: &Box<dyn Tool>,
     ) {
         let name = format!(
-            "{}{}",
+            "{}_{}",
             current_select_mode.cursor_name(),
             current_tool.cursor_name()
         );
