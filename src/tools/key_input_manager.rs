@@ -57,6 +57,8 @@ impl KeyInputManager {
         ret.keycode_to_flag.insert(KeyCode::KeyW, false);
         ret.keycode_to_mapping.insert(KeyCode::KeyE, "Extended");
         ret.keycode_to_flag.insert(KeyCode::KeyE, false);
+        ret.keycode_to_mapping.insert(KeyCode::KeyR, "Laser");
+        ret.keycode_to_flag.insert(KeyCode::KeyR, false);
         ret
     }
     pub fn modifier_inputs(&mut self, key: KeyCode, pressed: bool) {
@@ -84,7 +86,7 @@ impl KeyInputManager {
         return self.control_modifier && key == KeyCode::KeyS && pressed;
     }
     pub fn resize_input(&mut self, key: KeyCode, pressed: bool) -> bool {
-        return key == KeyCode::KeyR
+        return key == KeyCode::KeyZ
             && pressed
             && !self.alt_modifier
             && !self.control_modifier

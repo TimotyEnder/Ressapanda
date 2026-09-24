@@ -95,6 +95,21 @@ pub fn find_first_voxel_to_intersect_ray(
     }
     return None;
 }
+pub fn find_all_voxels_that_itersect_ray(
+    ray: Ray,
+    voxel_scene: &VoxelScene,
+) -> Option<Vec<(Point3<f32>, Vector3<f32>)>> {
+    let mut voxel_hits = Vec::new();
+    for voxel in voxel_scene.get_all_voxels() {
+        if let Some(t_min) = t_min_for_voxel_ray_overlap(&ray, voxel) {
+            voxel_hits.push((ray.origin + (ray.direction * t_min), voxel.get_position()));
+        }
+    }
+    if !voxel_hits.is_empty() {
+        return Some(voxel_hits);
+    }
+    return None;
+}
 pub fn find_pos_of_ray_vectors_closest_point_to_voxel_pos(
     ray: Ray,
     voxel_pos: Vector3<f32>,
