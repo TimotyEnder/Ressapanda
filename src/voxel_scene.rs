@@ -888,8 +888,16 @@ impl VoxelScene {
         return false;
     }
     pub fn set_voxel_group_visibility(&mut self, group: usize, visible: bool) {
-        if group > 0 && !self.voxel_groups.is_empty() && self.voxel_groups.len() > group {
-            self.voxel_groups[group].visible = visible;
+        if !self.current_voxel_groups_selected.contains(&group) {
+            if group > 0 && !self.voxel_groups.is_empty() && self.voxel_groups.len() > group {
+                self.voxel_groups[group].visible = visible;
+            }
+        } else {
+            for group in self.current_voxel_groups_selected.iter() {
+                if *group > 0 && !self.voxel_groups.is_empty() && self.voxel_groups.len() > *group {
+                    self.voxel_groups[*group].visible = visible;
+                }
+            }
         }
         self.voxels_changed = true;
         self.saved = false;
@@ -1203,6 +1211,7 @@ impl VoxelScene {
             group.editing_name = false;
         }
     }
+    //pub fn get_unique_full_visible_vertex_list(&mut self) -> Vec<VoxelSnapshot> {}
 }
 #[derive(Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]
 pub struct VoxelScenePosition {

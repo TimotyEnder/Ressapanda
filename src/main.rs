@@ -9,6 +9,7 @@ pub mod color;
 pub mod conversion_utils;
 pub mod cursor_loader;
 pub mod depth_texture;
+pub mod export;
 pub mod filler;
 pub mod icon_loader;
 pub mod raycast;
