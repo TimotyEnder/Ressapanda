@@ -31,10 +31,7 @@ impl VoxelInstance {
             x: position.x,
             y: position.y,
             z: position.z,
-            r: self.color.r,
-            g: self.color.g,
-            b: self.color.b,
-            a: self.color.a,
+            color: self.color,
         }
     }
     pub fn from_saved(save: SavedVoxel) -> Self {
@@ -49,7 +46,7 @@ impl VoxelInstance {
     pub fn from_snapshot(snap: &VoxelSnapshot) -> Self {
         Self {
             position: vec3(snap.x as f32, snap.y as f32, snap.z as f32),
-            color: VoxelColor::new(snap.r, snap.g, snap.b, snap.a),
+            color: snap.color,
             selected: false,
             grid_voxel: false,
             fragment_voxel: false,

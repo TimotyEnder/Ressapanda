@@ -8,7 +8,7 @@ use crate::{
     },
     cursor_loader::CursorLoader,
     depth_texture::DepthTexture,
-    export::{ObjExport, export_obj_to_path},
+    export::{ObjExport, ObjExportType, export_materials_to_path, export_obj_to_path},
     save::{load_from_file, save_to_file},
     select_mode::{
         select_mode::{SelectMode, select_mode_from_name, select_mode_tooltip_from_name},
@@ -28,7 +28,7 @@ use cgmath::Point3;
 use egui::{
     Align2, Button, Color32, FontId, Frame, Image, Panel, Rect, epaint, load::SizedTexture, menu,
 };
-use std::{iter, sync::Arc};
+use std::{iter, path::Path, sync::Arc};
 use wgpu::util::DeviceExt;
 use winit::{
     dpi::PhysicalPosition,
@@ -824,6 +824,15 @@ impl State {
                             ui.menu_button("Export", |ui| {
                                 menu::MenuBar::new().ui(ui, |ui| {
                                     if ui.button("As .obj").clicked() {
+                                        self.ui_info
+                                            .obj_export_dialog
+                                            .set_user_data(ObjExportType::Obj);
+                                        self.ui_info.obj_export_dialog.save_file();
+                                    }
+                                    if ui.button("As .obj and .mtl").clicked() {
+                                        self.ui_info
+                                            .obj_export_dialog
+                                            .set_user_data(ObjExportType::ObjAndMtl);
                                         self.ui_info.obj_export_dialog.save_file();
                                     }
                                 });
@@ -1259,11 +1268,29 @@ impl State {
     fn file_export_dialog(&mut self, ui: &mut egui::Ui) {
         self.ui_info.obj_export_dialog.update(ui.ctx());
         if let Some(path) = self.ui_info.obj_export_dialog.take_picked() {
-            let mut export = ObjExport::new();
-            let voxels = self.voxel_scene.get_unique_full_visible_vertex_list();
-            export.decompose_voxel_list_to_obj_export_data(voxels);
-            match export_obj_to_path(&path, export) {
-                Err(e) => log::error!("Export Failed: {e}"),
+            match self.ui_info.obj_export_dialog.user_data() {
+                Some(ObjExportType::Obj) => {
+                    let mut export = ObjExport::new();
+                    let voxels = self.voxel_scene.get_unique_full_visible_vertex_list();
+                    export.decompose_voxel_list_to_obj_export_data(voxels, ObjExportType::Obj);
+                    if let Err(e) = export_obj_to_path(&path, &export) {
+                        log::error!("Export Failed: {e}");
+                    }
+                }
+                Some(ObjExportType::ObjAndMtl) => {
+                    let mut export = ObjExport::new();
+                    let voxels = self.voxel_scene.get_unique_full_visible_vertex_list();
+                    export
+                        .decompose_voxel_list_to_obj_export_data(voxels, ObjExportType::ObjAndMtl);
+                    if let Err(e) = export_obj_to_path(&path, &export) {
+                        log::error!("Export Failed: {e}");
+                        return;
+                    }
+                    let mtl_path = path.with_extension("mtl");
+                    if let Err(e) = export_materials_to_path(&mtl_path, &export.materials) {
+                        log::error!("Material Export Failed {e}");
+                    }
+                }
                 _ => {}
             }
         }

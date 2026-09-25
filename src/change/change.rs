@@ -7,6 +7,7 @@ use crate::{
         AddGroup, GroupInfoChange, RemoveGroup, VoxelChange, VoxelFragmentSelect, VoxelGridResize,
         VoxelGroupDownShift, VoxelGroupUpShift, VoxelMove, VoxelRotate,
     },
+    color::VoxelColor,
     tools::fragment,
     voxel_instance::VoxelInstance,
     voxel_scene::{GridVoxelDimensions, VoxelGroup, VoxelGroupId, VoxelScene, VoxelScenePosition},
@@ -17,10 +18,7 @@ pub struct VoxelSnapshot {
     pub x: i32,
     pub y: i32,
     pub z: i32,
-    pub r: f32,
-    pub g: f32,
-    pub b: f32,
-    pub a: f32,
+    pub color: VoxelColor,
 }
 #[derive(Clone)]
 pub enum Step {
