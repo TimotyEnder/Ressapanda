@@ -25,7 +25,8 @@ pub struct UIData {
     pub voxel_grid_resize_focus_flag: bool,
     pub voxel_group_rename_request_focus_flag: bool,
     pub current_save_path: Option<PathBuf>,
-    pub file_dialog: egui_file_dialog::FileDialog,
+    pub save_file_dialog: egui_file_dialog::FileDialog,
+    pub obj_export_dialog: egui_file_dialog::FileDialog,
 }
 impl UIData {
     pub fn new(ctx: egui::Context) -> Self {
@@ -43,12 +44,19 @@ impl UIData {
             current_save_path: None,
             voxel_grid_resize_length_string: String::new(),
             voxel_grid_resize_width_string: String::new(),
-            file_dialog: FileDialog::new()
+            save_file_dialog: FileDialog::new()
                 .add_file_filter_extensions("Ressapanda Scene", vec!["rspnd"])
                 .default_file_filter("Ressapanda Scene")
                 .default_file_name("new_scene.rspnd")
                 .add_save_extension("Ressapanda Scene", "rspnd")
                 .default_save_extension("rspnd")
+                .allow_file_overwrite(true),
+            obj_export_dialog: FileDialog::new()
+                .add_file_filter_extensions("Obj Files", vec!["obj"])
+                .default_file_filter("Obj File")
+                .default_file_name("new_object.obj")
+                .add_save_extension("Obj File", "obj")
+                .default_save_extension("obj")
                 .allow_file_overwrite(true),
             voxel_grid_resize_focus_flag: true,
         }

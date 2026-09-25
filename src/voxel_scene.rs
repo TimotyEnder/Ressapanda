@@ -1214,7 +1214,7 @@ impl VoxelScene {
     pub fn get_unique_full_visible_vertex_list(&mut self) -> Vec<VoxelSnapshot> {
         let mut to_ret = Vec::new();
         let mut positions_included = BTreeSet::new();
-        for group in self.voxel_groups.iter().rev() {
+        for group in self.voxel_groups.iter().rev().filter(|group| group.id != 0) {
             for voxel in group.position_to_voxel.values() {
                 let scene_pos = VoxelScenePosition::from_voxel_position(voxel.get_position());
                 if !positions_included.contains(&scene_pos) {
@@ -1226,7 +1226,7 @@ impl VoxelScene {
         to_ret
     }
 }
-#[derive(Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]
+#[derive(Eq, PartialEq, PartialOrd, Ord, Hash, Clone, Copy)]
 pub struct VoxelScenePosition {
     pub x: i32,
     pub y: i32,

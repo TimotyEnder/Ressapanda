@@ -8,6 +8,7 @@ use crate::{
     },
     cursor_loader::CursorLoader,
     depth_texture::DepthTexture,
+    export::{ObjExport, export_obj_to_path},
     save::{load_from_file, save_to_file},
     select_mode::{
         select_mode::{SelectMode, select_mode_from_name, select_mode_tooltip_from_name},
@@ -24,7 +25,9 @@ use crate::{
     voxel_scene::{VoxelScene, VoxelSceneDirection},
 };
 use cgmath::Point3;
-use egui::{Align2, Color32, FontId, Frame, Image, Panel, Rect, epaint, load::SizedTexture, menu};
+use egui::{
+    Align2, Button, Color32, FontId, Frame, Image, Panel, Rect, epaint, load::SizedTexture, menu,
+};
 use std::{iter, sync::Arc};
 use wgpu::util::DeviceExt;
 use winit::{
@@ -760,8 +763,10 @@ impl State {
                 }
             }
         } else {
-            self.ui_info.file_dialog.set_user_data(FileAction::Save);
-            self.ui_info.file_dialog.save_file();
+            self.ui_info
+                .save_file_dialog
+                .set_user_data(FileAction::Save);
+            self.ui_info.save_file_dialog.save_file();
         }
     }
     fn orientation_legend(&self, ui: &mut egui::Ui) {
@@ -802,16 +807,27 @@ impl State {
                                 self.ui_info.current_save_path = None;
                             }
                             if ui.button("Open").clicked() {
-                                self.ui_info.file_dialog.set_user_data(FileAction::Open);
-                                self.ui_info.file_dialog.pick_file();
+                                self.ui_info
+                                    .save_file_dialog
+                                    .set_user_data(FileAction::Open);
+                                self.ui_info.save_file_dialog.pick_file();
                             }
                             if ui.button("Save").clicked() {
                                 self.conditional_save();
                             }
                             if ui.button("Save As").clicked() {
-                                self.ui_info.file_dialog.set_user_data(FileAction::Save);
-                                self.ui_info.file_dialog.save_file();
+                                self.ui_info
+                                    .save_file_dialog
+                                    .set_user_data(FileAction::Save);
+                                self.ui_info.save_file_dialog.save_file();
                             }
+                            ui.menu_button("Export", |ui| {
+                                menu::MenuBar::new().ui(ui, |ui| {
+                                    if ui.button("As .obj").clicked() {
+                                        self.ui_info.obj_export_dialog.save_file();
+                                    }
+                                });
+                            });
                         });
                         ui.menu_button("Model", |ui| {
                             if ui
@@ -1216,13 +1232,14 @@ impl State {
             });
         self.popups(ui);
         self.file_save_dialog(ui);
+        self.file_export_dialog(ui);
         self.orientation_legend(ui);
     }
 
     fn file_save_dialog(&mut self, ui: &mut egui::Ui) {
-        self.ui_info.file_dialog.update(ui.ctx());
-        if let Some(path) = self.ui_info.file_dialog.take_picked() {
-            match self.ui_info.file_dialog.user_data() {
+        self.ui_info.save_file_dialog.update(ui.ctx());
+        if let Some(path) = self.ui_info.save_file_dialog.take_picked() {
+            match self.ui_info.save_file_dialog.user_data() {
                 Some(FileAction::Open) => match load_from_file(&path) {
                     Ok(scene_saved) => self.voxel_scene = scene_saved,
                     Err(e) => log::error!("Open failed: {e}"),
@@ -1237,6 +1254,18 @@ impl State {
                 _ => {}
             }
             self.ui_info.current_save_path = Some(path);
+        }
+    }
+    fn file_export_dialog(&mut self, ui: &mut egui::Ui) {
+        self.ui_info.obj_export_dialog.update(ui.ctx());
+        if let Some(path) = self.ui_info.obj_export_dialog.take_picked() {
+            let mut export = ObjExport::new();
+            let voxels = self.voxel_scene.get_unique_full_visible_vertex_list();
+            export.decompose_voxel_list_to_obj_export_data(voxels);
+            match export_obj_to_path(&path, export) {
+                Err(e) => log::error!("Export Failed: {e}"),
+                _ => {}
+            }
         }
     }
     fn popups(&mut self, ui: &mut egui::Ui) {

@@ -25,7 +25,6 @@ pub struct VoxelSnapshot {
 #[derive(Clone)]
 pub enum Step {
     VoxelChange {
-        // position-level delta (cheap hot path)
         group_id: VoxelGroupId,
         changes: Vec<(Option<VoxelSnapshot>, Option<VoxelSnapshot>)>, // before, after
     },
