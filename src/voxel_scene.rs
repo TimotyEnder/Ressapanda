@@ -1211,7 +1211,20 @@ impl VoxelScene {
             group.editing_name = false;
         }
     }
-    //pub fn get_unique_full_visible_vertex_list(&mut self) -> Vec<VoxelSnapshot> {}
+    pub fn get_unique_full_visible_vertex_list(&mut self) -> Vec<VoxelSnapshot> {
+        let mut to_ret = Vec::new();
+        let mut positions_included = BTreeSet::new();
+        for group in self.voxel_groups.iter().rev() {
+            for voxel in group.position_to_voxel.values() {
+                let scene_pos = VoxelScenePosition::from_voxel_position(voxel.get_position());
+                if !positions_included.contains(&scene_pos) {
+                    to_ret.push(voxel.to_snapshot());
+                    positions_included.insert(scene_pos);
+                }
+            }
+        }
+        to_ret
+    }
 }
 #[derive(Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]
 pub struct VoxelScenePosition {
