@@ -3,6 +3,8 @@ use std::{collections::HashSet, fmt::Write, path::Path};
 use anyhow::Ok;
 
 use crate::{change::change::VoxelSnapshot, color::VoxelColor, voxel_scene::VoxelScenePosition};
+
+const AMBIENT_STRENGTH: f32 = 0.4;
 pub enum ObjExportType {
     Obj,
     ObjAndMtl,
@@ -19,24 +21,22 @@ impl std::fmt::Display for ObjVertex {
     }
 }
 
-pub struct ObjFaceQuad {
+pub struct ObjFaceTriangle {
     pub f1: usize,
     pub f2: usize,
     pub f3: usize,
-    pub f4: usize,
     pub vn1: usize,
     pub vn2: usize,
     pub vn3: usize,
-    pub vn4: usize,
     pub color_index: Option<usize>,
 }
 
-impl std::fmt::Display for ObjFaceQuad {
+impl std::fmt::Display for ObjFaceTriangle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "f {}//{} {}//{} {}//{} {}//{}",
-            self.f1, self.vn1, self.f2, self.vn2, self.f3, self.vn3, self.f4, self.vn4
+            "f {}//{} {}//{} {}//{}",
+            self.f1, self.vn1, self.f2, self.vn2, self.f3, self.vn3
         )
     }
 }
@@ -50,9 +50,14 @@ pub struct MtlMaterial {
 }
 impl MtlMaterial {
     pub fn from_voxel_color(color: &VoxelColor) -> Self {
+        let diffuse_color = [color.r, color.g, color.b];
         Self {
-            ambient_color: [0.0, 0.0, 0.0],
-            diffuse_color: [color.r, color.g, color.b],
+            ambient_color: [
+                diffuse_color[0] * AMBIENT_STRENGTH,
+                diffuse_color[1] * AMBIENT_STRENGTH,
+                diffuse_color[2] * AMBIENT_STRENGTH,
+            ],
+            diffuse_color,
             specular_color: [0.0, 0.0, 0.0],
             shininess: 100,
             dissolve: color.a,
@@ -60,7 +65,7 @@ impl MtlMaterial {
     }
     pub fn material_def_to_string(&self, material_index: usize) -> String {
         format!(
-            "newmtl Color{}\n Ka {} {} {}\n Kd {} {} {}\n Ks {} {} {}\n Ns {}\n d {}\n",
+            "newmtl Color{}\n Ka {} {} {}\n Kd {} {} {}\n Ks {} {} {}\n Ns {}\n illum 2\n d {}\n",
             material_index,
             self.ambient_color[0],
             self.ambient_color[1],
@@ -80,7 +85,7 @@ impl MtlMaterial {
 #[derive(Default)]
 pub struct ObjExport {
     pub vertices: Vec<ObjVertex>,
-    pub face_quads: Vec<ObjFaceQuad>,
+    pub face_triangles: Vec<ObjFaceTriangle>,
     pub materials: Vec<MtlMaterial>,
 }
 
@@ -101,29 +106,32 @@ impl ObjExport {
         for vertex in self.vertices.iter() {
             let _ = writeln!(full_string, "{vertex}");
         }
-        for quad in self.face_quads.iter() {
-            if let Some(index) = quad.color_index {
+        let mut current_material: Option<usize> = None;
+        for triangle in self.face_triangles.iter() {
+            if let Some(index) = triangle.color_index
+                && current_material != Some(index)
+            {
                 let _ = writeln!(full_string, "usemtl Color{index}");
+                current_material = Some(index);
             }
-            let _ = writeln!(full_string, "{quad}");
+            let _ = writeln!(full_string, "{triangle}");
         }
         full_string
     }
 
-    pub fn add_vertices_and_quads(
+    pub fn add_vertices_and_triangles(
         &mut self,
         vertices: Vec<ObjVertex>,
-        mut quads: Vec<ObjFaceQuad>,
+        mut triangles: Vec<ObjFaceTriangle>,
     ) {
         let offset = self.vertices.len();
         self.vertices.extend(vertices);
-        for quad in &mut quads {
-            quad.f1 += offset;
-            quad.f2 += offset;
-            quad.f3 += offset;
-            quad.f4 += offset;
+        for triangle in &mut triangles {
+            triangle.f1 += offset;
+            triangle.f2 += offset;
+            triangle.f3 += offset;
         }
-        self.face_quads.extend(quads);
+        self.face_triangles.extend(triangles);
     }
     pub fn convert_colors_into_mats(&mut self, colors: Vec<VoxelColor>) {
         let mats = colors
@@ -148,7 +156,7 @@ impl ObjExport {
             .collect::<HashSet<_>>();
         let mut positions_processed = HashSet::new();
         let mut vertices = Vec::new();
-        let mut quads = Vec::new();
+        let mut triangles = Vec::new();
         let mut colors = Vec::new();
         for voxel in voxels {
             let position = VoxelScenePosition {
@@ -260,35 +268,33 @@ impl ObjExport {
                         z: position.z as f32 + z_offset,
                     });
                 }
-                quads.push(ObjFaceQuad {
-                    f1: first_vertex,
-                    f2: first_vertex + 1,
-                    f3: first_vertex + 2,
-                    f4: first_vertex + 3,
-                    vn1: normal_index,
-                    vn2: normal_index,
-                    vn3: normal_index,
-                    vn4: normal_index,
-                    color_index: {
-                        match export_type {
-                            ObjExportType::ObjAndMtl => {
-                                if let Some(index) =
-                                    colors.iter().position(|color| *color == voxel.color)
-                                {
-                                    Some(index)
-                                } else {
-                                    colors.push(voxel.color);
-                                    Some(colors.len() - 1)
-                                }
-                            }
-                            _ => None,
+                let color_index = match export_type {
+                    ObjExportType::ObjAndMtl => {
+                        if let Some(index) = colors.iter().position(|color| *color == voxel.color) {
+                            Some(index)
+                        } else {
+                            colors.push(voxel.color);
+                            Some(colors.len() - 1)
                         }
-                    },
-                });
+                    }
+                    _ => None,
+                };
+                // split the quad along its v1-v3 diagonal, both keeping the same winding
+                for (second, third) in [(1usize, 2usize), (2, 3)] {
+                    triangles.push(ObjFaceTriangle {
+                        f1: first_vertex,
+                        f2: first_vertex + second,
+                        f3: first_vertex + third,
+                        vn1: normal_index,
+                        vn2: normal_index,
+                        vn3: normal_index,
+                        color_index,
+                    });
+                }
             }
         }
         self.convert_colors_into_mats(colors);
-        self.add_vertices_and_quads(vertices, quads);
+        self.add_vertices_and_triangles(vertices, triangles);
     }
 }
 pub fn export_obj_to_path(path: &Path, export: &ObjExport) -> anyhow::Result<()> {
