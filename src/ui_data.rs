@@ -10,6 +10,10 @@ pub enum FileAction {
     Open,
     Save,
 }
+pub enum FileExportType {
+    Obj,
+    ObjAndMtl,
+}
 pub struct UIData {
     pub ui_brush_color: Color32,
     pub last_color_added: Color32,

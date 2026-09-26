@@ -1,4 +1,4 @@
-use cgmath::{MetricSpace, Point3, Vector3, vec3};
+use cgmath::{MetricSpace, Point3, Vector3, point3, vec3};
 
 use crate::{
     brushes::brush::Brush,
@@ -78,11 +78,35 @@ impl SelectMode for ExtendedAreaSelectMode {
                 config.width as f64,
                 config.height as f64,
             );
-            let closest_point = find_pos_of_ray_vectors_closest_point_to_voxel_pos(ray, voxel_pos);
+
             if let Some(base_voxel) = self.base_voxel {
+                let face_mid_point = vec3(
+                    (base_voxel.x + voxel_pos.x) / 2.0,
+                    (base_voxel.y + voxel_pos.y) / 2.0,
+                    (base_voxel.z + voxel_pos.z) / 2.0,
+                );
+                let closest_to_face_mid_point =
+                    find_pos_of_ray_vectors_closest_point_to_voxel_pos(ray, face_mid_point);
+                let fill_point = point3(
+                    if closest_to_face_mid_point.x == face_mid_point.x {
+                        face_mid_point.x
+                    } else {
+                        closest_to_face_mid_point.x
+                    },
+                    if closest_to_face_mid_point.y == face_mid_point.y {
+                        face_mid_point.y
+                    } else {
+                        closest_to_face_mid_point.y
+                    },
+                    if closest_to_face_mid_point.z == face_mid_point.z {
+                        face_mid_point.z
+                    } else {
+                        closest_to_face_mid_point.z
+                    },
+                );
                 for voxel_pos in fill_positions_from_a_to_b(
                     base_voxel,
-                    Self::fill_position(base_voxel, voxel_pos, closest_point),
+                    Self::fill_position(base_voxel, voxel_pos, fill_point),
                 )
                 .iter()
                 .chain(fill_positions_from_a_to_b(base_voxel, voxel_pos).iter())

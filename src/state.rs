@@ -8,7 +8,7 @@ use crate::{
     },
     cursor_loader::CursorLoader,
     depth_texture::DepthTexture,
-    export::{ObjExport, ObjExportType, export_materials_to_path, export_obj_to_path},
+    export::{ObjExport, export_materials_to_path, export_obj_to_path},
     save::{load_from_file, save_to_file},
     select_mode::{
         select_mode::{SelectMode, select_mode_from_name, select_mode_tooltip_from_name},
@@ -19,7 +19,7 @@ use crate::{
         key_input_manager::{KeyInputManager, VoxelGroupAction},
         tool::{Tool, tool_from_name, tool_tooltip_from_name},
     },
-    ui_data::{FileAction, UIData},
+    ui_data::{FileAction, FileExportType, UIData},
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
     voxel_instance::RawVoxelInstance,
     voxel_scene::{VoxelScene, VoxelSceneDirection},
@@ -828,13 +828,13 @@ impl State {
                                             if ui.button("As .obj").clicked() {
                                                 self.ui_info
                                                     .obj_export_dialog
-                                                    .set_user_data(ObjExportType::Obj);
+                                                    .set_user_data(FileExportType::Obj);
                                                 self.ui_info.obj_export_dialog.save_file();
                                             }
                                             if ui.button("As .obj and .mtl").clicked() {
                                                 self.ui_info
                                                     .obj_export_dialog
-                                                    .set_user_data(ObjExportType::ObjAndMtl);
+                                                    .set_user_data(FileExportType::ObjAndMtl);
                                                 self.ui_info.obj_export_dialog.save_file();
                                             }
                                         })
@@ -1273,19 +1273,19 @@ impl State {
         self.ui_info.obj_export_dialog.update(ui.ctx());
         if let Some(path) = self.ui_info.obj_export_dialog.take_picked() {
             match self.ui_info.obj_export_dialog.user_data() {
-                Some(ObjExportType::Obj) => {
+                Some(FileExportType::Obj) => {
                     let mut export = ObjExport::new();
                     let voxels = self.voxel_scene.get_unique_full_visible_vertex_list();
-                    export.decompose_voxel_list_to_obj_export_data(voxels, ObjExportType::Obj);
+                    export.decompose_voxel_list_to_obj_export_data(voxels, FileExportType::Obj);
                     if let Err(e) = export_obj_to_path(&path, &export) {
                         log::error!("Export Failed: {e}");
                     }
                 }
-                Some(ObjExportType::ObjAndMtl) => {
+                Some(FileExportType::ObjAndMtl) => {
                     let mut export = ObjExport::new();
                     let voxels = self.voxel_scene.get_unique_full_visible_vertex_list();
                     export
-                        .decompose_voxel_list_to_obj_export_data(voxels, ObjExportType::ObjAndMtl);
+                        .decompose_voxel_list_to_obj_export_data(voxels, FileExportType::ObjAndMtl);
                     if let Err(e) = export_obj_to_path(&path, &export) {
                         log::error!("Export Failed: {e}");
                         return;

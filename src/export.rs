@@ -2,13 +2,13 @@ use std::{collections::HashSet, fmt::Write, path::Path};
 
 use anyhow::Ok;
 
-use crate::{change::change::VoxelSnapshot, color::VoxelColor, voxel_scene::VoxelScenePosition};
+use crate::{
+    change::change::VoxelSnapshot, color::VoxelColor, ui_data::FileExportType,
+    voxel_scene::VoxelScenePosition,
+};
 
 const AMBIENT_STRENGTH: f32 = 0.4;
-pub enum ObjExportType {
-    Obj,
-    ObjAndMtl,
-}
+
 pub struct ObjVertex {
     pub x: f32,
     pub y: f32,
@@ -144,7 +144,7 @@ impl ObjExport {
     pub fn decompose_voxel_list_to_obj_export_data(
         &mut self,
         voxels: Vec<VoxelSnapshot>,
-        export_type: ObjExportType,
+        export_type: FileExportType,
     ) {
         let positions_occupied = voxels
             .iter()
@@ -269,7 +269,7 @@ impl ObjExport {
                     });
                 }
                 let color_index = match export_type {
-                    ObjExportType::ObjAndMtl => {
+                    FileExportType::ObjAndMtl => {
                         if let Some(index) = colors.iter().position(|color| *color == voxel.color) {
                             Some(index)
                         } else {
