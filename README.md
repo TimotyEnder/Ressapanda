@@ -1,5 +1,7 @@
 # Ressapanda
 
+![Ressapanda Screenshot](Readme_Screenshot.png)
+
 A 3D voxel editor built in Rust with wgpu and egui. This is a tool I built for my own game-development needs.
 
 Main philosophies:
