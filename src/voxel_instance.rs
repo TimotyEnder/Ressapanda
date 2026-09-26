@@ -139,7 +139,9 @@ impl VoxelInstance {
     pub fn get_position(&self) -> Vector3<f32> {
         self.position
     }
-
+    pub fn get_color(&self) -> VoxelColor {
+        self.color
+    }
     pub fn select(&mut self) {
         self.selected = true;
     }

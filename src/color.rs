@@ -18,6 +18,14 @@ impl VoxelColor {
             a: (color.a() as f32 / 255.0),
         }
     }
+    pub fn to_egui_color(&self) -> Color32 {
+        Color32::from_rgba_unmultiplied(
+            (linear_to_srgb(self.r) * 255.0) as u8,
+            (linear_to_srgb(self.g) * 255.0) as u8,
+            (linear_to_srgb(self.b) * 255.0) as u8,
+            (linear_to_srgb(self.a) * 255.0) as u8,
+        )
+    }
     pub fn from_hex(hex: &str) -> anyhow::Result<Self> {
         if hex
             .chars()
@@ -66,6 +74,13 @@ pub fn srgb_to_linear(c: f32) -> f32 {
         c / 12.92
     } else {
         ((c + 0.055) / 1.055).powf(2.4)
+    }
+}
+pub fn linear_to_srgb(c: f32) -> f32 {
+    if c <= 0.0031308 {
+        c * 12.92
+    } else {
+        1.055 * c.powf(1.0 / 2.4) - 0.055
     }
 }
 pub const ORANGE: Color32 = Color32::from_rgb(219, 135, 88);

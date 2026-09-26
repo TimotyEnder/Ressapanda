@@ -510,6 +510,8 @@ impl State {
         );
     }
     pub fn update(&mut self) {
+        self.current_tool.update();
+        self.color_select_update();
         self.window.set_title(&self.get_window_name());
         self.camera_controller.update_camera(&mut self.camera);
         self.camera_controller
@@ -523,6 +525,17 @@ impl State {
             &self.current_select_mode,
             &self.current_tool,
         );
+    }
+    pub fn color_select_update(&mut self) {
+        if self.current_tool.name() == "Color_Picker" {
+            if let Some(color) = self.voxel_scene.give_current_color_change() {
+                self.ui_info.ui_brush_color = color;
+                self.ui_info.color_hex_input_string = self.ui_info.ui_brush_color.to_hex();
+                self.current_brush = Brush {
+                    color: VoxelColor::from_egui_color(self.ui_info.ui_brush_color),
+                };
+            }
+        }
     }
     fn ui_update(&mut self) {
         let raw_input = self.egui_winit_state.take_egui_input(&self.window);
@@ -1233,7 +1246,7 @@ impl State {
             .collapsible(false)
             .auto_sized()
             .show(ui, |ui| {
-                ["Add", "Style", "Del", "Cut"]
+                ["Add", "Style", "Del", "Cut", "Color_Picker"]
                     .iter()
                     .for_each(|name| self.tool_toggle_button(ui, *name));
             });

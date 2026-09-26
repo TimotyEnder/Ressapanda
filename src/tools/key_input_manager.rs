@@ -49,6 +49,8 @@ impl KeyInputManager {
         ret.keycode_to_flag.insert(KeyCode::KeyS, false);
         ret.keycode_to_mapping.insert(KeyCode::KeyF, "Cut");
         ret.keycode_to_flag.insert(KeyCode::KeyF, false);
+        ret.keycode_to_mapping.insert(KeyCode::KeyG, "Color_Picker");
+        ret.keycode_to_flag.insert(KeyCode::KeyG, false);
 
         //selection modes
         ret.keycode_to_mapping.insert(KeyCode::KeyQ, "Single");

@@ -31,4 +31,6 @@ impl Tool for FragmentCut {
     fn tooltip(&self) -> &'static str {
         "Fragment cut: add selected  voxels into a fragment that can  be separated into a voxel group (Shortcut:F)"
     }
+
+    fn update(&mut self) {}
 }

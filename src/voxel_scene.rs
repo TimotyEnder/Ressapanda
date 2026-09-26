@@ -1,5 +1,6 @@
 use cgmath::{Deg, Quaternion, Vector3};
 use cgmath::{prelude::*, vec3};
+use egui::Color32;
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex};
 use std::usize;
@@ -167,6 +168,7 @@ pub struct VoxelScene {
     history: Arc<Mutex<History>>,
     current_change: Option<Change>,
     current_fragment: Option<BTreeMap<VoxelGroupId, BTreeSet<VoxelScenePosition>>>,
+    current_color_change: Option<Color32>,
 }
 impl VoxelScene {
     pub fn orientating_cross_scene() -> Self {
@@ -190,6 +192,7 @@ impl VoxelScene {
             history: Arc::new(Mutex::new(History::new())),
             current_change: None,
             current_fragment: None,
+            current_color_change: None,
         }
     }
     pub fn to_saved(&self) -> SaveFile {
@@ -234,6 +237,7 @@ impl VoxelScene {
             history: Arc::new(Mutex::new(History::new())),
             current_change: None,
             current_fragment: None,
+            current_color_change: None,
         }
     }
     pub fn new() -> Self {
@@ -260,6 +264,7 @@ impl VoxelScene {
             history: Arc::new(Mutex::new(History::new())),
             current_change: None,
             current_fragment: None,
+            current_color_change: None,
         }
     }
     pub fn undo(&mut self) {
@@ -323,6 +328,11 @@ impl VoxelScene {
         self.voxels_changed = true;
     }
     pub fn reset_fragment(&mut self) {
+        for group in self.voxel_groups.iter_mut() {
+            for voxel in group.position_to_voxel.values_mut() {
+                voxel.fragment_unselect();
+            }
+        }
         self.current_fragment = None;
     }
     pub fn make_voxel_group_from_fragment(&mut self) {
@@ -430,6 +440,15 @@ impl VoxelScene {
                 }
             }
         }
+    }
+    pub fn give_current_color_change(&mut self) -> Option<Color32> {
+        if let Some(color_change) = self.current_color_change.take() {
+            return Some(color_change);
+        }
+        return None;
+    }
+    pub fn set_color_change(&mut self, color: Option<Color32>) {
+        self.current_color_change = color;
     }
     pub fn get_fragment_voxel_counter_per_group(&self) -> Option<Vec<(String, usize)>> {
         if let Some(ref fragment) = self.current_fragment {

@@ -21,6 +21,7 @@ const RESIZE_VOXEL_GRID: &[u8] = include_bytes!("../Assets/Icons/resize_voxel_gr
 const REDO: &[u8] = include_bytes!("../Assets/Icons/redo.png");
 const UNDO: &[u8] = include_bytes!("../Assets/Icons/undo.png");
 const CUT: &[u8] = include_bytes!("../Assets/Icons/cut.png");
+const COLOR_PICKER: &[u8] = include_bytes!("../Assets/Icons/color_picker.png");
 
 pub struct IconLoader {
     icons: HashMap<String, TextureHandle>,
@@ -48,6 +49,7 @@ impl IconLoader {
             (UNDO, "Undo"),
             (REDO, "Redo"),
             (CUT, "Cut"),
+            (COLOR_PICKER, "Color_Picker"),
         ]
         .iter()
         .for_each(|(icon_const, name)| {

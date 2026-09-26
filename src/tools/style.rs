@@ -31,4 +31,6 @@ impl Tool for Style {
     fn tooltip(&self) -> &'static str {
         "Style/Paint (Shorcut:S)"
     }
+
+    fn update(&mut self) {}
 }

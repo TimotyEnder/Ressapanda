@@ -33,4 +33,6 @@ impl Tool for Add {
     fn tooltip(&self) -> &'static str {
         "Add (Shorcut:A)"
     }
+
+    fn update(&mut self) {}
 }

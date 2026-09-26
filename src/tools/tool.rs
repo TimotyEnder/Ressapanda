@@ -2,7 +2,7 @@ use cgmath::Vector3;
 
 use crate::{
     brushes::brush::Brush,
-    tools::{add::Add, del::Del, fragment::FragmentCut, style::Style},
+    tools::{add::Add, color_picker::ColorPicker, del::Del, fragment::FragmentCut, style::Style},
     voxel_scene::VoxelScene,
 };
 
@@ -22,6 +22,7 @@ pub trait Tool {
     fn name(&self) -> &'static str;
     fn cursor_name(&self) -> &'static str;
     fn tooltip(&self) -> &'static str;
+    fn update(&mut self);
 }
 
 pub fn tool_from_name(name: &'static str) -> Option<Box<dyn Tool>> {
@@ -30,6 +31,7 @@ pub fn tool_from_name(name: &'static str) -> Option<Box<dyn Tool>> {
         "Del" => return Some(Box::new(Del {})),
         "Style" => return Some(Box::new(Style {})),
         "Cut" => return Some(Box::new(FragmentCut {})),
+        "Color_Picker" => return Some(Box::new(ColorPicker::new())),
         _ => return None,
     };
 }
@@ -41,6 +43,9 @@ pub fn tool_tooltip_from_name(name: &str) -> Option<&str> {
         "Cut" => Some(
             "Fragment cut: add selected  voxels into a fragment that can  be made  into a separate voxel group (Shortcut:F)",
         ),
+        "Color_Picker" => {
+            Some("Color Picker. Multiple selections will yield an average color value (Shortcut:G)")
+        }
         _ => return None,
     }
 }

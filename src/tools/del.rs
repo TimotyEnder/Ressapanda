@@ -31,4 +31,6 @@ impl Tool for Del {
     fn tooltip(&self) -> &'static str {
         "Delete (Shorcut:D)"
     }
+
+    fn update(&mut self) {}
 }
