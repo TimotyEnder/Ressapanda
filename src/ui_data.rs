@@ -14,6 +14,7 @@ pub enum FileExportType {
     Obj,
     ObjAndMtl,
 }
+pub const UI_FONT_SIZE: f32 = 15.0;
 pub struct UIData {
     pub ui_brush_color: Color32,
     pub last_color_added: Color32,

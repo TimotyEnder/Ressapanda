@@ -19,7 +19,7 @@ use crate::{
         key_input_manager::{KeyInputManager, VoxelGroupAction},
         tool::{Tool, tool_from_name, tool_tooltip_from_name},
     },
-    ui_data::{FileAction, FileExportType, UIData},
+    ui_data::{FileAction, FileExportType, UI_FONT_SIZE, UIData},
     vertex::{CUBE_INDICES, CUBE_VERTICES, Vertex},
     voxel_instance::RawVoxelInstance,
     voxel_scene::{VoxelScene, VoxelSceneDirection},
@@ -345,6 +345,11 @@ impl State {
         visuals.override_text_color = Some(egui::Color32::WHITE);
         egui_ctx.set_theme(egui::Theme::Dark);
         egui_ctx.set_visuals(visuals);
+        egui_ctx.all_styles_mut(|style| {
+            for font_id in style.text_styles.values_mut() {
+                font_id.size = UI_FONT_SIZE;
+            }
+        });
 
         Ok(Self {
             window,
