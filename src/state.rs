@@ -822,19 +822,23 @@ impl State {
                                 self.ui_info.save_file_dialog.save_file();
                             }
                             ui.menu_button("Export", |ui| {
-                                menu::MenuBar::new().ui(ui, |ui| {
-                                    if ui.button("As .obj").clicked() {
-                                        self.ui_info
-                                            .obj_export_dialog
-                                            .set_user_data(ObjExportType::Obj);
-                                        self.ui_info.obj_export_dialog.save_file();
-                                    }
-                                    if ui.button("As .obj and .mtl").clicked() {
-                                        self.ui_info
-                                            .obj_export_dialog
-                                            .set_user_data(ObjExportType::ObjAndMtl);
-                                        self.ui_info.obj_export_dialog.save_file();
-                                    }
+                                ui.menu_button("As Obj File", |ui| {
+                                    ui.horizontal_centered(|ui| {
+                                        ui.vertical_centered(|ui| {
+                                            if ui.button("As .obj").clicked() {
+                                                self.ui_info
+                                                    .obj_export_dialog
+                                                    .set_user_data(ObjExportType::Obj);
+                                                self.ui_info.obj_export_dialog.save_file();
+                                            }
+                                            if ui.button("As .obj and .mtl").clicked() {
+                                                self.ui_info
+                                                    .obj_export_dialog
+                                                    .set_user_data(ObjExportType::ObjAndMtl);
+                                                self.ui_info.obj_export_dialog.save_file();
+                                            }
+                                        })
+                                    })
                                 });
                             });
                         });
