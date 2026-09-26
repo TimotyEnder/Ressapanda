@@ -397,6 +397,7 @@ impl State {
         self.key_input_manager.modifier_inputs(key, pressed);
         if self.key_input_manager.choose_color_input(key, pressed) {
             self.ui_info.show_color_picker = !self.ui_info.show_color_picker;
+            self.ui_info.color_selected = true;
         }
         match self
             .key_input_manager
