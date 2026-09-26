@@ -406,7 +406,7 @@ impl State {
                 self.voxel_scene.add_voxel_group();
             }
             VoxelGroupAction::Delete => {
-                self.voxel_scene.remove_voxel_groups();
+                self.ui_info.voxel_group_removal_popup = true;
             }
             VoxelGroupAction::Merge => {
                 self.voxel_scene.merge_voxel_group();
