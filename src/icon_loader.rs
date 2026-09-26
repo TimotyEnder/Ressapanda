@@ -8,7 +8,7 @@ const EX_AREA_SELECT: &[u8] = include_bytes!("../Assets/Icons/extended_area_sele
 const LASER_SELECT: &[u8] = include_bytes!("../Assets/Icons/laser_select.png");
 const DEL: &[u8] = include_bytes!("../Assets/Icons/del.png");
 const ADD: &[u8] = include_bytes!("../Assets/Icons/add.png");
-const SUBS: &[u8] = include_bytes!("../Assets/Icons/subs.png");
+const STYLE: &[u8] = include_bytes!("../Assets/Icons/style.png");
 const ADD_VOXEL_GROUP: &[u8] = include_bytes!("../Assets/Icons/add_voxel_group.png");
 const DELETE_VOXEL_GROUP: &[u8] = include_bytes!("../Assets/Icons/delete_voxel_group.png");
 const MERGE_VOXEL_GROUP: &[u8] = include_bytes!("../Assets/Icons/merge_voxel_group.png");
@@ -35,7 +35,7 @@ impl IconLoader {
             (LASER_SELECT, "Laser"),
             (DEL, "Del"),
             (ADD, "Add"),
-            (SUBS, "Subs"),
+            (STYLE, "Style"),
             (ADD_VOXEL_GROUP, "Add_Voxel_Group"),
             (DELETE_VOXEL_GROUP, "Delete_Voxel_Group"),
             (MERGE_VOXEL_GROUP, "Merge_Voxel_Group"),

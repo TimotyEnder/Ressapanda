@@ -1233,7 +1233,7 @@ impl State {
             .collapsible(false)
             .auto_sized()
             .show(ui, |ui| {
-                ["Add", "Subs", "Del", "Cut"]
+                ["Add", "Style", "Del", "Cut"]
                     .iter()
                     .for_each(|name| self.tool_toggle_button(ui, *name));
             });

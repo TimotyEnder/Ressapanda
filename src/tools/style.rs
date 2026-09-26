@@ -1,7 +1,7 @@
 use crate::{brushes::brush::Brush, tools::tool::Tool};
 
-pub struct Subs {}
-impl Tool for Subs {
+pub struct Style {}
+impl Tool for Style {
     fn operate_with_position(
         &mut self,
         operating_position: cgmath::Vector3<f32>,
@@ -14,7 +14,7 @@ impl Tool for Subs {
     }
 
     fn name(&self) -> &'static str {
-        "Subs"
+        "Style"
     }
 
     fn temp_operate_with_position(
@@ -26,9 +26,9 @@ impl Tool for Subs {
         scene.select_voxel_at_position(operating_position);
     }
     fn cursor_name(&self) -> &'static str {
-        "subs"
+        "style"
     }
     fn tooltip(&self) -> &'static str {
-        "Substitute/Paint (Shorcut:S)"
+        "Style/Paint (Shorcut:S)"
     }
 }

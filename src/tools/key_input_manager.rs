@@ -45,7 +45,7 @@ impl KeyInputManager {
         ret.keycode_to_flag.insert(KeyCode::KeyA, false);
         ret.keycode_to_mapping.insert(KeyCode::KeyD, "Del");
         ret.keycode_to_flag.insert(KeyCode::KeyD, false);
-        ret.keycode_to_mapping.insert(KeyCode::KeyS, "Subs");
+        ret.keycode_to_mapping.insert(KeyCode::KeyS, "Style");
         ret.keycode_to_flag.insert(KeyCode::KeyS, false);
         ret.keycode_to_mapping.insert(KeyCode::KeyF, "Cut");
         ret.keycode_to_flag.insert(KeyCode::KeyF, false);
