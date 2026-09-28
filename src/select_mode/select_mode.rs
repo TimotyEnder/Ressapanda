@@ -67,6 +67,11 @@ pub fn select_mode_tooltip_from_name(name: &str) -> Option<&str> {
         "Area" => return Some("Area Select Mode (Shortcut:W)"),
         "Extended" => return Some("Extended Area Select(Shortcut:E)"),
         "Laser" => return Some("Laser Select (Shortcut:r)"),
+        "Line" => {
+            return Some(
+                "Line Select Mode: drag to form uniform line between two voxels. Selects the voxels in between (Shortcut:T)",
+            );
+        }
         _ => return None,
     };
 }
