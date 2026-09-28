@@ -22,6 +22,7 @@ const REDO: &[u8] = include_bytes!("../Assets/Icons/redo.png");
 const UNDO: &[u8] = include_bytes!("../Assets/Icons/undo.png");
 const CUT: &[u8] = include_bytes!("../Assets/Icons/cut.png");
 const COLOR_PICKER: &[u8] = include_bytes!("../Assets/Icons/color_picker.png");
+const LINE_SELECT: &[u8] = include_bytes!("../Assets/Icons/line_select.png");
 
 pub struct IconLoader {
     icons: HashMap<String, TextureHandle>,
@@ -34,6 +35,7 @@ impl IconLoader {
             (AREA_SELECT, "Area"),
             (EX_AREA_SELECT, "Extended"),
             (LASER_SELECT, "Laser"),
+            (LINE_SELECT, "Line"),
             (DEL, "Del"),
             (ADD, "Add"),
             (STYLE, "Style"),
