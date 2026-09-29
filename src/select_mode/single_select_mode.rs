@@ -11,12 +11,14 @@ use crate::{
 pub struct SingleSelectMode {
     press_flag: bool,
     previous_voxel_pos_drawn: Option<Vector3<f32>>,
+    shift_operated_voxels: Vec<Vector3<f32>>,
 }
 impl SingleSelectMode {
     pub fn new() -> Self {
         Self {
             press_flag: false,
             previous_voxel_pos_drawn: None,
+            shift_operated_voxels: Vec::new(),
         }
     }
 }
@@ -25,7 +27,7 @@ impl SelectMode for SingleSelectMode {
         &mut self,
         mouse_x: f64,
         mouse_y: f64,
-        _modifier_key_status: ModifierKeysStatus,
+        modifier_key_status: ModifierKeysStatus,
         camera: &crate::camera::Camera,
         scene: &mut crate::voxel_scene::VoxelScene,
         config: &wgpu::SurfaceConfiguration,
@@ -43,7 +45,9 @@ impl SelectMode for SingleSelectMode {
             );
             let hit = find_first_voxel_to_intersect_ray(ray, scene);
 
-            if let Some((intersect_position, voxel_position)) = hit {
+            if let Some((intersect_position, voxel_position)) = hit
+                && !modifier_key_status.shift_modifier
+            {
                 match tool.name() {
                     "Add" => {
                         if let Some(voxel) = scene
@@ -67,16 +71,20 @@ impl SelectMode for SingleSelectMode {
 
     fn mouse_up(
         &mut self,
-        _mouse_x: f64,
-        _mouse_y: f64,
-        _modifier_key_status: ModifierKeysStatus,
-        _camera: &crate::camera::Camera,
-        _scene: &mut crate::voxel_scene::VoxelScene,
-        _config: &wgpu::SurfaceConfiguration,
-        _tool: &mut Box<dyn Tool>,
-        _brush: &Brush,
+        mouse_x: f64,
+        mouse_y: f64,
+        modifier_key_status: ModifierKeysStatus,
+        camera: &crate::camera::Camera,
+        scene: &mut crate::voxel_scene::VoxelScene,
+        config: &wgpu::SurfaceConfiguration,
+        tool: &mut Box<dyn Tool>,
+        brush: &Brush,
     ) {
         self.press_flag = false;
+        for operating_position in self.shift_operated_voxels.iter() {
+            tool.operate_with_position(*operating_position, scene, brush);
+        }
+        self.shift_operated_voxels.clear();
     }
 
     fn temp_draw_on_mouse_hover(
@@ -115,7 +123,10 @@ impl SelectMode for SingleSelectMode {
                                     return;
                                 }
                             }
-                            tool.operate_with_position(op_position, scene, brush);
+                            self.shift_operated_voxels.push(op_position);
+                            for op_pos in self.shift_operated_voxels.iter() {
+                                tool.temp_operate_with_position(*op_pos, scene, brush);
+                            }
                             self.previous_voxel_pos_drawn = Some(op_position);
                         } else {
                             tool.temp_operate_with_position(
@@ -133,7 +144,10 @@ impl SelectMode for SingleSelectMode {
                                 return;
                             }
                         }
-                        tool.operate_with_position(voxel_position, scene, brush);
+                        self.shift_operated_voxels.push(voxel_position);
+                        for op_pos in self.shift_operated_voxels.iter() {
+                            tool.temp_operate_with_position(*op_pos, scene, brush);
+                        }
                         self.previous_voxel_pos_drawn = Some(voxel_position);
                     } else {
                         tool.temp_operate_with_position(
@@ -144,7 +158,7 @@ impl SelectMode for SingleSelectMode {
                     }
                 }
             }
-        } else {
+        } else if self.shift_operated_voxels.is_empty() {
             scene.force_voxel_scene_update();
         }
     }
