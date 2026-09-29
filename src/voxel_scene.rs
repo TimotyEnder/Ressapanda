@@ -870,7 +870,7 @@ impl VoxelScene {
                 self.shift_selected_voxel_group = None;
             } else if self.current_voxel_groups_selected.len() <= 1 {
                 self.current_voxel_groups_selected.extend(
-                    self.current_voxel_groups_selected[0].min(additional_selection) + 1
+                    self.current_voxel_groups_selected[0].min(additional_selection)
                         ..=additional_selection.max(self.current_voxel_groups_selected[0]),
                 );
             } else {
