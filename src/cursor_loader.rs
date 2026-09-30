@@ -56,7 +56,7 @@ impl CursorLoader {
             (XE_DEL, "xe_del"),
             (XE_STYLE, "xe_style"),
             (XE_CUT, "xe_cut"),
-            (XEE_CPICK, "xe_cpick"),
+            (XE_CPICK, "xe_cpick"),
             (XEE_ADD, "xee_add"),
             (XEE_DEL, "xee_del"),
             (XEE_STYLE, "xee_style"),
