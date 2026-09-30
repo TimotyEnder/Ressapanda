@@ -27,24 +27,30 @@ impl ExtendedAreaSelectMode {
     fn fill_position(
         _base_voxel: Vector3<f32>,
         voxel_pos: Vector3<f32>,
+        face_mid: Vector3<f32>,
         closest_point: Point3<f32>,
     ) -> Vector3<f32> {
-        let dist = voxel_pos
+        let dist = face_mid
             .distance(vec3(closest_point.x, closest_point.y, closest_point.z))
             .round();
         let mut positions = [
-            voxel_pos + (dist * vec3(1.0, 0.0, 0.0)),
-            voxel_pos + (dist * vec3(-1.0, 0.0, 0.0)),
-            voxel_pos + (dist * vec3(0.0, 1.0, 0.0)),
-            voxel_pos + (dist * vec3(0.0, -1.0, 0.0)),
-            voxel_pos + (dist * vec3(0.0, 0.0, 1.0)),
-            voxel_pos + (dist * vec3(0.0, 0.0, -1.0)),
+            (dist * vec3(1.0, 0.0, 0.0)),
+            (dist * vec3(-1.0, 0.0, 0.0)),
+            (dist * vec3(0.0, 1.0, 0.0)),
+            (dist * vec3(0.0, -1.0, 0.0)),
+            (dist * vec3(0.0, 0.0, 1.0)),
+            (dist * vec3(0.0, 0.0, -1.0)),
         ];
         positions.sort_by(|posa, posb| {
-            posa.distance(vec3(closest_point.x, closest_point.y, closest_point.z))
-                .total_cmp(&posb.distance(vec3(closest_point.x, closest_point.y, closest_point.z)))
+            (face_mid + posa)
+                .distance(vec3(closest_point.x, closest_point.y, closest_point.z))
+                .total_cmp(&(face_mid + posb).distance(vec3(
+                    closest_point.x,
+                    closest_point.y,
+                    closest_point.z,
+                )))
         });
-        positions[0]
+        voxel_pos + positions[0]
     }
 }
 impl SelectMode for ExtendedAreaSelectMode {
@@ -104,14 +110,11 @@ impl SelectMode for ExtendedAreaSelectMode {
                         closest_to_face_mid_point.z
                     },
                 );
-                for voxel_pos in fill_positions_from_a_to_b(
+                for pos in fill_positions_from_a_to_b(
                     base_voxel,
-                    Self::fill_position(base_voxel, voxel_pos, fill_point),
-                )
-                .iter()
-                .chain(fill_positions_from_a_to_b(base_voxel, voxel_pos).iter())
-                {
-                    tool.operate_with_position(*voxel_pos, scene, brush);
+                    Self::fill_position(base_voxel, voxel_pos, face_mid_point, fill_point),
+                ) {
+                    tool.operate_with_position(pos, scene, brush);
                 }
                 self.base_voxel = None;
                 self.first_hit = None;
@@ -204,14 +207,38 @@ impl SelectMode for ExtendedAreaSelectMode {
                 let closest_point =
                     find_pos_of_ray_vectors_closest_point_to_voxel_pos(ray, voxel_pos);
                 if let Some(base_voxel) = self.base_voxel {
-                    for list_voxel in fill_positions_from_a_to_b(
+                    let face_mid_point = vec3(
+                        (base_voxel.x + voxel_pos.x) / 2.0,
+                        (base_voxel.y + voxel_pos.y) / 2.0,
+                        (base_voxel.z + voxel_pos.z) / 2.0,
+                    );
+                    let closest_to_face_mid_point =
+                        find_pos_of_ray_vectors_closest_point_to_voxel_pos(ray, face_mid_point);
+                    let fill_point = point3(
+                        if closest_to_face_mid_point.x == face_mid_point.x {
+                            face_mid_point.x
+                        } else {
+                            closest_to_face_mid_point.x
+                        },
+                        if closest_to_face_mid_point.y == face_mid_point.y {
+                            face_mid_point.y
+                        } else {
+                            closest_to_face_mid_point.y
+                        },
+                        if closest_to_face_mid_point.z == face_mid_point.z {
+                            face_mid_point.z
+                        } else {
+                            closest_to_face_mid_point.z
+                        },
+                    );
+                    for pos in fill_positions_from_a_to_b(
                         base_voxel,
-                        Self::fill_position(base_voxel, voxel_pos, closest_point),
+                        Self::fill_position(base_voxel, voxel_pos, face_mid_point, fill_point),
                     )
                     .iter()
                     .chain(fill_positions_from_a_to_b(base_voxel, voxel_pos).iter())
                     {
-                        tool.temp_operate_with_position(*list_voxel, scene, brush);
+                        tool.temp_operate_with_position(*pos, scene, brush);
                     }
                 }
             }
