@@ -1,7 +1,13 @@
 [package]
 name = "ressapanda"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
+description = "A 3D voxel editor built in Rust with wgpu and egui"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/TimotyEnder/Ressapanda"
+readme = "README.md"
+keywords = ["voxel", "3d", "graphics", "editor", "modeling"]
+categories = ["graphics", "game-development"]
 
 [dependencies]
 anyhow = "1.0.104"
@@ -11,7 +17,7 @@ egui = "0.36.2"
 egui-wgpu = "0.36.2"
 egui-winit = "0.36.2"
 env_logger = "0.11.11"
-image = "0.25.10"
+image = { version = "0.25.10", default-features = false, features = ["png"] }
 log = "0.4.34"
 pollster = "1.0.1"
 wgpu = "30.0.1"

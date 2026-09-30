@@ -19,7 +19,15 @@ impl App {
 }
 impl ApplicationHandler<State> for App {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        let window_attributes = WindowAttributes::default();
+        #[allow(unused_mut)]
+        let mut window_attributes = WindowAttributes::default().with_title("Ressapanda");
+        #[cfg(target_os = "linux")]
+        {
+            use winit::platform::wayland::WindowAttributesExtWayland as _;
+            window_attributes =
+                window_attributes.with_name("io.github.timotyender.ressapanda", "ressapanda");
+        }
+
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
         self.state = Some(pollster::block_on(State::new(window, event_loop)).unwrap());
     }

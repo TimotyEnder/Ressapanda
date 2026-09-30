@@ -1,0 +1,17 @@
+#!/bin/sh
+# AppImage entrypoint. The type2 runtime mounts the embedded SquashFS, points
+# $APPDIR at it, and executes this script. Everything here runs from the
+# read-only mount, so nothing may write to $HERE.
+set -e
+
+HERE="$(dirname "$(readlink -f "$0")")"
+
+# The runtime already puts $APPDIR/usr/bin on PATH in most cases, but relying on
+# that is fragile across AppImage runtime versions -- set it explicitly.
+export PATH="${HERE}/usr/bin:${PATH}"
+
+# No libraries are bundled (graphics libraries are loaded from the host at
+# runtime via dlopen), but keep the search path correct in case that changes.
+export LD_LIBRARY_PATH="${HERE}/usr/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+
+exec "${HERE}/usr/bin/ressapanda" "$@"

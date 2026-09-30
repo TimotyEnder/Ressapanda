@@ -88,3 +88,5 @@ I think it's important to be transparent here. I am a CS student and my aim with
 I have used AI tools extensively in read-only mode to explain key concepts to me, provide applicable examples, and to help me follow the wgpu beginner courses I found online. The only times AI touched my codebase is as an advanced search/replace/small refactor tool (e.g. add tooltip descriptions to the tools in the form: "X", format the README I made, and fix the spelling/formatting).
 
 All architectural and algorithmic decisions were made by me, and I fully wrote out the entirety of the code for this project. Any visual assets you see in Ressapanda are hand-made in LibreSprite by me and will continue to be handmade forever.
+
+Build scripts and docker files are somewhat LLM-generated, this is where I draw the line.

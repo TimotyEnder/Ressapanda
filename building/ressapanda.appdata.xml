@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.timotyender.ressapanda</id>
+
+  <name>Ressapanda</name>
+  <summary>A 3D voxel editor built with wgpu and egui</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <project_group>Voxel</project_group>
+
+  <description>
+    <p>
+      Ressapanda is a 3D voxel editor built in Rust with wgpu and egui, made for my GameDev/3D printing needs.
+    </p>
+    <p>Selection modes and tools are separate, in the spirit of Vim: select, then edit.</p>
+    <ul>
+      <li>Single, Area, Extended Area, Laser and Line selection modes</li>
+      <li>Add, Style, Delete, Cut and Color Picker tools</li>
+      <li>Voxel Groups act as layers-like semantic term, and can be moved, rotated, duplicated and recentered independently. Voxels can be moved from one voxel group to another. Group Visibility can be toggled. Invisible groups are omitted on export.</li>
+      <li>For now, Export to Wavefront OBJ, with or without a material library</li>
+      <li>Shortcuts made to  be used by one hand, with the other almsot never leaving the mouse.</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">io.github.timotyender.ressapanda.desktop</launchable>
+
+  <url type="homepage">https://github.com/TimotyEnder/Ressapanda</url>
+  <url type="bugtracker">https://github.com/TimotyEnder/Ressapanda/issues</url>
+
+  <developer id="io.github.timotyender">
+    <name>TimotyEnder</name>
+  </developer>
+
+  <content_rating type="oars-1.1"/>
+
+  <releases>
+    <release version="0.2.0" date="2026-09-30">
+      <description>
+        <p>V0.2.0 Linux Universal Release</p>
+      </description>
+    </release>
+  </releases>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/TimotyEnder/Ressapanda/main/Readme_Screenshot.png</image>
+      <caption>Ressapanda editing a voxel scene</caption>
+    </screenshot>
+  </screenshots>
+
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+
+  <recommends>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </recommends>
+</component>

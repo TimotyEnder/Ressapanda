@@ -1,0 +1,13 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Type=Application
+Name=Ressapanda
+GenericName=Voxel Editor
+Comment=A 3D voxel editor built with wgpu and egui
+Exec=ressapanda
+Icon=io.github.timotyender.ressapanda
+Terminal=false
+Categories=Graphics;3DGraphics;
+Keywords=voxel;3d;model;editor;game;gamedev;modelling;
+StartupNotify=true
+StartupWMClass=io.github.timotyender.ressapanda
