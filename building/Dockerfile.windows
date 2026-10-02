@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1.6
+FROM rust:1.98.1-bookworm
+
+# Install MinGW-w64 toolchain for cross-compiling to Windows (GNU)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    mingw-w64 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add Windows GNU target
+RUN rustup target add x86_64-pc-windows-gnu
+
+# Configure Cargo to use the MinGW linker
+ENV CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc
+
+WORKDIR /src
+
+# Default command is a no-op; build script invokes cargo directly
+CMD ["bash", "-c", "echo 'Windows cross build image ready'"]
+
+# Install windres for compiling Windows resources
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    mingw-w64-tools \
+    && rm -rf /var/lib/apt/lists/*
