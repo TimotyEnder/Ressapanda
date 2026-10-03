@@ -32,7 +32,7 @@ The selection mode decides how a click is turned into voxels to operate on.
 | <img src="Assets/Icons/area_select.png" width="32" /> | Area Select | Drag to fill an axis-aligned box between the two clicked points. | W |
 | <img src="Assets/Icons/extended_area_select.png" width="32" /> | Extended Area Select | Drag to fill an initial face, then a second click to extrude a box out through the nearest face. | E |
 | <img src="Assets/Icons/laser_select.png" width="32" /> | Laser Select | Applies the tool to every voxel the cursor ray passes through (except Add). | R |
-| <img src="Assets/Icons/line_select.png" width="32" /> | Line Select (Next Release) | Applies the tool to every voxel that forms a straigh line from one voxel to another | T |
+| <img src="Assets/Icons/line_select.png" width="32" /> | Line Select  | Applies the tool to every voxel that forms a straigh line from one voxel to another | T |
 
 ## Tools
 
