@@ -56,6 +56,13 @@ Undo and Redo operate like a stack. Undoing a change and then making another cha
 | <img src="Assets/Icons/undo.png" width="32" /> | Undo | Reverts the last change. | Ctrl + Z |
 | <img src="Assets/Icons/redo.png" width="32" /> | Redo | Reapplies the last undone change. | Ctrl + Y |
 
+## Model Actions
+
+| Name | Description | Shortcut |
+| --- | --- | --- |
+|Move | Moves selected voxel groups Up/Down/Left/Right/Forwards/Backwards relative to the camera position | ALT+Q/E/A/D/W/S |
+|Rotate | Rotates selected voxel groups Up/Down/Left/Right/Forwards/Backwards relative to the camera position | SHIFT+Q/E/A/D/W/S |
+
 ## Voxel Groups
 
 A Voxel Group is a layer-like semantic term in Ressapanda. They can be ordered, moved, duplicated, and voxels can move from one group to another. If there are two voxels in the same position in two different groups, the voxel in the group that is lower in the hierarchy is shown. Groups that are not visible are not exported.
