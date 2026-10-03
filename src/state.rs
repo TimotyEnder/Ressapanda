@@ -1367,7 +1367,10 @@ impl State {
                         if let Some(color) =
                             Color32::from_hex(&self.ui_info.color_hex_input_string).ok()
                         {
-                            self.ui_info.ui_brush_color = color
+                            self.ui_info.ui_brush_color = color;
+                            self.current_brush = Brush {
+                                color: VoxelColor::from_egui_color(self.ui_info.ui_brush_color),
+                            };
                         }
                     }
                     ui.label("Recent Colors:");
