@@ -695,22 +695,24 @@ impl VoxelScene {
                 })
         });
     }
+    fn global_center_of_selected_groups(&mut self) -> Vector3<f32> {
+        let mut global_center = self
+            .current_voxel_groups_selected
+            .iter()
+            .map(|group| self.voxel_groups[*group].center.clone())
+            .sum::<Vector3<f32>>()
+            / self.current_voxel_groups_selected.len() as f32;
+        global_center = global_center.map(|value| value.round());
+        global_center
+    }
     pub fn reposition_to_calculated_center(&mut self) {
-        self.find_center();
-        for i in self.current_voxel_groups_selected.clone() {
-            let center = self.voxel_groups[i].center;
-            self.move_by_vector(vec3(-center.x, 0.0, -center.z));
-            let mut move_overrides_grid = self.move_overrides_grid(vec3(0.0, -1.0, 0.0));
-            while !move_overrides_grid {
-                self.move_by_vector(vec3(0.0, -1.0, 0.0));
-                move_overrides_grid = self.move_overrides_grid(vec3(0.0, -1.0, 0.0));
-            }
-        }
+        let global_center = self.global_center_of_selected_groups();
+        self.move_by_vector(vec3(-global_center.x, 0.0, -global_center.z));
     }
     pub fn rotate_around_center(&mut self, axis: Vector3<f32>, deg: cgmath::Deg<f32>) {
+        let global_center = self.global_center_of_selected_groups();
         for i in self.current_voxel_groups_selected.clone() {
-            let center = self.voxel_groups[i].center.clone();
-            self.rotate_voxel_group_around_center(axis, deg, i, center);
+            self.rotate_voxel_group_around_center(axis, deg, i, global_center);
             let group_id = self.voxel_groups[i].id;
             self.current_change
                 .get_or_insert_with(Change::new)
@@ -718,26 +720,8 @@ impl VoxelScene {
                     group_id,
                     axis,
                     deg,
-                    center,
+                    center: global_center,
                 });
-            let smallest_y = self.voxel_groups[i]
-                .position_to_voxel
-                .iter()
-                .filter_map(|(_, v)| (!v.is_grid()).then_some(v.get_position().y))
-                .fold(f32::INFINITY, f32::min);
-            let necessary_lift_overlap_prevention = (1.0 - smallest_y).max(0.0);
-            if smallest_y <= 0.0 {
-                self.move_voxel_group_by_vector(
-                    vec3(0.0, necessary_lift_overlap_prevention, 0.0),
-                    i,
-                );
-                self.current_change
-                    .get_or_insert_with(Change::new)
-                    .add_step(crate::change::change::Step::VoxelMove {
-                        group_id,
-                        move_vector: vec3(0.0, necessary_lift_overlap_prevention, 0.0),
-                    });
-            }
         }
         self.voxels_changed = true;
         self.saved = false;
