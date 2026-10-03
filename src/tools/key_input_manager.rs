@@ -8,7 +8,7 @@ use crate::{
     camera_controller::CameraController,
     select_mode::select_mode::{SelectMode, select_mode_from_name},
     tools::tool::{Tool, tool_from_name},
-    voxel_scene::{self, VoxelScene, VoxelSceneDirection},
+    voxel_scene::{self, FlipAxis, VoxelScene, VoxelSceneDirection},
 };
 pub enum VoxelGroupAction {
     Create,
@@ -193,7 +193,7 @@ impl KeyInputManager {
             }
         }
     }
-    pub fn move_commands_inputs(
+    pub fn model_commands_inputs(
         &mut self,
         key: KeyCode,
         pressed: bool,
@@ -204,12 +204,26 @@ impl KeyInputManager {
             self.center_input(key, pressed, scene, camera);
             self.move_inputs(key, pressed, scene, camera);
         } else if self.shift_modifier {
+            self.mirror_flip_inputs(key, pressed, scene);
             self.rotate_inputs(key, pressed, scene, camera);
         }
     }
     fn center_input(&self, key: KeyCode, pressed: bool, scene: &mut VoxelScene, _camera: &Camera) {
         if key == KeyCode::KeyC && pressed {
             scene.reposition_to_calculated_center();
+        }
+    }
+    fn mirror_flip_inputs(&mut self, key: KeyCode, pressed: bool, scene: &mut VoxelScene) {
+        if pressed {
+            let axis = match key {
+                KeyCode::KeyX => FlipAxis::X,
+                KeyCode::KeyY => FlipAxis::Y,
+                KeyCode::KeyZ => FlipAxis::Z,
+                _ => {
+                    return;
+                }
+            };
+            scene.mirror_flip_around_axis(axis);
         }
     }
     fn move_inputs(

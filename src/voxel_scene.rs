@@ -4,6 +4,7 @@ use egui::Color32;
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex};
 use std::usize;
+use wgpu::wgc::resource::TextureErrorDimension::X;
 
 use crate::camera::Camera;
 use crate::change::change::{Change, History, VoxelSnapshot};
@@ -14,6 +15,11 @@ use crate::{
     color::VoxelColor,
     voxel_instance::{RawVoxelInstance, VoxelInstance},
 };
+pub enum FlipAxis {
+    X,
+    Y,
+    Z,
+}
 pub struct GridVoxelDimensions {
     pub width: f32,  //x coord size
     pub length: f32, //z coord size
@@ -768,6 +774,28 @@ impl VoxelScene {
         self.voxels_changed = true;
         self.saved = false;
     }
+    pub fn mirror_flip_around_axis(&mut self, axis_line_flip: FlipAxis) {
+        let global_center = self.global_center_of_selected_groups();
+        for i in self.current_voxel_groups_selected.clone() {
+            let mut voxels_to_move: Vec<VoxelInstance> =
+                std::mem::take(&mut self.voxel_groups[i].position_to_voxel)
+                    .into_values()
+                    .collect();
+            for _ in 0..voxels_to_move.len() {
+                let mut voxel_extracted = voxels_to_move.remove(0);
+                let old_pos = voxel_extracted.get_position();
+                voxel_extracted.set_position(match axis_line_flip {
+                    FlipAxis::X => vec3(-old_pos.x + global_center.x, old_pos.y, old_pos.z),
+                    FlipAxis::Y => vec3(old_pos.x, -old_pos.y + global_center.y, old_pos.z),
+                    FlipAxis::Z => vec3(old_pos.x, old_pos.y, -old_pos.z + global_center.z),
+                });
+                self.voxel_groups[i].position_to_voxel.insert(
+                    VoxelScenePosition::from_voxel_position(voxel_extracted.get_position()),
+                    voxel_extracted,
+                );
+            }
+        }
+    }
     pub fn move_by_vector(&mut self, move_vector: Vector3<f32>) {
         for i in self.current_voxel_groups_selected.clone() {
             self.move_voxel_group_by_vector(move_vector, i);
@@ -802,7 +830,6 @@ impl VoxelScene {
                 move_vector,
             ));
         }
-
         let voxels: Vec<VoxelInstance> = old_keys
             .iter()
             .map(|k| {

@@ -449,7 +449,7 @@ impl State {
         {
             self.current_select_mode = selection_mode;
         }
-        self.key_input_manager.move_commands_inputs(
+        self.key_input_manager.model_commands_inputs(
             key,
             pressed,
             &mut self.voxel_scene,
@@ -976,6 +976,31 @@ impl State {
                                 .clicked()
                             {
                                 self.voxel_scene.reposition_to_calculated_center();
+                            }
+                            ui.separator();
+                            if ui
+                                .button("Flip Around the X Axis")
+                                .on_hover_text("(Shortcut:Shift+X)")
+                                .clicked()
+                            {
+                                self.voxel_scene
+                                    .mirror_flip_around_axis(crate::voxel_scene::FlipAxis::X);
+                            }
+                            if ui
+                                .button("Flip Around the Y Axis")
+                                .on_hover_text("(Shortcut:Shift+Y)")
+                                .clicked()
+                            {
+                                self.voxel_scene
+                                    .mirror_flip_around_axis(crate::voxel_scene::FlipAxis::Y);
+                            }
+                            if ui
+                                .button("Flip Around the Z Axis")
+                                .on_hover_text("(Shortcut:Shift+Z)")
+                                .clicked()
+                            {
+                                self.voxel_scene
+                                    .mirror_flip_around_axis(crate::voxel_scene::FlipAxis::Z);
                             }
                         });
                         ui.menu_button("View", |ui| {
