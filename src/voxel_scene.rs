@@ -713,7 +713,7 @@ impl VoxelScene {
     }
     pub fn reposition_to_calculated_center(&mut self) {
         let global_center = self.global_center_of_selected_groups();
-        self.move_by_vector(vec3(-global_center.x, 0.0, -global_center.z));
+        self.move_by_vector(vec3(-global_center.x, -global_center.y, -global_center.z));
     }
     pub fn rotate_around_center(&mut self, axis: Vector3<f32>, deg: cgmath::Deg<f32>) {
         let global_center = self.global_center_of_selected_groups();
