@@ -1,4 +1,4 @@
-use cgmath::{Vector3, vec3};
+use cgmath::Vector3;
 
 pub fn fill_positions_from_a_to_b(
     a_op_pos: Vector3<f32>,

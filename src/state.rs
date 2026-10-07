@@ -8,7 +8,7 @@ use crate::{
     },
     cursor_loader::CursorLoader,
     depth_texture::DepthTexture,
-    export::{ObjExport, export_materials_to_path, export_obj_to_path},
+    export::obj_export::{ObjExport, export_materials_to_path, export_obj_to_path},
     save::{load_from_file, save_to_file},
     select_mode::{
         select_mode::{SelectMode, select_mode_from_name, select_mode_tooltip_from_name},
@@ -25,10 +25,8 @@ use crate::{
     voxel_scene::{VoxelScene, VoxelSceneDirection},
 };
 use cgmath::Point3;
-use egui::{
-    Align2, Button, Color32, FontId, Frame, Image, Panel, Rect, epaint, load::SizedTexture, menu,
-};
-use std::{iter, path::Path, sync::Arc};
+use egui::{Align2, Color32, FontId, Frame, Image, Panel, Rect, epaint, load::SizedTexture, menu};
+use std::{iter, sync::Arc};
 use wgpu::util::DeviceExt;
 use winit::{
     dpi::PhysicalPosition,

@@ -1,6 +1,6 @@
 use std::collections::{BTreeSet, VecDeque};
 
-use cgmath::{Vector3, vec3};
+use cgmath::Vector3;
 
 use crate::{
     change::change::Step::{
@@ -8,7 +8,6 @@ use crate::{
         VoxelGroupDownShift, VoxelGroupUpShift, VoxelMove, VoxelRotate,
     },
     color::VoxelColor,
-    tools::fragment,
     voxel_instance::VoxelInstance,
     voxel_scene::{GridVoxelDimensions, VoxelGroup, VoxelGroupId, VoxelScene, VoxelScenePosition},
 };
@@ -119,13 +118,13 @@ impl Step {
                     .iter_mut()
                     .find(|group| group.id == *group_id);
                 if let Some(working_group) = working_group_opt {
-                    if let Some((before, after)) = name {
+                    if let Some((before, _)) = name {
                         working_group.name = String::from(before);
                     }
-                    if let Some((before, after)) = visible {
+                    if let Some((before, _)) = visible {
                         working_group.visible = *before
                     }
-                    if let Some((before, after)) = center {
+                    if let Some((before, _)) = center {
                         working_group.center = *before;
                     }
                 }
@@ -178,7 +177,7 @@ impl Step {
                 scene.voxel_groups_ref_mut().push(voxel_group);
             }
             VoxelGridResize { diff } => {
-                let ((before_w, before_l), (_)) = diff;
+                let ((before_w, before_l), _) = diff;
                 scene.grid_voxel_dimensions = GridVoxelDimensions {
                     width: *before_w,
                     length: *before_l,
@@ -295,13 +294,13 @@ impl Step {
                     .iter_mut()
                     .find(|group| group.id == *group_id);
                 if let Some(working_group) = working_group_opt {
-                    if let Some((before, after)) = name {
+                    if let Some((_, after)) = name {
                         working_group.name = String::from(after);
                     }
-                    if let Some((before, after)) = visible {
+                    if let Some((_, after)) = visible {
                         working_group.visible = *after
                     }
-                    if let Some((before, after)) = center {
+                    if let Some((_, after)) = center {
                         working_group.center = *after;
                     }
                 }

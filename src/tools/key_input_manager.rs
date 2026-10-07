@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
 use cgmath::Point3;
-use winit::keyboard::{Key, KeyCode};
+use winit::keyboard::KeyCode;
 
 use crate::{
     camera::{Camera, CameraLookDirection},
     camera_controller::CameraController,
     select_mode::select_mode::{SelectMode, select_mode_from_name},
     tools::tool::{Tool, tool_from_name},
-    voxel_scene::{self, FlipAxis, VoxelScene, VoxelSceneDirection},
+    voxel_scene::{FlipAxis, VoxelScene, VoxelSceneDirection},
 };
 pub enum VoxelGroupAction {
     Create,

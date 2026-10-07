@@ -2,7 +2,7 @@ use cgmath::{Point3, Vector3};
 
 use crate::{
     brushes::brush::Brush,
-    filler::{fill_line_from_a_to_b, fill_positions_from_a_to_b},
+    filler::fill_line_from_a_to_b,
     raycast::{find_first_voxel_to_intersect_ray, raycast_compute_from_mouse_position},
     select_mode::select_mode::SelectMode,
     tools::key_input_manager::ModifierKeysStatus,

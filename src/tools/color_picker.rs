@@ -1,9 +1,6 @@
 use egui::Color32;
 
-use crate::{
-    color::{VoxelColor, linear_to_srgb, srgb_to_linear},
-    tools::tool::Tool,
-};
+use crate::{color::VoxelColor, tools::tool::Tool};
 
 pub struct ColorPicker {
     colors_added: Option<Vec<VoxelColor>>,

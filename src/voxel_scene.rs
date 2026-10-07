@@ -4,7 +4,6 @@ use egui::Color32;
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex};
 use std::usize;
-use wgpu::wgc::resource::TextureErrorDimension::X;
 
 use crate::camera::Camera;
 use crate::change::change::{Change, History, VoxelSnapshot};
@@ -676,31 +675,32 @@ impl VoxelScene {
             (sum.z / n).round(),
         )
     }
-    fn move_overrides_grid(&self, move_vector: Vector3<f32>) -> bool {
-        let move_scene_vector = VoxelScenePosition::from_voxel_position(move_vector);
-        return self.current_voxel_groups_selected.iter().any(|index| {
-            self.voxel_groups[*index]
-                .position_to_voxel
-                .iter()
-                .filter(|(_, v)| !v.is_grid())
-                .any(|(pos, _)| {
-                    let dest = VoxelScenePosition {
-                        x: pos.x + move_scene_vector.x,
-                        y: pos.y + move_scene_vector.y,
-                        z: pos.z + move_scene_vector.z,
-                    };
-                    let mut overrides = false;
-                    for i in 0..self.voxel_groups.len() {
-                        overrides = overrides
-                            || self.voxel_groups[i]
-                                .position_to_voxel
-                                .get(&dest)
-                                .is_some_and(|v| v.is_grid());
-                    }
-                    overrides
-                })
-        });
-    }
+    // fn move_overrides_grid(&self, move_vector: Vector3<f32>) -> bool {
+    //     let move_scene_vector = VoxelScenePosition::from_voxel_position(move_vector);
+    //     return self.current_voxel_groups_selected.iter().any(|index| {
+    //         self.voxel_groups[*index]
+    //             .position_to_voxel
+    //             .iter()
+    //             .filter(|(_, v)| !v.is_grid())
+    //             .any(|(pos, _)| {
+    //                 let dest = VoxelScenePosition {
+    //                     x: pos.x + move_scene_vector.x,
+    //                     y: pos.y + move_scene_vector.y,
+    //                     z: pos.z + move_scene_vector.z,
+    //                 };
+    //                 let mut overrides = false;
+    //                 for i in 0..self.voxel_groups.len() {
+    //                     overrides = overrides
+    //                         || self.voxel_groups[i]
+    //                             .position_to_voxel
+    //                             .get(&dest)
+    //                             .is_some_and(|v| v.is_grid());
+    //                 }
+    //                 overrides
+    //             })
+    //     });
+    // }
+    // LEGACY CODE THAT MIGHT BE REQUIRED LATER ON IF I DECIDE THAT GRID VOXELS CAN BE OVERRIDEN
     fn global_center_of_selected_groups(&mut self) -> Vector3<f32> {
         let mut global_center = self
             .current_voxel_groups_selected
