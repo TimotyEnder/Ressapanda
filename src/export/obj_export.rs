@@ -279,7 +279,6 @@ impl ObjExport {
                     }
                     _ => None,
                 };
-                // split the quad along its v1-v3 diagonal, both keeping the same winding
                 for (second, third) in [(1usize, 2usize), (2, 3)] {
                     triangles.push(ObjFaceTriangle {
                         f1: first_vertex,

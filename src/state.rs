@@ -8,7 +8,11 @@ use crate::{
     },
     cursor_loader::CursorLoader,
     depth_texture::DepthTexture,
-    export::obj_export::{ObjExport, export_materials_to_path, export_obj_to_path},
+    export::{
+        self,
+        obj_export::{ObjExport, export_materials_to_path, export_obj_to_path},
+        stl_export::{StlExport, export_stl_to_path},
+    },
     save::{load_from_file, save_to_file},
     select_mode::{
         select_mode::{SelectMode, select_mode_from_name, select_mode_tooltip_from_name},
@@ -857,6 +861,18 @@ impl State {
                                         })
                                     })
                                 });
+                                ui.menu_button("As Stl File", |ui| {
+                                    ui.horizontal_centered(|ui| {
+                                        ui.vertical_centered(|ui| {
+                                            if ui.button("As .stl").clicked() {
+                                                self.ui_info
+                                                    .stl_export_dialog
+                                                    .set_user_data(FileExportType::Stl);
+                                                self.ui_info.stl_export_dialog.save_file();
+                                            }
+                                        })
+                                    })
+                                });
                             });
                         });
                         ui.menu_button("Model", |ui| {
@@ -1335,6 +1351,21 @@ impl State {
                     let mtl_path = path.with_extension("mtl");
                     if let Err(e) = export_materials_to_path(&mtl_path, &export.materials) {
                         log::error!("Material Export Failed {e}");
+                    }
+                }
+                _ => {}
+            }
+        }
+        self.ui_info.stl_export_dialog.update(ui.ctx());
+        if let Some(path) = self.ui_info.stl_export_dialog.take_picked() {
+            match self.ui_info.stl_export_dialog.user_data() {
+                Some(FileExportType::Stl) => {
+                    let mut export = StlExport::new();
+                    let voxels = self.voxel_scene.get_unique_full_visible_vertex_list();
+                    export.decompose_voxel_list_to_stl_export_data(voxels, FileExportType::Stl);
+                    if let Err(e) = export_stl_to_path(&path, &export) {
+                        log::error!("Export Failed: {e}");
+                        return;
                     }
                 }
                 _ => {}

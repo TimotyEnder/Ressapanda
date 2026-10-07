@@ -13,6 +13,7 @@ pub enum FileAction {
 pub enum FileExportType {
     Obj,
     ObjAndMtl,
+    Stl,
 }
 pub const UI_FONT_SIZE: f32 = 15.0;
 pub struct UIData {
@@ -32,6 +33,7 @@ pub struct UIData {
     pub current_save_path: Option<PathBuf>,
     pub save_file_dialog: egui_file_dialog::FileDialog,
     pub obj_export_dialog: egui_file_dialog::FileDialog,
+    pub stl_export_dialog: egui_file_dialog::FileDialog,
 }
 impl UIData {
     pub fn new(ctx: egui::Context) -> Self {
@@ -62,6 +64,13 @@ impl UIData {
                 .default_file_name("new_object.obj")
                 .add_save_extension("Obj File", "obj")
                 .default_save_extension("obj")
+                .allow_file_overwrite(true),
+            stl_export_dialog: FileDialog::new()
+                .add_file_filter_extensions("Stl Files", vec!["stl"])
+                .default_file_filter("Stl File")
+                .default_file_name("new_object.stl")
+                .add_save_extension("Stl File", "stl")
+                .default_save_extension("stl")
                 .allow_file_overwrite(true),
             voxel_grid_resize_focus_flag: true,
         }
