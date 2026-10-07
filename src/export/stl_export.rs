@@ -176,9 +176,9 @@ impl StlExport {
                     continue;
                 }
                 let vertices_as_stl = corners.map(|offset| StlVertex {
-                    x: neighbor.x as f32 + offset[0],
-                    y: neighbor.y as f32 + offset[1],
-                    z: neighbor.z as f32 + offset[2],
+                    x: position.x as f32 + offset[0],
+                    y: position.y as f32 + offset[1],
+                    z: position.z as f32 + offset[2],
                 });
 
                 self.triangles.push(StlFace {
@@ -186,6 +186,15 @@ impl StlExport {
                     v1: vertices_as_stl[0],
                     v2: vertices_as_stl[1],
                     v3: vertices_as_stl[2],
+                    attribute_byte_count: StlColorInAttributeValue {
+                        color: VoxelColor::new(0.0, 0.0, 0.0, 0.0),
+                    }, //fornow
+                });
+                self.triangles.push(StlFace {
+                    normal: normal_vector,
+                    v1: vertices_as_stl[0],
+                    v2: vertices_as_stl[2],
+                    v3: vertices_as_stl[3],
                     attribute_byte_count: StlColorInAttributeValue {
                         color: VoxelColor::new(0.0, 0.0, 0.0, 0.0),
                     }, //fornow
