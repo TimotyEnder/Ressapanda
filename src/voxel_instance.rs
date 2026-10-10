@@ -86,49 +86,362 @@ impl VoxelInstance {
     pub fn point_on_voxel_grid_closest_to_point(
         &self,
         comparison_point: Point3<f32>,
+        skewed_mode: bool,
     ) -> Vector3<f32> {
         let mut points = [
-            Point3 {
-                x: self.position.x,
-                y: self.position.y + 1.0,
-                z: self.position.z,
-            },
-            Point3 {
-                x: self.position.x,
-                y: self.position.y - 1.0,
-                z: self.position.z,
-            },
-            Point3 {
-                x: self.position.x + 1.0,
-                y: self.position.y,
-                z: self.position.z,
-            },
-            Point3 {
-                x: self.position.x - 1.0,
-                y: self.position.y,
-                z: self.position.z,
-            },
-            Point3 {
-                x: self.position.x,
-                y: self.position.y,
-                z: self.position.z + 1.0,
-            },
-            Point3 {
-                x: self.position.x,
-                y: self.position.y,
-                z: self.position.z - 1.0,
-            },
+            (
+                false,
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y + 1.0,
+                    z: self.position.z,
+                },
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y + 1.0,
+                    z: self.position.z,
+                },
+            ),
+            (
+                false,
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y - 1.0,
+                    z: self.position.z,
+                },
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y - 1.0,
+                    z: self.position.z,
+                },
+            ),
+            (
+                false,
+                Point3 {
+                    x: self.position.x + 1.0,
+                    y: self.position.y,
+                    z: self.position.z,
+                },
+                Point3 {
+                    x: self.position.x + 1.0,
+                    y: self.position.y,
+                    z: self.position.z,
+                },
+            ),
+            (
+                false,
+                Point3 {
+                    x: self.position.x - 1.0,
+                    y: self.position.y,
+                    z: self.position.z,
+                },
+                Point3 {
+                    x: self.position.x - 1.0,
+                    y: self.position.y,
+                    z: self.position.z,
+                },
+            ),
+            (
+                false,
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y,
+                    z: self.position.z + 1.0,
+                },
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y,
+                    z: self.position.z + 1.0,
+                },
+            ),
+            (
+                false,
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y,
+                    z: self.position.z - 1.0,
+                },
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y,
+                    z: self.position.z - 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x + 0.75,
+                    y: self.position.y + 0.75,
+                    z: self.position.z,
+                },
+                Point3 {
+                    x: self.position.x + 1.0,
+                    y: self.position.y + 1.0,
+                    z: self.position.z,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x + 0.75,
+                    y: self.position.y - 0.75,
+                    z: self.position.z,
+                },
+                Point3 {
+                    x: self.position.x + 1.0,
+                    y: self.position.y - 1.0,
+                    z: self.position.z,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x - 0.75,
+                    y: self.position.y + 0.75,
+                    z: self.position.z,
+                },
+                Point3 {
+                    x: self.position.x - 1.0,
+                    y: self.position.y + 1.0,
+                    z: self.position.z,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x - 0.75,
+                    y: self.position.y - 0.75,
+                    z: self.position.z,
+                },
+                Point3 {
+                    x: self.position.x - 1.0,
+                    y: self.position.y - 1.0,
+                    z: self.position.z,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x + 0.75,
+                    y: self.position.y,
+                    z: self.position.z + 0.75,
+                },
+                Point3 {
+                    x: self.position.x + 1.0,
+                    y: self.position.y,
+                    z: self.position.z + 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x + 0.75,
+                    y: self.position.y,
+                    z: self.position.z - 0.75,
+                },
+                Point3 {
+                    x: self.position.x + 1.0,
+                    y: self.position.y,
+                    z: self.position.z - 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x - 0.75,
+                    y: self.position.y,
+                    z: self.position.z + 0.75,
+                },
+                Point3 {
+                    x: self.position.x - 1.0,
+                    y: self.position.y,
+                    z: self.position.z + 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x - 0.75,
+                    y: self.position.y,
+                    z: self.position.z - 0.75,
+                },
+                Point3 {
+                    x: self.position.x - 1.0,
+                    y: self.position.y,
+                    z: self.position.z - 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y + 0.75,
+                    z: self.position.z + 0.75,
+                },
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y + 1.0,
+                    z: self.position.z + 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y + 0.75,
+                    z: self.position.z - 0.75,
+                },
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y + 1.0,
+                    z: self.position.z - 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y - 0.75,
+                    z: self.position.z + 0.75,
+                },
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y - 1.0,
+                    z: self.position.z + 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y - 0.75,
+                    z: self.position.z - 0.75,
+                },
+                Point3 {
+                    x: self.position.x,
+                    y: self.position.y - 1.0,
+                    z: self.position.z - 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x + 0.75,
+                    y: self.position.y + 0.75,
+                    z: self.position.z + 0.75,
+                },
+                Point3 {
+                    x: self.position.x + 1.0,
+                    y: self.position.y + 1.0,
+                    z: self.position.z + 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x + 0.75,
+                    y: self.position.y + 0.75,
+                    z: self.position.z - 0.75,
+                },
+                Point3 {
+                    x: self.position.x + 1.0,
+                    y: self.position.y + 1.0,
+                    z: self.position.z - 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x + 0.75,
+                    y: self.position.y - 0.75,
+                    z: self.position.z + 0.75,
+                },
+                Point3 {
+                    x: self.position.x + 1.0,
+                    y: self.position.y - 1.0,
+                    z: self.position.z + 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x + 0.75,
+                    y: self.position.y - 0.75,
+                    z: self.position.z - 0.75,
+                },
+                Point3 {
+                    x: self.position.x + 1.0,
+                    y: self.position.y - 1.0,
+                    z: self.position.z - 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x - 0.75,
+                    y: self.position.y + 0.75,
+                    z: self.position.z + 0.75,
+                },
+                Point3 {
+                    x: self.position.x - 1.0,
+                    y: self.position.y + 1.0,
+                    z: self.position.z + 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x - 0.75,
+                    y: self.position.y + 0.75,
+                    z: self.position.z - 0.75,
+                },
+                Point3 {
+                    x: self.position.x - 1.0,
+                    y: self.position.y + 1.0,
+                    z: self.position.z - 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x - 0.75,
+                    y: self.position.y - 0.75,
+                    z: self.position.z + 0.75,
+                },
+                Point3 {
+                    x: self.position.x - 1.0,
+                    y: self.position.y - 1.0,
+                    z: self.position.z + 1.0,
+                },
+            ),
+            (
+                true,
+                Point3 {
+                    x: self.position.x - 0.75,
+                    y: self.position.y - 0.75,
+                    z: self.position.z - 0.75,
+                },
+                Point3 {
+                    x: self.position.x - 1.0,
+                    y: self.position.y - 1.0,
+                    z: self.position.z - 1.0,
+                },
+            ),
         ];
-        points.sort_by(|x, y| {
-            (*y - comparison_point)
+        points.sort_by(|a, b| {
+            ((*a).1 - comparison_point)
                 .magnitude()
-                .total_cmp(&(*x - comparison_point).magnitude())
+                .total_cmp(&((*b).1 - comparison_point).magnitude())
         });
-        Vector3::new(
-            points[points.len() - 1].x,
-            points[points.len() - 1].y,
-            points[points.len() - 1].z,
-        )
+        let mut best = points[0];
+        if !skewed_mode {
+            let mut next_best_it = 1;
+            while best.0 {
+                best = points[next_best_it];
+                next_best_it += 1;
+            }
+        }
+        Vector3::new(best.2.x, best.2.y, best.2.z)
     }
     pub fn set_position(&mut self, position: cgmath::Vector3<f32>) {
         self.position = position;

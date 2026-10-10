@@ -23,6 +23,8 @@ const UNDO: &[u8] = include_bytes!("../Assets/Icons/undo.png");
 const CUT: &[u8] = include_bytes!("../Assets/Icons/cut.png");
 const COLOR_PICKER: &[u8] = include_bytes!("../Assets/Icons/color_picker.png");
 const LINE_SELECT: &[u8] = include_bytes!("../Assets/Icons/line_select.png");
+const SKEWED_MODE_ON: &[u8] = include_bytes!("../Assets/Icons/skewed_mode_on.png");
+const SKEWED_MODE_OFF: &[u8] = include_bytes!("../Assets/Icons/skewed_mode_off.png");
 
 pub struct IconLoader {
     icons: HashMap<String, TextureHandle>,
@@ -52,6 +54,8 @@ impl IconLoader {
             (REDO, "Redo"),
             (CUT, "Cut"),
             (COLOR_PICKER, "Color_Picker"),
+            (SKEWED_MODE_ON, "Skewed_On"),
+            (SKEWED_MODE_OFF, "Skewed_Off"),
         ]
         .iter()
         .for_each(|(icon_const, name)| {

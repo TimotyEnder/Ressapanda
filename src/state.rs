@@ -395,8 +395,18 @@ impl State {
     pub fn window(&self) -> &Window {
         &self.window
     }
+    pub fn update_skewed_mode(&mut self) {
+        let mod_stat = self.key_input_manager.get_modifier_keys_status();
+        if mod_stat.control_modifier {
+            self.voxel_scene.set_skewed_mode_status(true);
+        } else {
+            self.voxel_scene.set_skewed_mode_status(false);
+        }
+    }
     pub fn handle_key(&mut self, _event_loop: &ActiveEventLoop, key: KeyCode, pressed: bool) {
-        self.key_input_manager.modifier_inputs(key, pressed);
+        if self.key_input_manager.modifier_inputs(key, pressed) {
+            self.update_skewed_mode();
+        }
         if self.key_input_manager.choose_color_input(key, pressed) {
             self.ui_info.show_color_picker = !self.ui_info.show_color_picker;
             self.ui_info.color_selected = true;
@@ -1300,6 +1310,7 @@ impl State {
             .auto_sized()
             .show(ui, |ui| {
                 self.resize_voxel_grid_button(ui);
+                self.skewed_mode_toggle_button(ui);
             });
         self.popups(ui);
         self.file_save_dialog(ui);
@@ -1670,6 +1681,30 @@ impl State {
         let sized = SizedTexture::new(texture.id(), [25.0, 25.0]);
         let img = Image::new(sized);
         Some(egui::Button::image(img).fill(Color32::from_white_alpha(0)))
+    }
+    fn skewed_mode_toggle_button(&mut self, ui: &mut egui::Ui) {
+        let Some(texture) = self.ui_info.icon_loader.get_icon_texture(
+            if self.voxel_scene.get_skewed_mode_status() {
+                "Skewed_On"
+            } else {
+                "Skewed_Off"
+            },
+        ) else {
+            return;
+        };
+        let sized = SizedTexture::new(texture.id(), [50.0, 50.0]);
+        let img = Image::new(sized);
+        let button = egui::Button::image(img);
+        let mut responce = ui.add(button);
+        if self.voxel_scene.get_skewed_mode_status() {
+            responce = responce.highlight()
+        }
+        if responce
+            .on_hover_text(format!("Skewed Mode {}\n Allows to place voxels on other voxels vertices and edge midpoints\n (Hold down Control to activate)",if self.voxel_scene.get_skewed_mode_status(){"ON"}else{"OFF"}))
+            .clicked()
+        {
+            self.voxel_scene.set_skewed_mode_status(!self.voxel_scene.get_skewed_mode_status());
+        }
     }
     fn resize_voxel_grid_button(&mut self, ui: &mut egui::Ui) {
         let Some(texture) = self

@@ -62,6 +62,7 @@ impl SelectMode for AreaSelectMode {
             {
                 let mut prev_operating_point = prev_voxel_position;
                 let mut operating_point = voxel_position;
+                let skewed = scene.get_skewed_mode_status();
                 if tool.name().contains("Add") {
                     if let Some(prev_voxel) = scene
                         .get_voxel_from_position_prioritizing_first_selected_set(
@@ -69,7 +70,7 @@ impl SelectMode for AreaSelectMode {
                         )
                     {
                         prev_operating_point = prev_voxel
-                            .point_on_voxel_grid_closest_to_point(prev_intersect_position);
+                            .point_on_voxel_grid_closest_to_point(prev_intersect_position, skewed);
 
                         tool.operate_with_position(prev_operating_point, scene, brush);
                     }
@@ -77,7 +78,7 @@ impl SelectMode for AreaSelectMode {
                         .get_voxel_from_position_prioritizing_first_selected_set(voxel_position)
                     {
                         operating_point =
-                            voxel.point_on_voxel_grid_closest_to_point(intersect_position);
+                            voxel.point_on_voxel_grid_closest_to_point(intersect_position, skewed);
                         tool.operate_with_position(
                             Vector3::new(operating_point.x, operating_point.y, operating_point.z),
                             scene,
@@ -122,6 +123,7 @@ impl SelectMode for AreaSelectMode {
             if let Some((prev_intersect_position, prev_voxel_position)) = self.previous_hit {
                 let mut prev_operating_point = prev_voxel_position;
                 let mut operating_point = voxel_position;
+                let skewed = scene.get_skewed_mode_status();
                 if tool.name().contains("Add") {
                     if let Some(prev_voxel) = scene
                         .get_voxel_from_position_prioritizing_first_selected_set(
@@ -129,7 +131,7 @@ impl SelectMode for AreaSelectMode {
                         )
                     {
                         prev_operating_point = prev_voxel
-                            .point_on_voxel_grid_closest_to_point(prev_intersect_position);
+                            .point_on_voxel_grid_closest_to_point(prev_intersect_position, skewed);
 
                         tool.temp_operate_with_position(prev_operating_point, scene, brush);
                     }
@@ -137,7 +139,7 @@ impl SelectMode for AreaSelectMode {
                         .get_voxel_from_position_prioritizing_first_selected_set(voxel_position)
                     {
                         operating_point =
-                            voxel.point_on_voxel_grid_closest_to_point(intersect_position);
+                            voxel.point_on_voxel_grid_closest_to_point(intersect_position, skewed);
                         tool.temp_operate_with_position(
                             Vector3::new(operating_point.x, operating_point.y, operating_point.z),
                             scene,
@@ -152,13 +154,14 @@ impl SelectMode for AreaSelectMode {
                     tool.temp_operate_with_position(list_voxel, scene, brush);
                 }
             } else {
+                let skewed = scene.get_skewed_mode_status();
                 match tool.name() {
                     "Add" => {
                         if let Some(voxel) = scene
                             .get_voxel_from_position_prioritizing_first_selected_set(voxel_position)
                         {
-                            let point =
-                                voxel.point_on_voxel_grid_closest_to_point(intersect_position);
+                            let point = voxel
+                                .point_on_voxel_grid_closest_to_point(intersect_position, skewed);
                             tool.temp_operate_with_position(
                                 Vector3::new(point.x, point.y, point.z),
                                 scene,

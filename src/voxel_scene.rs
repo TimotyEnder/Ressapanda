@@ -174,6 +174,7 @@ pub struct VoxelScene {
     current_change: Option<Change>,
     current_fragment: Option<BTreeMap<VoxelGroupId, BTreeSet<VoxelScenePosition>>>,
     current_color_change: Option<Color32>,
+    skewed_editing_mode: bool,
 }
 impl VoxelScene {
     pub fn orientating_cross_scene() -> Self {
@@ -198,6 +199,7 @@ impl VoxelScene {
             current_change: None,
             current_fragment: None,
             current_color_change: None,
+            skewed_editing_mode: false,
         }
     }
     pub fn to_saved(&self) -> SaveFile {
@@ -243,6 +245,7 @@ impl VoxelScene {
             current_change: None,
             current_fragment: None,
             current_color_change: None,
+            skewed_editing_mode: false,
         }
     }
     pub fn new() -> Self {
@@ -270,6 +273,7 @@ impl VoxelScene {
             current_change: None,
             current_fragment: None,
             current_color_change: None,
+            skewed_editing_mode: false,
         }
     }
     pub fn undo(&mut self) {
@@ -325,6 +329,12 @@ impl VoxelScene {
         }
 
         &self.raw_voxel_instance_list
+    }
+    pub fn get_skewed_mode_status(&self) -> bool {
+        self.skewed_editing_mode
+    }
+    pub fn set_skewed_mode_status(&mut self, status: bool) {
+        self.skewed_editing_mode = status;
     }
     pub fn is_voxel_scene_changed(&self) -> bool {
         self.voxels_changed
