@@ -61,7 +61,9 @@ Undo and Redo operate like a stack. Undoing a change and then making another cha
 | Name | Description | Shortcut |
 | --- | --- | --- |
 |Move | Moves selected voxel groups Up/Down/Left/Right/Forwards/Backwards relative to the camera position | ALT+Q/E/A/D/W/S |
-|Rotate | Rotates selected voxel groups Up/Down/Left/Right/Forwards/Backwards relative to the camera position | SHIFT+Q/E/A/D/W/S |
+|Rotate | Rotates selected voxel groups Up/Down/Left/Right/Forwards/Backwards relative to the camera position. When multiple voxel groups are selected, they are rotated around a common center. | SHIFT+Q/E/A/D/W/S |
+|Mirror/Flip | Mirrors/Flips selected voxel groups across X/Y/Z axes relative to the camera position. When multiple voxel groups are selected, they are flipped around a common center. | SHIFT+X/Y/Z |
+|Recenter | Recenters selected voxel groups. When multiple voxel groups are selected, they are acted upon with a common center. | ALT+C |
 
 ## Voxel Groups
 
@@ -87,6 +89,7 @@ Exports are found under File, Export.
 | --- | --- | --- |
 | Wavefront OBJ | .obj | Geometry only. Vertices, face normals and triangles, with hidden interior faces culled. |
 | Wavefront OBJ with materials | .obj and .mtl | Geometry plus a material library. Writes an .mtl file next to the .obj with one material per voxel color. |
+| STL | .stl | Binary STL format for 3D printing. Exports triangulated geometry of the visible voxels. |
 
 ## AI/LLM Use
 
