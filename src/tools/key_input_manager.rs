@@ -65,19 +65,24 @@ impl KeyInputManager {
         ret.keycode_to_flag.insert(KeyCode::KeyT, false);
         ret
     }
-    pub fn modifier_inputs(&mut self, key: KeyCode, pressed: bool) {
+    pub fn modifier_inputs(&mut self, key: KeyCode, pressed: bool) -> bool {
+        let mut changed = false;
         match key {
             KeyCode::ShiftLeft => {
+                changed = self.shift_modifier != pressed;
                 self.shift_modifier = pressed;
             }
             KeyCode::AltLeft => {
+                changed = self.alt_modifier != pressed;
                 self.alt_modifier = pressed;
             }
             KeyCode::ControlLeft => {
+                changed = self.control_modifier != pressed;
                 self.control_modifier = pressed;
             }
             _ => {}
         };
+        changed
     }
     pub fn choose_color_input(&mut self, key: KeyCode, pressed: bool) -> bool {
         return key == KeyCode::KeyC

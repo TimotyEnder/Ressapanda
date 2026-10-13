@@ -146,6 +146,7 @@ impl SelectMode for ExtendedAreaSelectMode {
             {
                 let mut prev_operating_point = prev_voxel_position;
                 let mut operating_point = voxel_position;
+                let skewed = scene.get_skewed_mode_status();
                 if tool.name().contains("Add") {
                     if let Some(prev_voxel) = scene
                         .get_voxel_from_position_prioritizing_first_selected_set(
@@ -153,13 +154,13 @@ impl SelectMode for ExtendedAreaSelectMode {
                         )
                     {
                         prev_operating_point = prev_voxel
-                            .point_on_voxel_grid_closest_to_point(prev_intersect_position);
+                            .point_on_voxel_grid_closest_to_point(prev_intersect_position, skewed);
                     }
                     if let Some(voxel) = scene
                         .get_voxel_from_position_prioritizing_first_selected_set(voxel_position)
                     {
                         operating_point =
-                            voxel.point_on_voxel_grid_closest_to_point(intersect_position);
+                            voxel.point_on_voxel_grid_closest_to_point(intersect_position, skewed);
                     }
                 }
                 self.base_voxel = Some(operating_point);
@@ -249,22 +250,25 @@ impl SelectMode for ExtendedAreaSelectMode {
                 if let Some((prev_intersect_position, prev_voxel_position)) = self.first_hit {
                     let mut prev_operating_point = prev_voxel_position;
                     let mut operating_point = voxel_position;
+                    let skewed = scene.get_skewed_mode_status();
                     if tool.name().contains("Add") {
                         if let Some(prev_voxel) = scene
                             .get_voxel_from_position_prioritizing_first_selected_set(
                                 prev_voxel_position,
                             )
                         {
-                            prev_operating_point = prev_voxel
-                                .point_on_voxel_grid_closest_to_point(prev_intersect_position);
+                            prev_operating_point = prev_voxel.point_on_voxel_grid_closest_to_point(
+                                prev_intersect_position,
+                                skewed,
+                            );
 
                             tool.temp_operate_with_position(prev_operating_point, scene, brush);
                         }
                         if let Some(voxel) = scene
                             .get_voxel_from_position_prioritizing_first_selected_set(voxel_position)
                         {
-                            operating_point =
-                                voxel.point_on_voxel_grid_closest_to_point(intersect_position);
+                            operating_point = voxel
+                                .point_on_voxel_grid_closest_to_point(intersect_position, skewed);
                             tool.temp_operate_with_position(
                                 Vector3::new(
                                     operating_point.x,
@@ -283,6 +287,7 @@ impl SelectMode for ExtendedAreaSelectMode {
                         tool.temp_operate_with_position(list_voxel, scene, brush);
                     }
                 } else {
+                    let skewed = scene.get_skewed_mode_status();
                     match tool.name() {
                         "Add" => {
                             if let Some(voxel) = scene
@@ -290,8 +295,10 @@ impl SelectMode for ExtendedAreaSelectMode {
                                     voxel_position,
                                 )
                             {
-                                let point =
-                                    voxel.point_on_voxel_grid_closest_to_point(intersect_position);
+                                let point = voxel.point_on_voxel_grid_closest_to_point(
+                                    intersect_position,
+                                    skewed,
+                                );
                                 tool.temp_operate_with_position(
                                     Vector3::new(point.x, point.y, point.z),
                                     scene,

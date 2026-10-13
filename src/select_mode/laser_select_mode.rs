@@ -48,13 +48,13 @@ impl SelectMode for LaserSelectMode {
             if !modifier_key_status.shift_modifier {
                 if tool.name() == "Add" {
                     let hit = find_first_voxel_to_intersect_ray(ray, scene);
-
+                    let skewed = scene.get_skewed_mode_status();
                     if let Some((intersect_position, voxel_position)) = hit {
                         if let Some(voxel) = scene
                             .get_voxel_from_position_prioritizing_first_selected_set(voxel_position)
                         {
-                            let point =
-                                voxel.point_on_voxel_grid_closest_to_point(intersect_position);
+                            let point = voxel
+                                .point_on_voxel_grid_closest_to_point(intersect_position, skewed);
                             let op_position = Vector3::new(point.x, point.y, point.z);
                             tool.operate_with_position(op_position, scene, brush);
                             self.previous_voxel_pos_drawn = Some(op_position);
@@ -116,10 +116,12 @@ impl SelectMode for LaserSelectMode {
         if tool.name() == "Add" {
             let hit = find_first_voxel_to_intersect_ray(ray, scene);
             if let Some((intersect_position, voxel_position)) = hit {
+                let skewed = scene.get_skewed_mode_status();
                 if let Some(voxel) =
                     scene.get_voxel_from_position_prioritizing_first_selected_set(voxel_position)
                 {
-                    let point = voxel.point_on_voxel_grid_closest_to_point(intersect_position);
+                    let point =
+                        voxel.point_on_voxel_grid_closest_to_point(intersect_position, skewed);
                     let op_position = Vector3::new(point.x, point.y, point.z);
                     if self.press_flag && modifier_key_status.shift_modifier {
                         if let Some(prev_drawn) = self.previous_voxel_pos_drawn {
