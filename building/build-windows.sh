@@ -54,8 +54,8 @@ docker run --rm \
     "${IMAGE_NAME}" \
     bash -c '
         set -euo pipefail
-        x86_64-w64-mingw32-windres /src/building/appicon.rc /tmp/appicon.o
-        RUSTFLAGS="-C link-arg=/tmp/appicon.o" cargo build --release --locked --target x86_64-pc-windows-gnu
+        # The icon is embedded by build.rs (windres) during the cargo build.
+        cargo build --release --locked --target x86_64-pc-windows-gnu
         x86_64-w64-mingw32-strip --strip-unneeded /build/target/x86_64-pc-windows-gnu/release/ressapanda.exe
         install -m 0755 /build/target/x86_64-pc-windows-gnu/release/ressapanda.exe /out/ressapanda.exe
         chown "${HOST_UID}:${HOST_GID}" /out/ressapanda.exe
