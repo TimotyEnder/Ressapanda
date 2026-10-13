@@ -5,11 +5,13 @@ use cgmath::Vector3;
 use crate::{
     change::change::Step::{
         AddGroup, GroupInfoChange, RemoveGroup, VoxelChange, VoxelFragmentSelect, VoxelGridResize,
-        VoxelGroupDownShift, VoxelGroupUpShift, VoxelMove, VoxelRotate,
+        VoxelGroupDownShift, VoxelGroupUpShift, VoxelMirrorFlip, VoxelMove, VoxelRotate,
     },
     color::VoxelColor,
     voxel_instance::VoxelInstance,
-    voxel_scene::{GridVoxelDimensions, VoxelGroup, VoxelGroupId, VoxelScene, VoxelScenePosition},
+    voxel_scene::{
+        FlipAxis, GridVoxelDimensions, VoxelGroup, VoxelGroupId, VoxelScene, VoxelScenePosition,
+    },
 };
 
 #[derive(Clone)]
@@ -62,6 +64,11 @@ pub enum Step {
         axis: Vector3<f32>,
         center: Vector3<f32>,
         deg: cgmath::Deg<f32>,
+    },
+    VoxelMirrorFlip {
+        group_id: VoxelGroupId,
+        flip_axis: FlipAxis,
+        center: Vector3<f32>,
     },
     VoxelFragmentSelect {
         group_id: VoxelGroupId,
@@ -244,6 +251,19 @@ impl Step {
                 }
                 scene.force_voxel_scene_update();
             }
+            VoxelMirrorFlip {
+                group_id,
+                flip_axis,
+                center,
+            } => {
+                let working_index_opt = scene
+                    .voxel_groups_ref_mut()
+                    .iter_mut()
+                    .position(|group| group.id == *group_id);
+                if let Some(working_index) = working_index_opt {
+                    scene.mirror_flip_voxel_group_around_axis(working_index, *flip_axis, *center);
+                }
+            }
         }
     }
     pub fn redo(&self, scene: &mut VoxelScene) {
@@ -398,6 +418,19 @@ impl Step {
                     }
                 }
                 scene.force_voxel_scene_update();
+            }
+            VoxelMirrorFlip {
+                group_id,
+                flip_axis,
+                center,
+            } => {
+                let working_index_opt = scene
+                    .voxel_groups_ref_mut()
+                    .iter_mut()
+                    .position(|group| group.id == *group_id);
+                if let Some(working_index) = working_index_opt {
+                    scene.mirror_flip_voxel_group_around_axis(working_index, *flip_axis, *center);
+                }
             }
         }
     }

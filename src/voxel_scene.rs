@@ -14,6 +14,7 @@ use crate::{
     color::VoxelColor,
     voxel_instance::{RawVoxelInstance, VoxelInstance},
 };
+#[derive(Clone, Copy)]
 pub enum FlipAxis {
     X,
     Y,
@@ -777,23 +778,38 @@ impl VoxelScene {
     pub fn mirror_flip_around_axis(&mut self, axis_line_flip: FlipAxis) {
         let global_center = self.global_center_of_selected_groups();
         for i in self.current_voxel_groups_selected.clone() {
-            let mut voxels_to_move: Vec<VoxelInstance> =
-                std::mem::take(&mut self.voxel_groups[i].position_to_voxel)
-                    .into_values()
-                    .collect();
-            for _ in 0..voxels_to_move.len() {
-                let mut voxel_extracted = voxels_to_move.remove(0);
-                let old_pos = voxel_extracted.get_position();
-                voxel_extracted.set_position(match axis_line_flip {
-                    FlipAxis::X => vec3(-old_pos.x + global_center.x, old_pos.y, old_pos.z),
-                    FlipAxis::Y => vec3(old_pos.x, -old_pos.y + global_center.y, old_pos.z),
-                    FlipAxis::Z => vec3(old_pos.x, old_pos.y, -old_pos.z + global_center.z),
+            self.mirror_flip_voxel_group_around_axis(i, axis_line_flip, global_center);
+            self.current_change
+                .get_or_insert_with(Change::new)
+                .add_step(crate::change::change::Step::VoxelMirrorFlip {
+                    group_id: self.voxel_groups[i].id,
+                    flip_axis: axis_line_flip,
+                    center: global_center,
                 });
-                self.voxel_groups[i].position_to_voxel.insert(
-                    VoxelScenePosition::from_voxel_position(voxel_extracted.get_position()),
-                    voxel_extracted,
-                );
-            }
+        }
+    }
+    pub fn mirror_flip_voxel_group_around_axis(
+        &mut self,
+        voxel_group: usize,
+        axis_line_flip: FlipAxis,
+        center: Vector3<f32>,
+    ) {
+        let mut voxels_to_move: Vec<VoxelInstance> =
+            std::mem::take(&mut self.voxel_groups[voxel_group].position_to_voxel)
+                .into_values()
+                .collect();
+        for _ in 0..voxels_to_move.len() {
+            let mut voxel_extracted = voxels_to_move.remove(0);
+            let old_pos = voxel_extracted.get_position();
+            voxel_extracted.set_position(match axis_line_flip {
+                FlipAxis::X => vec3(-old_pos.x + center.x, old_pos.y, old_pos.z),
+                FlipAxis::Y => vec3(old_pos.x, -old_pos.y + center.y, old_pos.z),
+                FlipAxis::Z => vec3(old_pos.x, old_pos.y, -old_pos.z + center.z),
+            });
+            self.voxel_groups[voxel_group].position_to_voxel.insert(
+                VoxelScenePosition::from_voxel_position(voxel_extracted.get_position()),
+                voxel_extracted,
+            );
         }
     }
     pub fn move_by_vector(&mut self, move_vector: Vector3<f32>) {
