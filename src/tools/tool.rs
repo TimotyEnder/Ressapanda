@@ -1,8 +1,12 @@
-use cgmath::Vector3;
+use cgmath::{Point3, Vector3, vec3};
+use log::log;
 
 use crate::{
     brushes::brush::Brush,
-    tools::{add::Add, color_picker::ColorPicker, del::Del, fragment::FragmentCut, style::Style},
+    tools::{
+        add::Add, color_picker::ColorPicker, del::Del, fragment::FragmentCut,
+        key_input_manager::ModifierKeysStatus, style::Style,
+    },
     voxel_scene::VoxelScene,
 };
 

@@ -1,3 +1,5 @@
+use cgmath::{Point3, Vector3, vec3};
+
 use crate::{
     brushes::brush::Brush,
     camera::Camera,
@@ -64,8 +66,12 @@ pub fn select_mode_tooltip_from_name(name: &str) -> Option<&str> {
         "Single" => {
             return Some("Single Select Mode (Shortcut:Q). For continuous operation, hold (Shift)");
         }
-        "Area" => return Some("Area Select Mode (Shortcut:W)"),
-        "Extended" => return Some("Extended Area Select(Shortcut:E)"),
+        "Area" => return Some("Area Select Mode (Shortcut:W)\n(Shift) to clamp to square/cube"),
+        "Extended" => {
+            return Some(
+                "Extended Area Select(Shortcut:E).\n(Shift) to clamp initial selection  to square/cube",
+            );
+        }
         "Laser" => return Some("Laser Select (Shortcut:r)"),
         "Line" => {
             return Some(
@@ -74,4 +80,58 @@ pub fn select_mode_tooltip_from_name(name: &str) -> Option<&str> {
         }
         _ => return None,
     };
+}
+pub fn clamp_voxel_selection_to_maintain_ascpect_ratio_mod_key_conditional(
+    raycast_result_opt: Option<(Point3<f32>, Vector3<f32>)>,
+    previous_hit: Option<(Point3<f32>, Vector3<f32>)>,
+    mod_key_status: ModifierKeysStatus,
+) -> Option<(Point3<f32>, Vector3<f32>)> {
+    if mod_key_status.shift_modifier {
+        if let Some((intersect_pos, voxel_pos)) = raycast_result_opt {
+            if let Some((prev_intersect_pos, prev_voxel_pos)) = previous_hit {
+                let x_dist = voxel_pos.x - prev_voxel_pos.x;
+                let y_dist = voxel_pos.y - prev_voxel_pos.y;
+                let z_dist = voxel_pos.z - prev_voxel_pos.z;
+                let biggest = (x_dist.abs()).max((y_dist.abs()).max(z_dist.abs()));
+                let clamped_pos = vec3(
+                    prev_voxel_pos.x + x_dist.signum() * biggest,
+                    prev_voxel_pos.y + y_dist.signum() * biggest,
+                    prev_voxel_pos.z + z_dist.signum() * biggest,
+                );
+                let clamped_pos = vec3(
+                    if voxel_pos.x == prev_voxel_pos.x {
+                        voxel_pos.x
+                    } else {
+                        prev_voxel_pos.x + x_dist.signum() * biggest
+                    },
+                    if voxel_pos.y == prev_voxel_pos.y {
+                        voxel_pos.y
+                    } else {
+                        prev_voxel_pos.y + y_dist.signum() * biggest
+                    },
+                    if voxel_pos.z == prev_voxel_pos.z {
+                        voxel_pos.z
+                    } else {
+                        prev_voxel_pos.z + z_dist.signum() * biggest
+                    },
+                );
+                let intersect_point_diff =
+                    voxel_pos - vec3(intersect_pos.x, intersect_pos.y, intersect_pos.z);
+                let clamped_intersect = clamped_pos + intersect_point_diff;
+                return Some((
+                    Point3::new(
+                        clamped_intersect.x,
+                        clamped_intersect.y,
+                        clamped_intersect.z,
+                    ),
+                    clamped_pos,
+                ));
+            } else {
+                return raycast_result_opt;
+            }
+        } else {
+            return None;
+        }
+    }
+    return raycast_result_opt;
 }

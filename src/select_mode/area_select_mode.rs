@@ -4,7 +4,9 @@ use crate::{
     brushes::brush::Brush,
     filler::fill_positions_from_a_to_b,
     raycast::{find_first_voxel_to_intersect_ray, raycast_compute_from_mouse_position},
-    select_mode::select_mode::SelectMode,
+    select_mode::select_mode::{
+        SelectMode, clamp_voxel_selection_to_maintain_ascpect_ratio_mod_key_conditional,
+    },
     tools::key_input_manager::ModifierKeysStatus,
 };
 
@@ -42,7 +44,7 @@ impl SelectMode for AreaSelectMode {
         &mut self,
         mouse_x: f64,
         mouse_y: f64,
-        _modifier_key_status: ModifierKeysStatus,
+        modifier_key_status: ModifierKeysStatus,
         camera: &crate::camera::Camera,
         scene: &mut crate::voxel_scene::VoxelScene,
         config: &wgpu::SurfaceConfiguration,
@@ -58,7 +60,11 @@ impl SelectMode for AreaSelectMode {
         );
         if let Some((prev_intersect_position, prev_voxel_position)) = self.previous_hit {
             if let Some((intersect_position, voxel_position)) =
-                find_first_voxel_to_intersect_ray(ray, scene)
+                clamp_voxel_selection_to_maintain_ascpect_ratio_mod_key_conditional(
+                    find_first_voxel_to_intersect_ray(ray, scene),
+                    self.previous_hit,
+                    modifier_key_status,
+                )
             {
                 let mut prev_operating_point = prev_voxel_position;
                 let mut operating_point = voxel_position;
@@ -103,7 +109,7 @@ impl SelectMode for AreaSelectMode {
         &mut self,
         mouse_x: f64,
         mouse_y: f64,
-        _modifier_key_status: ModifierKeysStatus,
+        modifier_key_status: ModifierKeysStatus,
         camera: &crate::camera::Camera,
         scene: &mut crate::voxel_scene::VoxelScene,
         config: &wgpu::SurfaceConfiguration,
@@ -118,7 +124,11 @@ impl SelectMode for AreaSelectMode {
             config.height as f64,
         );
         if let Some((intersect_position, voxel_position)) =
-            find_first_voxel_to_intersect_ray(ray, scene)
+            clamp_voxel_selection_to_maintain_ascpect_ratio_mod_key_conditional(
+                find_first_voxel_to_intersect_ray(ray, scene),
+                self.previous_hit,
+                modifier_key_status,
+            )
         {
             if let Some((prev_intersect_position, prev_voxel_position)) = self.previous_hit {
                 let mut prev_operating_point = prev_voxel_position;
@@ -190,6 +200,6 @@ impl SelectMode for AreaSelectMode {
         "Area"
     }
     fn tooltip(&self) -> &'static str {
-        "Area Select Mode (Shortcut:W)"
+        "Area Select Mode (Shortcut:W)\n(Shift) to clamp to square/cube"
     }
 }
