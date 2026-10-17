@@ -1,7 +1,10 @@
 use cgmath::{Point3, Vector3, Vector4, prelude::*, vec3};
+use egui::Color32;
 
 use crate::{
-    change::change::VoxelSnapshot, color::VoxelColor, save::SavedVoxel,
+    change::change::VoxelSnapshot,
+    color::{ORANGE, VoxelColor},
+    save::SavedVoxel,
     voxel_scene::VoxelScenePosition,
 };
 #[derive(Clone, Copy)]
@@ -11,6 +14,8 @@ pub struct VoxelInstance {
     selected: bool,
     grid_voxel: bool,
     fragment_voxel: bool,
+    voxel_group_highlighted: bool,
+    voxel_group_hightlighed_frames: usize,
 }
 impl VoxelInstance {
     pub fn to_saved(&self) -> SavedVoxel {
@@ -41,6 +46,8 @@ impl VoxelInstance {
             selected: false,
             grid_voxel: false,
             fragment_voxel: false,
+            voxel_group_highlighted: false,
+            voxel_group_hightlighed_frames: 0,
         }
     }
     pub fn from_snapshot(snap: &VoxelSnapshot) -> Self {
@@ -50,6 +57,8 @@ impl VoxelInstance {
             selected: false,
             grid_voxel: false,
             fragment_voxel: false,
+            voxel_group_highlighted: false,
+            voxel_group_hightlighed_frames: 0,
         }
     }
     pub fn new(position: cgmath::Vector3<f32>, color: VoxelColor) -> Self {
@@ -59,6 +68,8 @@ impl VoxelInstance {
             selected: false,
             grid_voxel: false,
             fragment_voxel: false,
+            voxel_group_highlighted: false,
+            voxel_group_hightlighed_frames: 0,
         }
     }
     pub fn new_grid_voxel(position: cgmath::Vector3<f32>, color: VoxelColor) -> Self {
@@ -68,18 +79,28 @@ impl VoxelInstance {
             selected: false,
             grid_voxel: true,
             fragment_voxel: false,
+            voxel_group_highlighted: false,
+            voxel_group_hightlighed_frames: 0,
         }
     }
-    pub fn to_raw(&self) -> RawVoxelInstance {
+    pub fn to_raw(&mut self) -> RawVoxelInstance {
         let info_vec = Vector4::new(
             if self.selected { 1.0 } else { 0.0 },
             if self.grid_voxel { 1.0 } else { 0.0 },
             if self.fragment_voxel { 1.0 } else { 0.0 },
             0.0,
         );
+        self.voxel_group_hightlighed_frames = self.voxel_group_hightlighed_frames.saturating_sub(1);
+        if self.voxel_group_hightlighed_frames <= 0 {
+            self.voxel_group_highlighted = false;
+        }
         RawVoxelInstance {
             matrix: (cgmath::Matrix4::from_translation(self.position)).into(),
-            color: self.color.to_vector_4().into(),
+            color: if self.voxel_group_highlighted {
+                VoxelColor::from_egui_color(ORANGE).to_vector_4().into()
+            } else {
+                self.color.to_vector_4().into()
+            },
             info_vec: info_vec.into(),
         }
     }
@@ -466,6 +487,10 @@ impl VoxelInstance {
     }
     pub fn fragment_unselect(&mut self) {
         self.fragment_voxel = false;
+    }
+    pub fn voxel_group_highlight(&mut self) {
+        self.voxel_group_highlighted = true;
+        self.voxel_group_hightlighed_frames = 60;
     }
     pub fn is_fragment_selected(&self) -> bool {
         self.fragment_voxel

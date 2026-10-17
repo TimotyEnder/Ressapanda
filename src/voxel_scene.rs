@@ -3,13 +3,13 @@ use cgmath::{prelude::*, vec3};
 use egui::Color32;
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex};
-use std::usize;
 
 use crate::camera::Camera;
 use crate::change::change::{Change, History, VoxelSnapshot};
 use crate::conversion_utils::snap_vector_to_flat_direction;
 use crate::filler::fill_positions_from_a_to_b;
 use crate::save::{SaveFile, SavedVoxelGroup};
+use crate::tools::key_input_manager::ModifierKeysStatus;
 use crate::{
     color::VoxelColor,
     voxel_instance::{RawVoxelInstance, VoxelInstance},
@@ -313,13 +313,13 @@ impl VoxelScene {
                     self.raw_voxel_instance_list.extend(
                         self.voxel_groups[i]
                             .position_to_voxel
-                            .values()
+                            .values_mut()
                             .map(|voxel| voxel.to_raw()),
                     );
                 }
             }
             self.raw_voxel_instance_list
-                .extend(self.temporary_voxels.iter().map(|voxel| voxel.to_raw()));
+                .extend(self.temporary_voxels.iter_mut().map(|voxel| voxel.to_raw()));
         }
         self.temporary_voxels.clear();
         for i in self.current_voxel_groups_selected.iter() {
@@ -845,7 +845,6 @@ impl VoxelScene {
                 .iter()
                 .filter_map(|(k, v)| (!v.is_grid()).then_some(*k)),
         );
-        let group_id = self.voxel_groups[index].id;
         let mut changes: Vec<(VoxelScenePosition, Vector3<f32>)> = Vec::new();
         for voxel in self.voxel_groups[index].position_to_voxel.values_mut() {
             if !voxel.is_grid() {
@@ -877,13 +876,26 @@ impl VoxelScene {
             );
         }
     }
+    pub fn voxel_group_ui_presence_toggle(
+        &mut self,
+        selection: usize,
+        mod_key_status: ModifierKeysStatus,
+    ) {
+        for voxel in self.voxel_groups[selection].position_to_voxel.values_mut() {
+            voxel.voxel_group_highlight();
+        }
+        if mod_key_status.control_modifier {
+            self.control_select_toggle_voxel_group_presence(selection);
+        } else if mod_key_status.shift_modifier {
+            self.shift_select_toggle_voxel_group_presence(selection);
+        } else {
+            self.set_current_voxel_group(vec![selection]);
+        }
+    }
     pub fn set_current_voxel_group(&mut self, working_selection: Vec<usize>) {
         self.current_voxel_groups_selected = working_selection;
     }
-    pub fn toggle_presence_in_current_voxel_group_selection(
-        &mut self,
-        additional_selection: usize,
-    ) {
+    fn control_select_toggle_voxel_group_presence(&mut self, additional_selection: usize) {
         if !self
             .current_voxel_groups_selected
             .contains(&additional_selection)
@@ -895,7 +907,7 @@ impl VoxelScene {
                 .retain(|element| *element != additional_selection);
         }
     }
-    pub fn shift_select_toggle_presence(&mut self, additional_selection: usize) {
+    fn shift_select_toggle_voxel_group_presence(&mut self, additional_selection: usize) {
         if !self
             .current_voxel_groups_selected
             .contains(&additional_selection)

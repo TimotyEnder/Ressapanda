@@ -1642,14 +1642,8 @@ impl State {
         }
         if response.clicked() {
             let mod_stat = self.key_input_manager.get_modifier_keys_status();
-            if mod_stat.control_modifier {
-                self.voxel_scene
-                    .toggle_presence_in_current_voxel_group_selection(index);
-            } else if mod_stat.shift_modifier {
-                self.voxel_scene.shift_select_toggle_presence(index);
-            } else {
-                self.voxel_scene.set_current_voxel_group(vec![index]);
-            }
+            self.voxel_scene
+                .voxel_group_ui_presence_toggle(index, mod_stat);
             self.voxel_scene.reset_input_state();
         }
         if response.double_clicked() {
