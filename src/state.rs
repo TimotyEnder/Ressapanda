@@ -76,7 +76,6 @@ pub struct State {
     pub egui_winit_state: egui_winit::State,
     egui_renderer: egui_wgpu::Renderer,
     egui_paint_jobs: Vec<epaint::ClippedPrimitive>,
-    egui_textures_delta: egui::TexturesDelta,
     ui_info: UIData,
 }
 impl State {
@@ -384,7 +383,6 @@ impl State {
             egui_renderer,
             egui_ctx: egui_ctx.clone(),
             egui_paint_jobs: Vec::new(),
-            egui_textures_delta: egui::TexturesDelta::default(),
             ui_info: UIData::new(egui_ctx.clone()),
             orienting_cross_camera_uniform,
             orienting_cross_camera,
@@ -553,13 +551,26 @@ impl State {
     fn ui_update(&mut self) {
         let raw_input = self.egui_winit_state.take_egui_input(&self.window);
         let egui_ctx = self.egui_ctx.clone();
-        let full_output = egui_ctx.run_ui(raw_input, |ui| self.ui(ui));
+        let mut full_output = egui_ctx.run_ui(raw_input, |ui| self.ui(ui));
 
         self.egui_winit_state
             .handle_platform_output(&self.window, full_output.platform_output);
+
+        for (id, deltas) in &full_output.textures_delta.set {
+            for delta in deltas {
+                self.egui_renderer
+                    .update_texture(&self.device, &self.queue, *id, delta);
+            }
+        }
+
+        for id in &full_output.textures_delta.free {
+            self.egui_renderer.free_texture(id);
+        }
+
+        full_output.textures_delta.clear();
+
         self.egui_paint_jobs =
             egui_ctx.tessellate(full_output.shapes, full_output.pixels_per_point);
-        self.egui_textures_delta = full_output.textures_delta;
     }
     fn update_temporary_voxel_generation_on_hover(&mut self) {
         self.current_select_mode.temp_draw_on_mouse_hover(
@@ -695,13 +706,6 @@ impl State {
             pixels_per_point: self.window.scale_factor() as f32,
         };
 
-        for (id, deltas) in &self.egui_textures_delta.set {
-            for delta in deltas {
-                self.egui_renderer
-                    .update_texture(&self.device, &self.queue, *id, delta);
-            }
-        }
-
         let ui_cmd_buffers = self.egui_renderer.update_buffers(
             &self.device,
             &self.queue,
@@ -709,7 +713,6 @@ impl State {
             &self.egui_paint_jobs,
             &screen_descriptor,
         );
-        self.egui_textures_delta.clear();
         {
             let render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("egui pass"),
