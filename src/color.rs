@@ -20,10 +20,10 @@ impl VoxelColor {
     }
     pub fn to_egui_color(&self) -> Color32 {
         Color32::from_rgba_unmultiplied(
-            (linear_to_srgb(self.r) * 255.0) as u8,
-            (linear_to_srgb(self.g) * 255.0) as u8,
-            (linear_to_srgb(self.b) * 255.0) as u8,
-            (linear_to_srgb(self.a) * 255.0) as u8,
+            (linear_to_srgb(self.r) * 255.0).round() as u8,
+            (linear_to_srgb(self.g) * 255.0).round() as u8,
+            (linear_to_srgb(self.b) * 255.0).round() as u8,
+            (self.a * 255.0).round() as u8,
         )
     }
     pub fn from_hex(hex: &str) -> anyhow::Result<Self> {

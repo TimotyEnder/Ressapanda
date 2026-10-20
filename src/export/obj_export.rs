@@ -1,4 +1,8 @@
-use std::{collections::HashSet, fmt::Write, path::Path};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Write,
+    path::Path,
+};
 
 use anyhow::Ok;
 
@@ -146,14 +150,19 @@ impl ObjExport {
         voxels: Vec<VoxelSnapshot>,
         export_type: FileExportType,
     ) {
-        let positions_occupied = voxels
+        let positions_occupied_to_color: HashMap<VoxelScenePosition, VoxelColor> = voxels
             .iter()
-            .map(|voxel| VoxelScenePosition {
-                x: voxel.x,
-                y: voxel.y,
-                z: voxel.z,
+            .map(|voxel| {
+                (
+                    VoxelScenePosition {
+                        x: voxel.x,
+                        y: voxel.y,
+                        z: voxel.z,
+                    },
+                    voxel.color,
+                )
             })
-            .collect::<HashSet<_>>();
+            .collect::<HashMap<VoxelScenePosition, VoxelColor>>();
         let mut positions_processed = HashSet::new();
         let mut vertices = Vec::new();
         let mut triangles = Vec::new();
@@ -256,8 +265,11 @@ impl ObjExport {
             ];
 
             for (neighbor, normal_index, corners) in faces {
-                if positions_occupied.contains(&neighbor) {
-                    continue;
+                if let Some(neighbor_color) = positions_occupied_to_color.get(&neighbor) {
+                    //only process if neighbor transparent and current is not
+                    if !(neighbor_color.a < 0.99 && voxel.color.a >= 0.99) {
+                        continue;
+                    }
                 }
 
                 let first_vertex = vertices.len() + 1;
