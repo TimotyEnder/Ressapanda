@@ -37,12 +37,15 @@ pub struct VoxelGroup {
 impl VoxelGroup {
     pub fn orientation_cross() -> Self {
         let voxels = vec![
+            VoxelInstance::new(vec3(1.0, 0.0, 0.0), VoxelColor::new(1.0, 0.0, 0.0, 1.0)),
             VoxelInstance::new(vec3(2.0, 0.0, 0.0), VoxelColor::new(1.0, 0.0, 0.0, 1.0)),
             VoxelInstance::new(vec3(3.0, 0.0, 0.0), VoxelColor::new(1.0, 0.0, 0.0, 1.0)),
             VoxelInstance::new(vec3(4.0, 0.0, 0.0), VoxelColor::new(1.0, 0.0, 0.0, 1.0)),
+            VoxelInstance::new(vec3(0.0, 1.0, 0.0), VoxelColor::new(0.0, 1.0, 0.0, 1.0)),
             VoxelInstance::new(vec3(0.0, 2.0, 0.0), VoxelColor::new(0.0, 1.0, 0.0, 1.0)),
             VoxelInstance::new(vec3(0.0, 3.0, 0.0), VoxelColor::new(0.0, 1.0, 0.0, 1.0)),
             VoxelInstance::new(vec3(0.0, 4.0, 0.0), VoxelColor::new(0.0, 1.0, 0.0, 1.0)),
+            VoxelInstance::new(vec3(0.0, 0.0, 1.0), VoxelColor::new(0.0, 0.0, 1.0, 1.0)),
             VoxelInstance::new(vec3(0.0, 0.0, 2.0), VoxelColor::new(0.0, 0.0, 1.0, 1.0)),
             VoxelInstance::new(vec3(0.0, 0.0, 3.0), VoxelColor::new(0.0, 0.0, 1.0, 1.0)),
             VoxelInstance::new(vec3(0.0, 0.0, 4.0), VoxelColor::new(0.0, 0.0, 1.0, 1.0)),

@@ -112,8 +112,7 @@ impl CameraController {
         camera.set_position(target, target + orbit);
     }
     pub fn update_orienting_cross_camera(&self, camera: &mut Camera) {
-        let target = Point3::from_vec(self.pan_offset);
         let orbit = spherical_to_cartesian(self.initial_radius, self.yaw, self.pitch).to_vec();
-        camera.set_position(target, target + orbit);
+        camera.set_position(Point3::origin(), Point3::origin() + orbit);
     }
 }
