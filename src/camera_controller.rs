@@ -49,14 +49,15 @@ impl CameraController {
         &mut self,
         mouse_button: MouseButton,
         mouse_button_is_pressed: bool,
-        mod_status: ModifierKeysStatus,
     ) {
         match mouse_button {
             MouseButton::Middle => self.start_rotate(mouse_button_is_pressed),
             MouseButton::Right => self.start_pan(mouse_button_is_pressed),
             _ => {}
         };
-        self.start_rotate(mod_status.space_rotational_modifier);
+    }
+    pub fn trackpad_rotation_with_rotation_modifier_key(&mut self, mod_stat: ModifierKeysStatus) {
+        self.start_rotate(mod_stat.space_rotational_modifier);
     }
     fn start_pan(&mut self, mouse_button_is_pressed: bool) {
         self.pan_started = mouse_button_is_pressed && !self.rotate_started;
