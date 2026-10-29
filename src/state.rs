@@ -61,7 +61,9 @@ pub struct State {
     camera_bind_group: wgpu::BindGroup,
     pub voxel_scene: VoxelScene,
     pub orienting_cross_scene: VoxelScene,
-    voxel_instance_buffer: wgpu::Buffer,
+    opaque_voxel_instance_buffer: wgpu::Buffer,
+    transparent_voxel_instance_buffer: wgpu::Buffer,
+    temporary_voxel_instance_buffer: wgpu::Buffer,
     orienting_cross_instance_buffer: wgpu::Buffer,
     depth_texture: DepthTexture,
     camera_controller: CameraController,
@@ -239,15 +241,38 @@ impl State {
 
         let mut voxel_scene = VoxelScene::new();
         let mut orienting_cross_scene = VoxelScene::orientating_cross_scene();
-        let voxel_instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Instance Buffer"),
-            contents: bytemuck::cast_slice(voxel_scene.prepare_buffer_contents()),
-            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-        });
+        let opaque_voxel_instance_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Instance Buffer"),
+                contents: bytemuck::cast_slice(
+                    &voxel_scene.prepare_buffer_contents().opaque_voxels,
+                ),
+                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+            });
+        let transparent_voxel_instance_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Instance Buffer"),
+                contents: bytemuck::cast_slice(
+                    &voxel_scene.prepare_buffer_contents().transparent_voxels,
+                ),
+                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+            });
+        let temporary_voxel_instance_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Instance Buffer"),
+                contents: bytemuck::cast_slice(
+                    &voxel_scene.prepare_buffer_contents().temporary_voxels,
+                ),
+                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+            });
         let orienting_cross_instance_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Orienting Cross Instance Buffer"),
-                contents: bytemuck::cast_slice(orienting_cross_scene.prepare_buffer_contents()),
+                contents: bytemuck::cast_slice(
+                    &orienting_cross_scene
+                        .prepare_buffer_contents()
+                        .opaque_voxels,
+                ),
                 usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
             });
         let next_frame_instance_count = voxel_scene.get_voxel_instance_count();
@@ -367,7 +392,9 @@ impl State {
             camera_buffer,
             camera_uniform,
             camera_bind_group,
-            voxel_instance_buffer,
+            opaque_voxel_instance_buffer,
+            transparent_voxel_instance_buffer,
+            temporary_voxel_instance_buffer,
             orienting_cross_instance_buffer,
             voxel_scene,
             orienting_cross_scene,
@@ -640,7 +667,82 @@ impl State {
                 timestamp_writes: None,
                 multiview_mask: None,
             });
-            render_pass.set_vertex_buffer(1, self.voxel_instance_buffer.slice(..));
+            render_pass.set_vertex_buffer(1, self.opaque_voxel_instance_buffer.slice(..));
+            render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
+            render_pass.draw_indexed(
+                0..CUBE_INDICES.len() as u32,
+                0,
+                0..self.next_frame_instance_count as u32,
+            );
+        }
+        {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some(" Main Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Load,
+                        store: wgpu::StoreOp::Store,
+                    },
+                    depth_slice: None,
+                })],
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.depth_texture.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }),
+                occlusion_query_set: None,
+                timestamp_writes: None,
+                multiview_mask: None,
+            });
+            render_pass.set_vertex_buffer(1, self.transparent_voxel_instance_buffer.slice(..));
+            render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
+            render_pass.draw_indexed(
+                0..CUBE_INDICES.len() as u32,
+                0,
+                0..self.next_frame_instance_count as u32,
+            );
+        }
+        {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some(" Main Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: crate::color::srgb_to_linear(0.3094) as f64,
+                            g: crate::color::srgb_to_linear(0.3094) as f64,
+                            b: crate::color::srgb_to_linear(0.3094) as f64,
+                            a: 1.0,
+                        }),
+                        store: wgpu::StoreOp::Store,
+                    },
+                    depth_slice: None,
+                })],
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.depth_texture.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }),
+                occlusion_query_set: None,
+                timestamp_writes: None,
+                multiview_mask: None,
+            });
+            render_pass.set_vertex_buffer(1, self.temporary_voxel_instance_buffer.slice(..));
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
@@ -774,19 +876,34 @@ impl State {
         if !self.voxel_scene.is_voxel_scene_changed() {
             return;
         }
-        self.next_frame_instance_count = self.voxel_scene.get_voxel_instance_count();
-        let bytes = bytemuck::cast_slice(self.voxel_scene.prepare_buffer_contents());
-        if bytes.len() as u64 > self.voxel_instance_buffer.size() {
-            self.voxel_instance_buffer =
-                self.device
-                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("Instance Buffer"),
-                        contents: bytes,
-                        usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-                    });
-        } else {
-            self.queue
-                .write_buffer(&self.voxel_instance_buffer, 0, bytes);
+        let buffers = self.voxel_scene.prepare_buffer_contents();
+        let device = &self.device;
+        let queue = &self.queue;
+
+        for (buffer, scene_buffer) in [
+            (
+                &mut self.opaque_voxel_instance_buffer,
+                &buffers.opaque_voxels,
+            ),
+            (
+                &mut self.transparent_voxel_instance_buffer,
+                &buffers.transparent_voxels,
+            ),
+            (
+                &mut self.temporary_voxel_instance_buffer,
+                &buffers.temporary_voxels,
+            ),
+        ] {
+            let bytes = bytemuck::cast_slice(scene_buffer);
+            if bytes.len() as u64 > buffer.size() {
+                *buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Instance Buffer"),
+                    contents: bytes,
+                    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                });
+            } else {
+                queue.write_buffer(buffer, 0, bytes);
+            }
         }
     }
     fn conditional_save(&mut self) {

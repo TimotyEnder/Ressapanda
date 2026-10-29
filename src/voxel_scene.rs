@@ -25,6 +25,13 @@ pub struct GridVoxelDimensions {
     pub length: f32, //z coord size
 }
 pub type VoxelGroupId = u64;
+
+pub struct VoxelSceneRenderBuffers {
+    pub opaque_voxels: Vec<RawVoxelInstance>,
+    pub transparent_voxels: Vec<RawVoxelInstance>,
+    pub temporary_voxels: Vec<RawVoxelInstance>,
+}
+
 #[derive(Clone)]
 pub struct VoxelGroup {
     pub position_to_voxel: BTreeMap<VoxelScenePosition, VoxelInstance>,
@@ -164,10 +171,10 @@ impl VoxelGroup {
 }
 pub struct VoxelScene {
     voxel_groups: Vec<VoxelGroup>,
+    render_buffers: VoxelSceneRenderBuffers,
     current_voxel_groups_selected: Vec<usize>,
     shift_selected_voxel_group: Option<usize>,
     temporary_voxels: Vec<VoxelInstance>,
-    raw_voxel_instance_list: Vec<RawVoxelInstance>,
     voxels_changed: bool,
     voxels_added_or_removed: bool,
     voxel_group_name_counter: usize,
@@ -185,10 +192,14 @@ impl VoxelScene {
         let orientation_cross = VoxelGroup::orientation_cross();
 
         Self {
+            render_buffers: VoxelSceneRenderBuffers {
+                temporary_voxels: Vec::new(),
+                transparent_voxels: Vec::new(),
+                opaque_voxels: Vec::new(),
+            },
             voxel_groups: vec![orientation_cross],
             current_voxel_groups_selected: vec![0],
             temporary_voxels: vec![],
-            raw_voxel_instance_list: vec![],
             voxels_changed: true,
             voxels_added_or_removed: true,
             voxel_group_name_counter: 0,
@@ -234,10 +245,14 @@ impl VoxelScene {
             voxel_groups.push(VoxelGroup::from_saved(group));
         }
         Self {
+            render_buffers: VoxelSceneRenderBuffers {
+                temporary_voxels: Vec::new(),
+                transparent_voxels: Vec::new(),
+                opaque_voxels: Vec::new(),
+            },
             voxel_groups: voxel_groups,
             current_voxel_groups_selected: vec![1],
             temporary_voxels: Vec::new(),
-            raw_voxel_instance_list: Vec::new(),
             voxels_changed: true,
             voxels_added_or_removed: true,
             voxel_group_name_counter: save.name_counter,
@@ -262,9 +277,13 @@ impl VoxelScene {
         voxel_groups.push(VoxelGroup::new(format!("Voxel Group:{}", 1), 1));
         voxel_groups[1].editing_name = false;
         Self {
+            render_buffers: VoxelSceneRenderBuffers {
+                temporary_voxels: Vec::new(),
+                transparent_voxels: Vec::new(),
+                opaque_voxels: Vec::new(),
+            },
             voxel_groups: voxel_groups,
             current_voxel_groups_selected: vec![1],
-            raw_voxel_instance_list: Vec::new(),
             voxels_changed: true,
             voxels_added_or_removed: false,
             temporary_voxels: Vec::new(),
@@ -292,7 +311,7 @@ impl VoxelScene {
             change.redo(self);
         }
     }
-    pub fn prepare_buffer_contents(&mut self) -> &Vec<RawVoxelInstance> {
+    pub fn prepare_buffer_contents(&mut self) -> &VoxelSceneRenderBuffers {
         if let Some(ref fragment) = self.current_fragment {
             if fragment.is_empty() {
                 self.current_fragment = None;
@@ -300,6 +319,11 @@ impl VoxelScene {
         }
         if self.voxels_changed {
             self.voxels_changed = false;
+            let mut voxel_scene_render_buffers = VoxelSceneRenderBuffers {
+                transparent_voxels: Vec::new(),
+                temporary_voxels: Vec::new(),
+                opaque_voxels: Vec::new(),
+            };
             if self.voxels_added_or_removed {
                 self.find_center();
             }
@@ -310,19 +334,28 @@ impl VoxelScene {
                 }
             }
             self.current_change = Some(Change::new());
-            self.raw_voxel_instance_list.clear();
             for i in (0..self.voxel_groups.len()).rev() {
                 if self.voxel_groups[i].visible {
-                    self.raw_voxel_instance_list.extend(
+                    voxel_scene_render_buffers.opaque_voxels.extend(
                         self.voxel_groups[i]
                             .position_to_voxel
                             .values_mut()
+                            .filter(|voxel| voxel.get_color().a >= 0.99)
+                            .map(|voxel| voxel.to_raw()),
+                    );
+                    voxel_scene_render_buffers.transparent_voxels.extend(
+                        self.voxel_groups[i]
+                            .position_to_voxel
+                            .values_mut()
+                            .filter(|voxel| voxel.get_color().a < 0.99)
                             .map(|voxel| voxel.to_raw()),
                     );
                 }
             }
-            self.raw_voxel_instance_list
+            voxel_scene_render_buffers
+                .temporary_voxels
                 .extend(self.temporary_voxels.iter_mut().map(|voxel| voxel.to_raw()));
+            self.render_buffers = voxel_scene_render_buffers;
         }
         self.temporary_voxels.clear();
         for i in self.current_voxel_groups_selected.iter() {
@@ -331,8 +364,7 @@ impl VoxelScene {
                 .values_mut()
                 .for_each(|voxel| voxel.unselect());
         }
-
-        &self.raw_voxel_instance_list
+        &self.render_buffers
     }
     pub fn get_skewed_mode_status(&self) -> bool {
         self.skewed_editing_mode
