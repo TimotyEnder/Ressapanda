@@ -3,7 +3,10 @@ use std::f64;
 use cgmath::{EuclideanSpace, InnerSpace, Point3, Vector2, Vector3};
 use winit::event::{MouseButton, MouseScrollDelta, TouchPhase};
 
-use crate::{camera::Camera, conversion_utils::spherical_to_cartesian};
+use crate::{
+    camera::Camera, conversion_utils::spherical_to_cartesian,
+    tools::key_input_manager::ModifierKeysStatus,
+};
 
 pub struct CameraController {
     sensitivity_rad_per_pixel: f64,
@@ -42,22 +45,31 @@ impl CameraController {
         self.yaw = (eye.x as f64).atan2(eye.z as f64);
         self.pan_offset = Vector3::new(0.0, 1.0, 0.0);
     }
-    pub fn handle_mouse_button(&mut self, button: MouseButton, is_pressed: bool) {
-        match button {
-            MouseButton::Middle => {
-                self.rotate_started = is_pressed && !self.pan_started;
-                if !is_pressed {
-                    self.rotate_last_position = None;
-                }
-            }
-            MouseButton::Right => {
-                self.pan_started = is_pressed && !self.rotate_started;
-                if !is_pressed {
-                    self.pan_last_position = None;
-                }
-            }
+    pub fn handle_mouse_button(
+        &mut self,
+        mouse_button: MouseButton,
+        mouse_button_is_pressed: bool,
+    ) {
+        match mouse_button {
+            MouseButton::Middle => self.start_rotate(mouse_button_is_pressed),
+            MouseButton::Right => self.start_pan(mouse_button_is_pressed),
             _ => {}
         };
+    }
+    pub fn trackpad_rotation_with_rotation_modifier_key(&mut self, mod_stat: ModifierKeysStatus) {
+        self.start_rotate(mod_stat.space_rotational_modifier);
+    }
+    fn start_pan(&mut self, mouse_button_is_pressed: bool) {
+        self.pan_started = mouse_button_is_pressed && !self.rotate_started;
+        if !mouse_button_is_pressed {
+            self.pan_last_position = None;
+        }
+    }
+    fn start_rotate(&mut self, mouse_button_is_pressed: bool) {
+        self.rotate_started = mouse_button_is_pressed && !self.pan_started;
+        if !mouse_button_is_pressed {
+            self.rotate_last_position = None;
+        }
     }
     pub fn handle_mouse_position(&mut self, x: f64, y: f64, viewport_height: f32, camera: &Camera) {
         self.handle_rotation(x, y);

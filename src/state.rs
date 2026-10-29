@@ -507,6 +507,10 @@ impl State {
         self.camera_controller.handle_mouse_wheel(delta, phase);
     }
     pub fn handle_cursor_moved(&mut self, pos: PhysicalPosition<f64>) {
+        self.camera_controller
+            .trackpad_rotation_with_rotation_modifier_key(
+                self.key_input_manager.get_modifier_keys_status(),
+            );
         self.camera_controller.handle_mouse_position(
             pos.x,
             pos.y,

@@ -23,6 +23,7 @@ pub struct ModifierKeysStatus {
     pub alt_modifier: bool,
     pub shift_modifier: bool,
     pub control_modifier: bool,
+    pub space_rotational_modifier: bool,
 }
 pub struct KeyInputManager {
     keycode_to_mapping: HashMap<KeyCode, &'static str>,
@@ -30,6 +31,7 @@ pub struct KeyInputManager {
     alt_modifier: bool,
     shift_modifier: bool,
     control_modifier: bool,
+    space_rotational_modifier: bool, //extra way to pan for trackpad users
 }
 impl KeyInputManager {
     pub fn new() -> Self {
@@ -39,6 +41,7 @@ impl KeyInputManager {
             alt_modifier: false,
             shift_modifier: false,
             control_modifier: false,
+            space_rotational_modifier: false,
         };
         //Tools
         ret.keycode_to_mapping.insert(KeyCode::KeyA, "Add");
@@ -79,6 +82,10 @@ impl KeyInputManager {
             KeyCode::ControlLeft => {
                 changed = self.control_modifier != pressed;
                 self.control_modifier = pressed;
+            }
+            KeyCode::Space => {
+                changed = self.space_rotational_modifier != pressed;
+                self.space_rotational_modifier = pressed;
             }
             _ => {}
         };
@@ -278,6 +285,7 @@ impl KeyInputManager {
             alt_modifier: self.alt_modifier,
             shift_modifier: self.shift_modifier,
             control_modifier: self.control_modifier,
+            space_rotational_modifier: self.space_rotational_modifier,
         }
     }
 }
