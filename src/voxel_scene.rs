@@ -1,4 +1,4 @@
-use cgmath::{Deg, Quaternion, Vector3};
+use cgmath::{Deg, Point3, Quaternion, Vector3};
 use cgmath::{prelude::*, vec3};
 use egui::Color32;
 use std::collections::{BTreeMap, BTreeSet};
@@ -364,6 +364,15 @@ impl VoxelScene {
                 .values_mut()
                 .for_each(|voxel| voxel.unselect());
         }
+        &self.render_buffers
+    }
+    pub fn sort_transparent_voxels(&mut self, camera_position: Point3<f32>) {
+        self.render_buffers.transparent_voxels.sort_by(|a, b| {
+            b.distance_squared_to(camera_position)
+                .total_cmp(&a.distance_squared_to(camera_position))
+        });
+    }
+    pub fn render_buffers(&self) -> &VoxelSceneRenderBuffers {
         &self.render_buffers
     }
     pub fn get_skewed_mode_status(&self) -> bool {
