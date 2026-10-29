@@ -477,7 +477,11 @@ impl State {
         button: MouseButton,
         pressed: bool,
     ) {
-        self.camera_controller.handle_mouse_button(button, pressed);
+        self.camera_controller.handle_mouse_button(
+            button,
+            pressed,
+            self.key_input_manager.get_modifier_keys_status(),
+        );
 
         if button == MouseButton::Left && pressed {
             self.current_select_mode.mouse_down(
