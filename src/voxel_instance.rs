@@ -507,6 +507,12 @@ pub struct RawVoxelInstance {
     info_vec: [f32; 4], //x selected bool-> f32 / y grid voxel bool-> f32 / z fragment voxel bool-> f32
 }
 impl RawVoxelInstance {
+    pub fn distance_squared_to(&self, point: Point3<f32>) -> f32 {
+        let x = self.matrix[3][0] - point.x;
+        let y = self.matrix[3][1] - point.y;
+        let z = self.matrix[3][2] - point.z;
+        x * x + y * y + z * z
+    }
     pub fn desc() -> wgpu::VertexBufferLayout<'static> {
         use std::mem;
         wgpu::VertexBufferLayout {
