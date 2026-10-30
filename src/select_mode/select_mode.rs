@@ -94,11 +94,6 @@ pub fn clamp_voxel_selection_to_maintain_ascpect_ratio_mod_key_conditional(
                 let z_dist = voxel_pos.z - prev_voxel_pos.z;
                 let biggest = (x_dist.abs()).max((y_dist.abs()).max(z_dist.abs()));
                 let clamped_pos = vec3(
-                    prev_voxel_pos.x + x_dist.signum() * biggest,
-                    prev_voxel_pos.y + y_dist.signum() * biggest,
-                    prev_voxel_pos.z + z_dist.signum() * biggest,
-                );
-                let clamped_pos = vec3(
                     if voxel_pos.x == prev_voxel_pos.x {
                         voxel_pos.x
                     } else {
@@ -116,7 +111,7 @@ pub fn clamp_voxel_selection_to_maintain_ascpect_ratio_mod_key_conditional(
                     },
                 );
                 let intersect_point_diff =
-                    voxel_pos - vec3(intersect_pos.x, intersect_pos.y, intersect_pos.z);
+                    vec3(intersect_pos.x, intersect_pos.y, intersect_pos.z) - voxel_pos;
                 let clamped_intersect = clamped_pos + intersect_point_diff;
                 return Some((
                     Point3::new(
