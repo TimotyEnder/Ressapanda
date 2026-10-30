@@ -361,7 +361,7 @@ impl State {
             &shader,
             config.format,
             false,
-            wgpu::CompareFunction::Less,
+            wgpu::CompareFunction::LessEqual,
         );
         let tool_selector = KeyInputManager::new();
         let current_tool: Box<dyn Tool> = Box::new(Add {});

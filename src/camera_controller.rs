@@ -19,6 +19,7 @@ pub struct CameraController {
     pub radius: f64,
     initial_radius: f64,
     pub pan_offset: Vector3<f32>,
+    track_pad_movement: bool, // disambiguates the input method with which the camera is rotated, change on opposite positive input recieved.
 }
 impl CameraController {
     pub fn new(rotation_sensitivity: f32, camera: &Camera) -> Self {
@@ -37,6 +38,7 @@ impl CameraController {
             pitch: (camera.get_eye_position().y as f64 / radius as f64).atan(),
             radius: radius as f64,
             pan_offset: Vector3::new(0.0, 0.0, 0.0),
+            track_pad_movement: false,
         }
     }
     pub fn set_preset_orbit(&mut self, eye: Vector3<f32>) {
@@ -51,13 +53,25 @@ impl CameraController {
         mouse_button_is_pressed: bool,
     ) {
         match mouse_button {
-            MouseButton::Middle => self.start_rotate(mouse_button_is_pressed),
+            MouseButton::Middle => {
+                if mouse_button_is_pressed {
+                    self.track_pad_movement = false
+                }
+                if !self.track_pad_movement {
+                    self.start_rotate(mouse_button_is_pressed)
+                }
+            }
             MouseButton::Right => self.start_pan(mouse_button_is_pressed),
             _ => {}
         };
     }
     pub fn trackpad_rotation_with_rotation_modifier_key(&mut self, mod_stat: ModifierKeysStatus) {
-        self.start_rotate(mod_stat.space_rotational_modifier);
+        if mod_stat.space_rotational_modifier {
+            self.track_pad_movement = true;
+        }
+        if self.track_pad_movement {
+            self.start_rotate(mod_stat.space_rotational_modifier);
+        }
     }
     fn start_pan(&mut self, mouse_button_is_pressed: bool) {
         self.pan_started = mouse_button_is_pressed && !self.rotate_started;
