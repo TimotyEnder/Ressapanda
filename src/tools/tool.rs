@@ -4,7 +4,7 @@ use log::log;
 use crate::{
     brushes::brush::Brush,
     tools::{
-        add::Add, color_picker::ColorPicker, del::Del, fragment::FragmentCut,
+        add::Add, color_picker::ColorPicker, del::Del, fragment::FragmentCut, grass::Grass,
         key_input_manager::ModifierKeysStatus, style::Style,
     },
     voxel_scene::VoxelScene,
@@ -36,6 +36,7 @@ pub fn tool_from_name(name: &'static str) -> Option<Box<dyn Tool>> {
         "Style" => return Some(Box::new(Style {})),
         "Cut" => return Some(Box::new(FragmentCut {})),
         "Color_Picker" => return Some(Box::new(ColorPicker::new())),
+        "Grass" => return Some(Box::new(Grass::new())),
         _ => return None,
     };
 }
@@ -48,8 +49,9 @@ pub fn tool_tooltip_from_name(name: &str) -> Option<&str> {
             "Fragment cut: add selected  voxels into a fragment that can  be made  into a separate voxel group (Shortcut:F)",
         ),
         "Color_Picker" => {
-            Some("Color Picker. Multiple selections will yield an average color value (Shortcut:G)")
+            Some("Color Picker. Multiple selections will yield an average color value (Shortcut:H)")
         }
+        "Grass" => Some("Adds grass in a specified area (Shortcut: G)"),
         _ => return None,
     }
 }

@@ -21,6 +21,7 @@ const RESIZE_VOXEL_GRID: &[u8] = include_bytes!("../Assets/Icons/resize_voxel_gr
 const REDO: &[u8] = include_bytes!("../Assets/Icons/redo.png");
 const UNDO: &[u8] = include_bytes!("../Assets/Icons/undo.png");
 const CUT: &[u8] = include_bytes!("../Assets/Icons/cut.png");
+const GRASS: &[u8] = include_bytes!("../Assets/Icons/grass.png");
 const COLOR_PICKER: &[u8] = include_bytes!("../Assets/Icons/color_picker.png");
 const LINE_SELECT: &[u8] = include_bytes!("../Assets/Icons/line_select.png");
 const SKEWED_MODE_ON: &[u8] = include_bytes!("../Assets/Icons/skewed_mode_on.png");
@@ -54,6 +55,7 @@ impl IconLoader {
             (REDO, "Redo"),
             (CUT, "Cut"),
             (COLOR_PICKER, "Color_Picker"),
+            (GRASS, "Grass"),
             (SKEWED_MODE_ON, "Skewed_On"),
             (SKEWED_MODE_OFF, "Skewed_Off"),
         ]

@@ -57,7 +57,7 @@ impl Tool for ColorPicker {
     }
 
     fn tooltip(&self) -> &'static str {
-        "Color Picker. Multiple selections will yield an average color value (Shortcut:G)"
+        "Color Picker. Multiple selections will yield an average color value (Shortcut:H)"
     }
 
     fn update(&mut self) {

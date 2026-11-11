@@ -1274,6 +1274,56 @@ impl State {
                     });
                 });
         }
+        if let Some(grass_zone_data) = self.voxel_scene.get_grass_zone_voxel_counter_per_group() {
+            let grass_zone_window = egui::Window::new("Current Grass Zone Selection")
+                .anchor(Align2::CENTER_TOP, [0.0, 0.0])
+                .collapsible(false)
+                .fixed_size([300.0, 200.0])
+                .resizable(false)
+                .show(ui, |ui| {
+                    egui::ScrollArea::vertical()
+                        .max_height(self.config.height as f32 * 0.3)
+                        .show(ui, |ui| {
+                            ui.vertical_centered(|ui| {
+                                let mut full_string = String::new();
+                                for (name, count) in grass_zone_data {
+                                    full_string += &format!("{}:{}\n", name, count);
+                                }
+                                ui.label(full_string);
+                            });
+                        });
+                    ui.vertical_centered(|ui| {
+                        ui.horizontal(|ui| {
+                            ui.label("Minimum grass height:");
+                            ui.text_edit_singleline(&mut self.ui_info.grass_zone_grass_height_min);
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("Maximum grass height:");
+                            ui.text_edit_singleline(&mut self.ui_info.grass_zone_grass_height_max);
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("Grass concentration percentage:");
+                            ui.text_edit_singleline(
+                                &mut self.ui_info.grass_zone_grass_concentration_percentage,
+                            );
+                            ui.label("%");
+                        });
+                        ui.horizontal(|ui| {
+                            if ui.button("Finalize").clicked() {
+                                self.voxel_scene.generate_grass_on_grass_zone(
+                                    &self.ui_info.grass_zone_grass_height_min,
+                                    &self.ui_info.grass_zone_grass_height_max,
+                                    &self.ui_info.grass_zone_grass_concentration_percentage,
+                                    &self.current_brush,
+                                );
+                            }
+                            if ui.button("Cancel Selection").clicked() {
+                                self.voxel_scene.reset_grass_zone();
+                            }
+                        });
+                    });
+                });
+        }
         let undo_redo_windo = egui::Window::new("Undo/Redo Window")
             .title_bar(false)
             .anchor(Align2::LEFT_TOP, [0.0, top_offset])
@@ -1289,7 +1339,7 @@ impl State {
                     let undo_button = egui::Button::image(img);
                     let response = ui
                         .add(undo_button)
-                        .on_hover_text("Undo last action (Shorcut:Shift+Z)");
+                        .on_hover_text("Undo last action (Shortcut:Ctrl+Z)");
                     if response.clicked() {
                         self.voxel_scene.undo();
                     }
@@ -1301,7 +1351,7 @@ impl State {
                     let undo_button = egui::Button::image(img);
                     let response = ui
                         .add(undo_button)
-                        .on_hover_text("Redo ndo last action (Shorcut:Shift+Y)");
+                        .on_hover_text("Redo last action (Shortcut:Ctrl+Y or Ctrl+Shift+Z)");
                     if response.clicked() {
                         self.voxel_scene.redo();
                     }
@@ -1460,7 +1510,7 @@ impl State {
             .collapsible(false)
             .auto_sized()
             .show(ui, |ui| {
-                ["Add", "Style", "Del", "Cut", "Color_Picker"]
+                ["Add", "Style", "Del", "Cut", "Grass", "Color_Picker"]
                     .iter()
                     .for_each(|name| self.tool_toggle_button(ui, *name));
             });

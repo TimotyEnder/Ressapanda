@@ -14,6 +14,7 @@ pub struct VoxelInstance {
     selected: bool,
     grid_voxel: bool,
     fragment_voxel: bool,
+    grass_zone_voxel: bool,
     voxel_group_highlighted: bool,
     voxel_group_hightlighed_frames: usize,
 }
@@ -46,6 +47,7 @@ impl VoxelInstance {
             selected: false,
             grid_voxel: false,
             fragment_voxel: false,
+            grass_zone_voxel: false,
             voxel_group_highlighted: false,
             voxel_group_hightlighed_frames: 0,
         }
@@ -57,6 +59,7 @@ impl VoxelInstance {
             selected: false,
             grid_voxel: false,
             fragment_voxel: false,
+            grass_zone_voxel: false,
             voxel_group_highlighted: false,
             voxel_group_hightlighed_frames: 0,
         }
@@ -68,6 +71,7 @@ impl VoxelInstance {
             selected: false,
             grid_voxel: false,
             fragment_voxel: false,
+            grass_zone_voxel: false,
             voxel_group_highlighted: false,
             voxel_group_hightlighed_frames: 0,
         }
@@ -79,6 +83,7 @@ impl VoxelInstance {
             selected: false,
             grid_voxel: true,
             fragment_voxel: false,
+            grass_zone_voxel: false,
             voxel_group_highlighted: false,
             voxel_group_hightlighed_frames: 0,
         }
@@ -88,7 +93,7 @@ impl VoxelInstance {
             if self.selected { 1.0 } else { 0.0 },
             if self.grid_voxel { 1.0 } else { 0.0 },
             if self.fragment_voxel { 1.0 } else { 0.0 },
-            0.0,
+            if self.grass_zone_voxel { 1.0 } else { 0.0 },
         );
         self.voxel_group_hightlighed_frames = self.voxel_group_hightlighed_frames.saturating_sub(1);
         if self.voxel_group_hightlighed_frames <= 0 {
@@ -488,12 +493,21 @@ impl VoxelInstance {
     pub fn fragment_unselect(&mut self) {
         self.fragment_voxel = false;
     }
+    pub fn grass_zone_select(&mut self) {
+        self.grass_zone_voxel = true;
+    }
+    pub fn grass_zone_unselect(&mut self) {
+        self.grass_zone_voxel = false;
+    }
     pub fn voxel_group_highlight(&mut self) {
         self.voxel_group_highlighted = true;
         self.voxel_group_hightlighed_frames = 60;
     }
     pub fn is_fragment_selected(&self) -> bool {
         self.fragment_voxel
+    }
+    pub fn is_grass_zone_selected(&self) -> bool {
+        self.grass_zone_voxel
     }
     pub fn is_grid(&self) -> bool {
         self.grid_voxel

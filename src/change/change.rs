@@ -4,8 +4,9 @@ use cgmath::Vector3;
 
 use crate::{
     change::change::Step::{
-        AddGroup, GroupInfoChange, RemoveGroup, VoxelChange, VoxelFragmentSelect, VoxelGridResize,
-        VoxelGroupDownShift, VoxelGroupUpShift, VoxelMirrorFlip, VoxelMove, VoxelRotate,
+        AddGroup, GrassZoneSelect, GroupInfoChange, RemoveGroup, VoxelChange, VoxelFragmentSelect,
+        VoxelGridResize, VoxelGroupDownShift, VoxelGroupUpShift, VoxelMirrorFlip, VoxelMove,
+        VoxelRotate,
     },
     color::VoxelColor,
     voxel_instance::VoxelInstance,
@@ -71,6 +72,10 @@ pub enum Step {
         center: Vector3<f32>,
     },
     VoxelFragmentSelect {
+        group_id: VoxelGroupId,
+        position: VoxelScenePosition,
+    },
+    GrassZoneSelect {
         group_id: VoxelGroupId,
         position: VoxelScenePosition,
     },
@@ -251,6 +256,25 @@ impl Step {
                 }
                 scene.force_voxel_scene_update();
             }
+            GrassZoneSelect { group_id, position } => {
+                let grass_zone = scene.current_grass_zone_ref_mut().get_or_insert_default();
+                if let Some(voxels) = grass_zone.get_mut(group_id) {
+                    voxels.remove(position);
+                    if voxels.len() < 1 {
+                        grass_zone.remove(group_id);
+                    }
+                }
+                if let Some(voxel_group) = scene
+                    .voxel_groups_ref_mut()
+                    .iter_mut()
+                    .find(|group| group.id == *group_id)
+                {
+                    if let Some(unselect_voxel) = voxel_group.position_to_voxel.get_mut(position) {
+                        unselect_voxel.grass_zone_unselect();
+                    }
+                }
+                scene.force_voxel_scene_update();
+            }
             VoxelMirrorFlip {
                 group_id,
                 flip_axis,
@@ -415,6 +439,25 @@ impl Step {
                 {
                     if let Some(unselect_voxel) = voxel_group.position_to_voxel.get_mut(position) {
                         unselect_voxel.fragment_select();
+                    }
+                }
+                scene.force_voxel_scene_update();
+            }
+            GrassZoneSelect { group_id, position } => {
+                let grass_zone = scene.current_grass_zone_ref_mut().get_or_insert_default();
+                if !grass_zone.contains_key(group_id) {
+                    grass_zone.insert(*group_id, BTreeSet::new());
+                }
+                if let Some(voxels) = grass_zone.get_mut(group_id) {
+                    voxels.insert(*position);
+                }
+                if let Some(voxel_group) = scene
+                    .voxel_groups_ref_mut()
+                    .iter_mut()
+                    .find(|group| group.id == *group_id)
+                {
+                    if let Some(unselect_voxel) = voxel_group.position_to_voxel.get_mut(position) {
+                        unselect_voxel.grass_zone_select();
                     }
                 }
                 scene.force_voxel_scene_update();

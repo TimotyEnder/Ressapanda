@@ -30,6 +30,9 @@ pub struct UIData {
     pub voxel_grid_resize_length_string: String,
     pub voxel_grid_resize_focus_flag: bool,
     pub voxel_group_rename_request_focus_flag: bool,
+    pub grass_zone_grass_height_min: String,
+    pub grass_zone_grass_height_max: String,
+    pub grass_zone_grass_concentration_percentage: String,
     pub current_save_path: Option<PathBuf>,
     pub save_file_dialog: egui_file_dialog::FileDialog,
     pub obj_export_dialog: egui_file_dialog::FileDialog,
@@ -73,6 +76,9 @@ impl UIData {
                 .default_save_extension("stl")
                 .allow_file_overwrite(true),
             voxel_grid_resize_focus_flag: true,
+            grass_zone_grass_height_min: String::from("1"),
+            grass_zone_grass_height_max: String::from("2"),
+            grass_zone_grass_concentration_percentage: String::from("20"),
         }
     }
 }

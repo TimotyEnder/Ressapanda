@@ -4,6 +4,7 @@ use egui::Color32;
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex};
 
+use crate::brushes::brush::Brush;
 use crate::camera::Camera;
 use crate::change::change::{Change, History, VoxelSnapshot};
 use crate::conversion_utils::snap_vector_to_flat_direction;
@@ -184,6 +185,7 @@ pub struct VoxelScene {
     history: Arc<Mutex<History>>,
     current_change: Option<Change>,
     current_fragment: Option<BTreeMap<VoxelGroupId, BTreeSet<VoxelScenePosition>>>,
+    current_grass_zone: Option<BTreeMap<VoxelGroupId, BTreeSet<VoxelScenePosition>>>,
     current_color_change: Option<Color32>,
     skewed_editing_mode: bool,
 }
@@ -213,6 +215,7 @@ impl VoxelScene {
             history: Arc::new(Mutex::new(History::new())),
             current_change: None,
             current_fragment: None,
+            current_grass_zone: None,
             current_color_change: None,
             skewed_editing_mode: false,
         }
@@ -263,6 +266,7 @@ impl VoxelScene {
             history: Arc::new(Mutex::new(History::new())),
             current_change: None,
             current_fragment: None,
+            current_grass_zone: None,
             current_color_change: None,
             skewed_editing_mode: false,
         }
@@ -295,6 +299,7 @@ impl VoxelScene {
             history: Arc::new(Mutex::new(History::new())),
             current_change: None,
             current_fragment: None,
+            current_grass_zone: None,
             current_color_change: None,
             skewed_editing_mode: false,
         }
@@ -315,6 +320,11 @@ impl VoxelScene {
         if let Some(ref fragment) = self.current_fragment {
             if fragment.is_empty() {
                 self.current_fragment = None;
+            }
+        }
+        if let Some(ref grass_zone) = self.current_grass_zone {
+            if grass_zone.is_empty() {
+                self.current_grass_zone = None;
             }
         }
         if self.voxels_changed {
@@ -358,8 +368,8 @@ impl VoxelScene {
             self.render_buffers = voxel_scene_render_buffers;
         }
         self.temporary_voxels.clear();
-        for i in self.current_voxel_groups_selected.iter() {
-            self.voxel_groups[*i]
+        for voxel_group in self.voxel_groups.iter_mut() {
+            voxel_group
                 .position_to_voxel
                 .values_mut()
                 .for_each(|voxel| voxel.unselect());
@@ -394,6 +404,97 @@ impl VoxelScene {
             }
         }
         self.current_fragment = None;
+    }
+    pub fn reset_grass_zone(&mut self) {
+        for group in self.voxel_groups.iter_mut() {
+            for voxel in group.position_to_voxel.values_mut() {
+                voxel.grass_zone_unselect();
+            }
+        }
+        self.current_grass_zone = None;
+    }
+    fn voxel_above_voxel_on_visible_layer(&self, voxel_pos: &VoxelScenePosition) -> bool {
+        let above_pos = VoxelScenePosition {
+            x: voxel_pos.x,
+            y: voxel_pos.y + 1,
+            z: voxel_pos.z,
+        };
+        for voxel_group in self.voxel_groups.iter().filter(|group| group.visible) {
+            if voxel_group.position_to_voxel.contains_key(&above_pos) {
+                return true;
+            }
+        }
+        return false;
+    }
+    pub fn generate_grass_on_grass_zone(
+        &mut self,
+        min_height: &str,
+        max_height: &str,
+        concentration_percentage: &str,
+        brush: &Brush,
+    ) {
+        let Some(min_height) = min_height.parse::<i32>().ok() else {
+            return;
+        };
+        let Some(max_height) = max_height.parse::<i32>().ok() else {
+            return;
+        };
+        let Some(concentration_percentage) = concentration_percentage.parse::<f32>().ok() else {
+            return;
+        };
+        if !(0.0..=100.0).contains(&concentration_percentage) {
+            return;
+        }
+        let mut voxels_to_add: Vec<VoxelScenePosition> = Vec::new();
+        if let Some(ref grass_zone) = self.current_grass_zone {
+            for (voxel_group_id, its_voxels) in grass_zone {
+                for grass_pos in its_voxels.iter() {
+                    if !self.voxel_above_voxel_on_visible_layer(grass_pos) {
+                        let roll = rand::random_range(1.0..=100.0);
+                        if roll < concentration_percentage {
+                            let grass_height = rand::random_range(min_height..=max_height);
+                            for offset in 1..=grass_height {
+                                voxels_to_add.push(VoxelScenePosition {
+                                    x: grass_pos.x,
+                                    y: grass_pos.y + offset,
+                                    z: grass_pos.z,
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for voxel_position in voxels_to_add {
+            for i in self.current_voxel_groups_selected.iter() {
+                self.voxel_groups[*i].position_to_voxel.insert(
+                    voxel_position.clone(),
+                    VoxelInstance::new(
+                        Vector3 {
+                            x: voxel_position.x as f32,
+                            y: voxel_position.y as f32,
+                            z: voxel_position.z as f32,
+                        },
+                        brush.color,
+                    ),
+                );
+                self.current_change
+                    .get_or_insert_with(Change::new)
+                    .add_step(crate::change::change::Step::VoxelChange {
+                        group_id: self.voxel_groups[*i].id,
+                        changes: vec![(
+                            None,
+                            Some(VoxelSnapshot {
+                                x: voxel_position.x,
+                                y: voxel_position.y,
+                                z: voxel_position.z,
+                                color: brush.color,
+                            }),
+                        )],
+                    });
+            }
+        }
+        self.reset_grass_zone();
     }
     pub fn make_voxel_group_from_fragment(&mut self) {
         if let Some(ref fragment) = self.current_fragment {
@@ -461,6 +562,22 @@ impl VoxelScene {
             self.reset_fragment();
         }
     }
+    pub fn grass_operate_on_voxel_pos(&mut self, position: Vector3<f32>) {
+        for voxel_group in self.voxel_groups.iter_mut() {
+            Self::grass_operate_on_voxel_pos_with_group(
+                self.current_grass_zone.get_or_insert_default(),
+                voxel_group,
+                position,
+            );
+            self.current_change
+                .get_or_insert_with(Change::new)
+                .add_step(crate::change::change::Step::GrassZoneSelect {
+                    group_id: voxel_group.id,
+                    position: VoxelScenePosition::from_voxel_position(position),
+                });
+            self.voxels_changed = true;
+        }
+    }
     pub fn cut_operate_on_voxel_pos(&mut self, position: Vector3<f32>) {
         for voxel_group in self.voxel_groups.iter_mut() {
             Self::cut_operate_on_voxel_pos_with_group(
@@ -475,6 +592,30 @@ impl VoxelScene {
                     position: VoxelScenePosition::from_voxel_position(position),
                 });
             self.voxels_changed = true;
+        }
+    }
+    pub fn grass_operate_on_voxel_pos_with_group(
+        grass_zone: &mut BTreeMap<VoxelGroupId, BTreeSet<VoxelScenePosition>>,
+        voxel_group: &mut VoxelGroup,
+        position: Vector3<f32>,
+    ) {
+        if !grass_zone.contains_key(&voxel_group.id) {
+            grass_zone.insert(voxel_group.id, BTreeSet::new());
+        }
+        if let Some(voxels) = grass_zone.get_mut(&voxel_group.id) {
+            let voxel_scene_pos = VoxelScenePosition::from_voxel_position(position);
+            if let Some(voxel_to_cut) = voxel_group.position_to_voxel.get_mut(&voxel_scene_pos) {
+                if voxels.contains(&voxel_scene_pos) {
+                    voxels.remove(&voxel_scene_pos);
+                    voxel_to_cut.grass_zone_unselect();
+                    if voxels.is_empty() {
+                        grass_zone.remove(&voxel_group.id);
+                    }
+                } else {
+                    voxels.insert(voxel_scene_pos);
+                    voxel_to_cut.grass_zone_select();
+                }
+            }
         }
     }
     pub fn cut_operate_on_voxel_pos_with_group(
@@ -515,6 +656,21 @@ impl VoxelScene {
             let mut to_ret = Vec::new();
             for voxel_group in self.voxel_groups.iter().filter(|group| group.id != 0) {
                 if let Some(voxels) = fragment.get(&voxel_group.id) {
+                    to_ret.push((String::from(&voxel_group.name), voxels.len()));
+                }
+            }
+            if to_ret.len() < 1 {
+                return None;
+            }
+            return Some(to_ret);
+        }
+        return None;
+    }
+    pub fn get_grass_zone_voxel_counter_per_group(&self) -> Option<Vec<(String, usize)>> {
+        if let Some(ref grass_zone) = self.current_grass_zone {
+            let mut to_ret = Vec::new();
+            for voxel_group in self.voxel_groups.iter().filter(|group| group.id != 0) {
+                if let Some(voxels) = grass_zone.get(&voxel_group.id) {
                     to_ret.push((String::from(&voxel_group.name), voxels.len()));
                 }
             }
@@ -576,6 +732,18 @@ impl VoxelScene {
             .map(|vox_group| vox_group.position_to_voxel.len())
             .sum::<usize>()
             + self.temporary_voxels.len()
+    }
+    pub fn select_voxel_at_position_regardless_of_current_voxel_group_selection(
+        &mut self,
+        position: Vector3<f32>,
+    ) {
+        let voxel_scene_position = VoxelScenePosition::from_voxel_position(position);
+        for voxel_group in self.voxel_groups.iter_mut().filter(|group| group.id != 0) {
+            if let Some(voxel) = voxel_group.position_to_voxel.get_mut(&voxel_scene_position) {
+                voxel.select();
+            }
+        }
+        self.voxels_changed = true;
     }
     pub fn select_voxel_at_position(&mut self, position: Vector3<f32>) {
         let voxel_scene_position = VoxelScenePosition::from_voxel_position(position);
@@ -694,6 +862,11 @@ impl VoxelScene {
         &mut self,
     ) -> &mut Option<BTreeMap<VoxelGroupId, BTreeSet<VoxelScenePosition>>> {
         &mut self.current_fragment
+    }
+    pub fn current_grass_zone_ref_mut(
+        &mut self,
+    ) -> &mut Option<BTreeMap<VoxelGroupId, BTreeSet<VoxelScenePosition>>> {
+        &mut self.current_grass_zone
     }
     pub fn current_voxel_group_selected_ref_mut(&mut self) -> &mut Vec<usize> {
         &mut self.current_voxel_groups_selected
