@@ -69,7 +69,7 @@ fn fs_main(in:VertexOutput)->@location(0) vec4<f32>
   let lit_color = in.color.rgb * (ambient + diffuse * 0.6);
   var final_color=lit_color;
   //selection logic
-  if in.info_vec.x>0.5 || in.info_vec.y>0.5 || in.info_vec.z>0.5
+  if in.info_vec.x>0.5 || in.info_vec.y>0.5 || in.info_vec.z>0.5  || in.info_vec.w>0.5
   {
     let s = abs(in.local_pos);
     let max_s= max(s.x,max(s.y,s.z));
@@ -79,6 +79,7 @@ fn fs_main(in:VertexOutput)->@location(0) vec4<f32>
     var edge_color=vec3(1.0, 1.0 , 1.0);
     if in.info_vec.x>0.5{edge_color=vec3(0.0, 0.0 , 0.0);}
     else if in.info_vec.z>0.5{edge_color=vec3(0.708376, 0.242281 , 0.097587);}
+    else if in.info_vec.w>0.5{edge_color=vec3(0.097587, 0.708376, 0.097587);}
     final_color = mix(final_color,edge_color , t);
   }
   return vec4<f32>(final_color, in.color.a);

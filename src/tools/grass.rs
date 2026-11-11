@@ -13,6 +13,7 @@ impl Tool for Grass {
         scene: &mut crate::voxel_scene::VoxelScene,
         brush: &crate::brushes::brush::Brush,
     ) {
+        scene.grass_operate_on_voxel_pos(operating_position);
     }
 
     fn temp_operate_with_position(
@@ -21,6 +22,7 @@ impl Tool for Grass {
         scene: &mut crate::voxel_scene::VoxelScene,
         brush: &crate::brushes::brush::Brush,
     ) {
+        scene.select_voxel_at_position(operating_position);
     }
 
     fn name(&self) -> &'static str {

@@ -184,6 +184,7 @@ pub struct VoxelScene {
     history: Arc<Mutex<History>>,
     current_change: Option<Change>,
     current_fragment: Option<BTreeMap<VoxelGroupId, BTreeSet<VoxelScenePosition>>>,
+    current_grass_zone: Option<BTreeMap<VoxelGroupId, BTreeSet<VoxelScenePosition>>>,
     current_color_change: Option<Color32>,
     skewed_editing_mode: bool,
 }
@@ -213,6 +214,7 @@ impl VoxelScene {
             history: Arc::new(Mutex::new(History::new())),
             current_change: None,
             current_fragment: None,
+            current_grass_zone: None,
             current_color_change: None,
             skewed_editing_mode: false,
         }
@@ -263,6 +265,7 @@ impl VoxelScene {
             history: Arc::new(Mutex::new(History::new())),
             current_change: None,
             current_fragment: None,
+            current_grass_zone: None,
             current_color_change: None,
             skewed_editing_mode: false,
         }
@@ -295,6 +298,7 @@ impl VoxelScene {
             history: Arc::new(Mutex::new(History::new())),
             current_change: None,
             current_fragment: None,
+            current_grass_zone: None,
             current_color_change: None,
             skewed_editing_mode: false,
         }
@@ -315,6 +319,11 @@ impl VoxelScene {
         if let Some(ref fragment) = self.current_fragment {
             if fragment.is_empty() {
                 self.current_fragment = None;
+            }
+        }
+        if let Some(ref grass_zone) = self.current_grass_zone {
+            if grass_zone.is_empty() {
+                self.current_grass_zone = None;
             }
         }
         if self.voxels_changed {
@@ -395,6 +404,14 @@ impl VoxelScene {
         }
         self.current_fragment = None;
     }
+    pub fn reset_grass_zone(&mut self) {
+        for group in self.voxel_groups.iter_mut() {
+            for voxel in group.position_to_voxel.values_mut() {
+                voxel.grass_zone_unselect();
+            }
+        }
+        self.current_grass_zone = None;
+    }
     pub fn make_voxel_group_from_fragment(&mut self) {
         if let Some(ref fragment) = self.current_fragment {
             let mut all_voxels = Vec::new();
@@ -461,6 +478,22 @@ impl VoxelScene {
             self.reset_fragment();
         }
     }
+    pub fn grass_operate_on_voxel_pos(&mut self, position: Vector3<f32>) {
+        for voxel_group in self.voxel_groups.iter_mut() {
+            Self::grass_operate_on_voxel_pos_with_group(
+                self.current_grass_zone.get_or_insert_default(),
+                voxel_group,
+                position,
+            );
+            self.current_change
+                .get_or_insert_with(Change::new)
+                .add_step(crate::change::change::Step::GrassZoneSelect {
+                    group_id: voxel_group.id,
+                    position: VoxelScenePosition::from_voxel_position(position),
+                });
+            self.voxels_changed = true;
+        }
+    }
     pub fn cut_operate_on_voxel_pos(&mut self, position: Vector3<f32>) {
         for voxel_group in self.voxel_groups.iter_mut() {
             Self::cut_operate_on_voxel_pos_with_group(
@@ -475,6 +508,30 @@ impl VoxelScene {
                     position: VoxelScenePosition::from_voxel_position(position),
                 });
             self.voxels_changed = true;
+        }
+    }
+    pub fn grass_operate_on_voxel_pos_with_group(
+        grass_zone: &mut BTreeMap<VoxelGroupId, BTreeSet<VoxelScenePosition>>,
+        voxel_group: &mut VoxelGroup,
+        position: Vector3<f32>,
+    ) {
+        if !grass_zone.contains_key(&voxel_group.id) {
+            grass_zone.insert(voxel_group.id, BTreeSet::new());
+        }
+        if let Some(voxels) = grass_zone.get_mut(&voxel_group.id) {
+            let voxel_scene_pos = VoxelScenePosition::from_voxel_position(position);
+            if let Some(voxel_to_cut) = voxel_group.position_to_voxel.get_mut(&voxel_scene_pos) {
+                if voxels.contains(&voxel_scene_pos) {
+                    voxels.remove(&voxel_scene_pos);
+                    voxel_to_cut.grass_zone_unselect();
+                    if voxels.is_empty() {
+                        grass_zone.remove(&voxel_group.id);
+                    }
+                } else {
+                    voxels.insert(voxel_scene_pos);
+                    voxel_to_cut.grass_zone_select();
+                }
+            }
         }
     }
     pub fn cut_operate_on_voxel_pos_with_group(
@@ -515,6 +572,21 @@ impl VoxelScene {
             let mut to_ret = Vec::new();
             for voxel_group in self.voxel_groups.iter().filter(|group| group.id != 0) {
                 if let Some(voxels) = fragment.get(&voxel_group.id) {
+                    to_ret.push((String::from(&voxel_group.name), voxels.len()));
+                }
+            }
+            if to_ret.len() < 1 {
+                return None;
+            }
+            return Some(to_ret);
+        }
+        return None;
+    }
+    pub fn get_grass_zone_voxel_counter_per_group(&self) -> Option<Vec<(String, usize)>> {
+        if let Some(ref grass_zone) = self.current_grass_zone {
+            let mut to_ret = Vec::new();
+            for voxel_group in self.voxel_groups.iter().filter(|group| group.id != 0) {
+                if let Some(voxels) = grass_zone.get(&voxel_group.id) {
                     to_ret.push((String::from(&voxel_group.name), voxels.len()));
                 }
             }
@@ -694,6 +766,11 @@ impl VoxelScene {
         &mut self,
     ) -> &mut Option<BTreeMap<VoxelGroupId, BTreeSet<VoxelScenePosition>>> {
         &mut self.current_fragment
+    }
+    pub fn current_grass_zone_ref_mut(
+        &mut self,
+    ) -> &mut Option<BTreeMap<VoxelGroupId, BTreeSet<VoxelScenePosition>>> {
+        &mut self.current_grass_zone
     }
     pub fn current_voxel_group_selected_ref_mut(&mut self) -> &mut Vec<usize> {
         &mut self.current_voxel_groups_selected
