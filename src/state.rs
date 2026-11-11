@@ -1274,6 +1274,36 @@ impl State {
                     });
                 });
         }
+        if let Some(grass_zone_data) = self.voxel_scene.get_grass_zone_voxel_counter_per_group() {
+            let grass_zone_window = egui::Window::new("Current Grass Zone Selection")
+                .anchor(Align2::CENTER_TOP, [0.0, 0.0])
+                .collapsible(false)
+                .fixed_size([300.0, 200.0])
+                .resizable(false)
+                .show(ui, |ui| {
+                    egui::ScrollArea::vertical()
+                        .max_height(self.config.height as f32 * 0.3)
+                        .show(ui, |ui| {
+                            ui.vertical_centered(|ui| {
+                                let mut full_string = String::new();
+                                for (name, count) in grass_zone_data {
+                                    full_string += &format!("{}:{}\n", name, count);
+                                }
+                                ui.label(full_string);
+                            });
+                        });
+                    ui.vertical_centered(|ui| {
+                        ui.horizontal(|ui| {
+                            if ui.button("Finalize").clicked() {
+                                // make grass permanent
+                            }
+                            if ui.button("Cancel Selection").clicked() {
+                                self.voxel_scene.reset_grass_zone();
+                            }
+                        });
+                    });
+                });
+        }
         let undo_redo_windo = egui::Window::new("Undo/Redo Window")
             .title_bar(false)
             .anchor(Align2::LEFT_TOP, [0.0, top_offset])
