@@ -1289,7 +1289,7 @@ impl State {
                     let undo_button = egui::Button::image(img);
                     let response = ui
                         .add(undo_button)
-                        .on_hover_text("Undo last action (Shorcut:Shift+Z)");
+                        .on_hover_text("Undo last action (Shortcut:Ctrl+Z)");
                     if response.clicked() {
                         self.voxel_scene.undo();
                     }
@@ -1301,7 +1301,7 @@ impl State {
                     let undo_button = egui::Button::image(img);
                     let response = ui
                         .add(undo_button)
-                        .on_hover_text("Redo ndo last action (Shorcut:Shift+Y)");
+                        .on_hover_text("Redo last action (Shortcut:Ctrl+Y or Ctrl+Shift+Z)");
                     if response.clicked() {
                         self.voxel_scene.redo();
                     }

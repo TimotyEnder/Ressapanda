@@ -9,7 +9,7 @@ Main philosophies:
 1. Everything should be able to be done with a mouse only (except anything that needs numbers to be entered).
 2. All shortcuts are made to be pressed and easily accessible with one hand so the other does not leave the mouse. I value good ergonomics and speed.
 3. The selection modes and tools are separate (Vim-like idea: select, then edit). Full flexibility. Using the color picker on multiple voxels yields the average color (useful for shading, gradients).
-4. Voxel Groups are a layer-like system so animation or reusable model chunks are made trivial. 2 voxels can be in the same position if they are in different voxel groups. The voxel that is in the group that is higher in the hierarchy is the one actually displayed. Voxel Group visibility can be toggled; invisible groups are omitted on export. Voxel Groups can be moved, rotated and recentered separately.
+4. Voxel Groups are a layer-like system so animation or reusable model chunks are made trivial. 2 voxels can be in the same position if they are in different voxel groups. The voxel that is in the group that is lower in the hierarchy (closer to the bottom of the group list) is the one displayed on top. Voxel Group visibility can be toggled; invisible groups are omitted on export. Voxel Groups can be moved, rotated and recentered separately.
 
 This tool will continue to be developed as it is a tool I will use for the long foreseeable future. GPL3 license and I accept contributions that support the core philosophies listed above.
 
@@ -22,6 +22,20 @@ Quick Roadmap (no one wants to read a long one):
 
 And much more when we get there!
 
+## Camera Controls
+
+| Input | Action |
+| --- | --- |
+| Middle mouse drag | Orbit around the scene. |
+| Right mouse drag | Pan the view. |
+| Mouse wheel | Zoom in and out. |
+| Space + pointer movement | Orbit around the scene (useful for trackpads). |
+| 1 | View along the X+ axis. |
+| 2 | View along the Z+ axis. |
+| 3 | View along the X- axis. |
+| 4 | View along the Z- axis. |
+| 5 | View straight down from above. |
+
 ## Selection Modes
 
 The selection mode decides how a click is turned into voxels to operate on.
@@ -29,10 +43,10 @@ The selection mode decides how a click is turned into voxels to operate on.
 | Icon | Name | Description | Shortcut |
 | --- | --- | --- | --- |
 | <img src="Assets/Icons/single_select.png" width="32" /> | Single Select | Applies the tool to one voxel. Hold Shift and drag to apply continuously. | Q |
-| <img src="Assets/Icons/area_select.png" width="32" /> | Area Select | Drag to fill an axis-aligned box between the two clicked points. | W |
-| <img src="Assets/Icons/extended_area_select.png" width="32" /> | Extended Area Select | Drag to fill an initial face, then a second click to extrude a box out through the nearest face. | E |
+| <img src="Assets/Icons/area_select.png" width="32" /> | Area Select | Drag to fill an axis-aligned box between the two clicked points. Hold Shift to constrain the box to a square/cube. | W |
+| <img src="Assets/Icons/extended_area_select.png" width="32" /> | Extended Area Select | Drag to fill an initial face, then a second click to extrude a box out through the nearest face. Hold Shift to constrain the initial face to a square/cube. | E |
 | <img src="Assets/Icons/laser_select.png" width="32" /> | Laser Select | Applies the tool to every voxel the cursor ray passes through (except Add). | R |
-| <img src="Assets/Icons/line_select.png" width="32" /> | Line Select  | Applies the tool to every voxel that forms a straigh line from one voxel to another | T |
+| <img src="Assets/Icons/line_select.png" width="32" /> | Line Select | Applies the tool to every voxel that forms a straight line from one voxel to another. | T |
 
 ## Tools
 
@@ -44,7 +58,7 @@ The tool decides what happens to each voxel the selection mode returns.
 | <img src="Assets/Icons/style.png" width="32" /> | Style | Recolors existing voxels with the brush color. | S |
 | <img src="Assets/Icons/del.png" width="32" /> | Delete | Removes voxels. | D |
 | <img src="Assets/Icons/cut.png" width="32" /> | Cut | Collects the selected voxels into a fragment that can be turned into its own voxel group. | F |
-| <img src="Assets/Icons/color_picker.png" width="32" /> | Color Picker | Reads the color under the cursor. Selecting more than one voxel averages the colors. | G |
+| <img src="Assets/Icons/color_picker.png" width="32" /> | Color Picker | Reads the color under the cursor. Selecting more than one voxel averages the colors. | H |
 
 Undo and Redo operate like a stack. Undoing a change and then making another change deletes any actions previously undone (might change in the future?).
 
@@ -53,8 +67,9 @@ Undo and Redo operate like a stack. Undoing a change and then making another cha
 | Icon | Name | Description | Shortcut |
 | --- | --- | --- | --- |
 | <img src="Assets/Icons/resize_voxel_grid.png" width="32" /> | Resize Voxel Grid | Changes the width and length of the voxel grid. | Z |
+| <img src="Assets/Icons/skewed_mode_on.png" width="32" /> <img src="Assets/Icons/skewed_mode_off.png" width="32" /> | Skewed Mode | Allows voxels to be placed on other voxels' vertices and edge midpoints. Hold Control to enable it temporarily, or use the toolbar button to toggle it. | Hold Ctrl |
 | <img src="Assets/Icons/undo.png" width="32" /> | Undo | Reverts the last change. | Ctrl + Z |
-| <img src="Assets/Icons/redo.png" width="32" /> | Redo | Reapplies the last undone change. | Ctrl + Y |
+| <img src="Assets/Icons/redo.png" width="32" /> | Redo | Reapplies the last undone change. | Ctrl + Y or Ctrl + Shift + Z |
 
 ## Model Actions
 
@@ -67,7 +82,7 @@ Undo and Redo operate like a stack. Undoing a change and then making another cha
 
 ## Voxel Groups
 
-A Voxel Group is a layer-like semantic term in Ressapanda. They can be ordered, moved, duplicated, and voxels can move from one group to another. If there are two voxels in the same position in two different groups, the voxel in the group that is lower in the hierarchy is shown. Groups that are not visible are not exported.
+A Voxel Group is a layer-like semantic term in Ressapanda. They can be ordered, moved, duplicated, and voxels can move from one group to another. If there are two voxels in the same position in two different groups, the voxel in the group that is lower in the hierarchy (closer to the bottom of the group list) is displayed on top. Groups that are not visible are not exported.
 
 ### Voxel Group Actions
 

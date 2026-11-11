@@ -9,31 +9,37 @@ const X1_STYLE: &[u8] = include_bytes!("../Assets/Cursors/x1style.png");
 const X1_DEL: &[u8] = include_bytes!("../Assets/Cursors/x1del.png");
 const X1_CUT: &[u8] = include_bytes!("../Assets/Cursors/x1cut.png");
 const X1_CPICK: &[u8] = include_bytes!("../Assets/Cursors/x1cpick.png");
+const X1_GRASS: &[u8] = include_bytes!("../Assets/Cursors/x1grss.png");
 const XN_ADD: &[u8] = include_bytes!("../Assets/Cursors/xnadd.png");
 const XN_STYLE: &[u8] = include_bytes!("../Assets/Cursors/xnstyle.png");
 const XN_DEL: &[u8] = include_bytes!("../Assets/Cursors/xndel.png");
 const XN_CUT: &[u8] = include_bytes!("../Assets/Cursors/xncut.png");
 const XN_CPICK: &[u8] = include_bytes!("../Assets/Cursors/xncpick.png");
+const XN_GRASS: &[u8] = include_bytes!("../Assets/Cursors/xngrss.png");
 const XE_ADD: &[u8] = include_bytes!("../Assets/Cursors/xeadd.png");
 const XE_STYLE: &[u8] = include_bytes!("../Assets/Cursors/xestyle.png");
 const XE_DEL: &[u8] = include_bytes!("../Assets/Cursors/xedel.png");
 const XE_CUT: &[u8] = include_bytes!("../Assets/Cursors/xecut.png");
 const XE_CPICK: &[u8] = include_bytes!("../Assets/Cursors/xecpick.png");
+const XE_GRASS: &[u8] = include_bytes!("../Assets/Cursors/xegrss.png");
 const XEE_ADD: &[u8] = include_bytes!("../Assets/Cursors/xeeadd.png");
 const XEE_STYLE: &[u8] = include_bytes!("../Assets/Cursors/xeestyle.png");
 const XEE_DEL: &[u8] = include_bytes!("../Assets/Cursors/xeedel.png");
 const XEE_CUT: &[u8] = include_bytes!("../Assets/Cursors/xeecut.png");
 const XEE_CPICK: &[u8] = include_bytes!("../Assets/Cursors/xeecpick.png");
+const XEE_GRASS: &[u8] = include_bytes!("../Assets/Cursors/xeegrss.png");
 const XL_ADD: &[u8] = include_bytes!("../Assets/Cursors/xladd.png");
 const XL_STYLE: &[u8] = include_bytes!("../Assets/Cursors/xlstyle.png");
 const XL_DEL: &[u8] = include_bytes!("../Assets/Cursors/xldel.png");
 const XL_CUT: &[u8] = include_bytes!("../Assets/Cursors/xlcut.png");
 const XL_CPICK: &[u8] = include_bytes!("../Assets/Cursors/xlcpick.png");
+const XL_GRASS: &[u8] = include_bytes!("../Assets/Cursors/xlgrss.png");
 const XLN_ADD: &[u8] = include_bytes!("../Assets/Cursors/xlnadd.png");
 const XLN_STYLE: &[u8] = include_bytes!("../Assets/Cursors/xlnstyle.png");
 const XLN_DEL: &[u8] = include_bytes!("../Assets/Cursors/xlndel.png");
 const XLN_CUT: &[u8] = include_bytes!("../Assets/Cursors/xlncut.png");
 const XLN_CPICK: &[u8] = include_bytes!("../Assets/Cursors/xlncpick.png");
+const XLN_GRASS: &[u8] = include_bytes!("../Assets/Cursors/xlngrss.png");
 
 pub struct CursorLoader {
     cursors: HashMap<String, CustomCursor>,
@@ -47,31 +53,37 @@ impl CursorLoader {
             (X1_STYLE, "x1_style"),
             (X1_CUT, "x1_cut"),
             (X1_CPICK, "x1_cpick"),
+            (X1_GRASS, "x1_grss"),
             (XN_ADD, "xn_add"),
             (XN_DEL, "xn_del"),
             (XN_STYLE, "xn_style"),
             (XN_CUT, "xn_cut"),
             (XN_CPICK, "xn_cpick"),
+            (XN_GRASS, "xn_grss"),
             (XE_ADD, "xe_add"),
             (XE_DEL, "xe_del"),
             (XE_STYLE, "xe_style"),
             (XE_CUT, "xe_cut"),
             (XE_CPICK, "xe_cpick"),
+            (XE_GRASS, "xe_grss"),
             (XEE_ADD, "xee_add"),
             (XEE_DEL, "xee_del"),
             (XEE_STYLE, "xee_style"),
             (XEE_CUT, "xee_cut"),
             (XEE_CPICK, "xee_cpick"),
+            (XEE_GRASS, "xee_grss"),
             (XL_ADD, "xl_add"),
             (XL_DEL, "xl_del"),
             (XL_STYLE, "xl_style"),
             (XL_CUT, "xl_cut"),
             (XL_CPICK, "xl_cpick"),
+            (XL_GRASS, "xl_grss"),
             (XLN_ADD, "xln_add"),
             (XLN_DEL, "xln_del"),
             (XLN_STYLE, "xln_style"),
             (XLN_CUT, "xln_cut"),
             (XLN_CPICK, "xln_cpick"),
+            (XLN_GRASS, "xln_grss"),
         ]
         .iter()
         .for_each(|(cursor_const, name)| {

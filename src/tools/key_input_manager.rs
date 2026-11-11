@@ -52,8 +52,8 @@ impl KeyInputManager {
         ret.keycode_to_flag.insert(KeyCode::KeyS, false);
         ret.keycode_to_mapping.insert(KeyCode::KeyF, "Cut");
         ret.keycode_to_flag.insert(KeyCode::KeyF, false);
-        ret.keycode_to_mapping.insert(KeyCode::KeyG, "Color_Picker");
-        ret.keycode_to_flag.insert(KeyCode::KeyG, false);
+        ret.keycode_to_mapping.insert(KeyCode::KeyH, "Color_Picker");
+        ret.keycode_to_flag.insert(KeyCode::KeyH, false);
 
         //selection modes
         ret.keycode_to_mapping.insert(KeyCode::KeyQ, "Single");
@@ -109,10 +109,13 @@ impl KeyInputManager {
             && !self.shift_modifier;
     }
     pub fn undo_input(&mut self, key: KeyCode, pressed: bool) -> bool {
-        return self.control_modifier && key == KeyCode::KeyZ && pressed;
+        return self.control_modifier && !self.shift_modifier && key == KeyCode::KeyZ && pressed;
     }
     pub fn redo_input(&mut self, key: KeyCode, pressed: bool) -> bool {
-        return self.control_modifier && key == KeyCode::KeyY && pressed;
+        return self.control_modifier
+            && pressed
+            && ((key == KeyCode::KeyY && !self.shift_modifier)
+                || (key == KeyCode::KeyZ && self.shift_modifier));
     }
     pub fn voxel_group_action_inputs(&mut self, key: KeyCode, pressed: bool) -> VoxelGroupAction {
         if self.shift_modifier && pressed {
@@ -212,6 +215,9 @@ impl KeyInputManager {
         scene: &mut VoxelScene,
         camera: &Camera,
     ) {
+        if self.control_modifier {
+            return;
+        }
         if self.alt_modifier {
             self.center_input(key, pressed, scene, camera);
             self.move_inputs(key, pressed, scene, camera);
