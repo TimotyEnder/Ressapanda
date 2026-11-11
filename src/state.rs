@@ -1310,7 +1310,12 @@ impl State {
                         });
                         ui.horizontal(|ui| {
                             if ui.button("Finalize").clicked() {
-                                // make grass permanent
+                                self.voxel_scene.generate_grass_on_grass_zone(
+                                    &self.ui_info.grass_zone_grass_height_min,
+                                    &self.ui_info.grass_zone_grass_height_max,
+                                    &self.ui_info.grass_zone_grass_concentration_percentage,
+                                    &self.current_brush,
+                                );
                             }
                             if ui.button("Cancel Selection").clicked() {
                                 self.voxel_scene.reset_grass_zone();

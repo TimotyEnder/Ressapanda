@@ -17,7 +17,9 @@ impl Tool for FragmentCut {
         scene: &mut crate::voxel_scene::VoxelScene,
         brush: &crate::brushes::brush::Brush,
     ) {
-        scene.select_voxel_at_position(operating_position);
+        scene.select_voxel_at_position_regardless_of_current_voxel_group_selection(
+            operating_position,
+        );
     }
 
     fn name(&self) -> &'static str {
