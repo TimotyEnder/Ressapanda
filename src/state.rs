@@ -1294,6 +1294,21 @@ impl State {
                         });
                     ui.vertical_centered(|ui| {
                         ui.horizontal(|ui| {
+                            ui.label("Minimum grass height:");
+                            ui.text_edit_singleline(&mut self.ui_info.grass_zone_grass_height_min);
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("Maximum grass height:");
+                            ui.text_edit_singleline(&mut self.ui_info.grass_zone_grass_height_max);
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("Grass concentration percentage:");
+                            ui.text_edit_singleline(
+                                &mut self.ui_info.grass_zone_grass_concentration_percentage,
+                            );
+                            ui.label("%");
+                        });
+                        ui.horizontal(|ui| {
                             if ui.button("Finalize").clicked() {
                                 // make grass permanent
                             }
