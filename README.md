@@ -18,7 +18,7 @@ Quick Roadmap (no one wants to read a long one):
 1. More export types (I obviously accept suggestions)
 2. More properties for the brush (metal, roughness, maybe emission)
 3. More tools/select modes if I find it necessary after field testing Ressapanda in my games
-4. More actions to make game dev easier: voxel terrain generation with noise, an auto grass brush, or something of this like
+4. More actions to make game dev easier: voxel terrain generation with noise, or something of this like
 
 And much more when we get there!
 
@@ -57,7 +57,8 @@ The tool decides what happens to each voxel the selection mode returns.
 | <img src="Assets/Icons/add.png" width="32" /> | Add | Places a voxel in the brush color. | A |
 | <img src="Assets/Icons/style.png" width="32" /> | Style | Recolors existing voxels with the brush color. | S |
 | <img src="Assets/Icons/del.png" width="32" /> | Delete | Removes voxels. | D |
-| <img src="Assets/Icons/cut.png" width="32" /> | Cut | Collects the selected voxels into a fragment that can be turned into its own voxel group. | F |
+| <img src="Assets/Icons/cut.png" width="32" /> | Cut | Collects the selected voxels into a fragment that can be turned into its own voxel group. Voxels are collected from every voxel group under the cursor, not just the selected ones. | F |
+| <img src="Assets/Icons/grass.png" width="32" /> | Grass | Marks existing voxels as a grass zone (clicking a marked voxel again unmarks it). Voxels are marked from every voxel group under the cursor, not just the selected ones. The Grass Zone window then lets you set a minimum and maximum grass height and a grass concentration percentage; Finalize generates grass patterns, adding voxels in the selected voxel groups and using current brush color. | G |
 | <img src="Assets/Icons/color_picker.png" width="32" /> | Color Picker | Reads the color under the cursor. Selecting more than one voxel averages the colors. | H |
 
 Undo and Redo operate like a stack. Undoing a change and then making another change deletes any actions previously undone (might change in the future?).
