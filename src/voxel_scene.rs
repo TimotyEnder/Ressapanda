@@ -2,6 +2,7 @@ use cgmath::{Deg, Point3, Quaternion, Vector3};
 use cgmath::{prelude::*, vec3};
 use egui::Color32;
 use std::collections::{BTreeMap, BTreeSet};
+use std::ops::{Add, Sub};
 use std::sync::{Arc, Mutex};
 
 use crate::brushes::brush::Brush;
@@ -903,32 +904,6 @@ impl VoxelScene {
             (sum.z / n).round(),
         )
     }
-    // fn move_overrides_grid(&self, move_vector: Vector3<f32>) -> bool {
-    //     let move_scene_vector = VoxelScenePosition::from_voxel_position(move_vector);
-    //     return self.current_voxel_groups_selected.iter().any(|index| {
-    //         self.voxel_groups[*index]
-    //             .position_to_voxel
-    //             .iter()
-    //             .filter(|(_, v)| !v.is_grid())
-    //             .any(|(pos, _)| {
-    //                 let dest = VoxelScenePosition {
-    //                     x: pos.x + move_scene_vector.x,
-    //                     y: pos.y + move_scene_vector.y,
-    //                     z: pos.z + move_scene_vector.z,
-    //                 };
-    //                 let mut overrides = false;
-    //                 for i in 0..self.voxel_groups.len() {
-    //                     overrides = overrides
-    //                         || self.voxel_groups[i]
-    //                             .position_to_voxel
-    //                             .get(&dest)
-    //                             .is_some_and(|v| v.is_grid());
-    //                 }
-    //                 overrides
-    //             })
-    //     });
-    // }
-    // LEGACY CODE THAT MIGHT BE REQUIRED LATER ON IF I DECIDE THAT GRID VOXELS CAN BE OVERRIDEN
     fn global_center_of_selected_groups(&mut self) -> Vector3<f32> {
         let mut global_center = self
             .current_voxel_groups_selected
@@ -1360,44 +1335,6 @@ impl VoxelScene {
                     self.current_voxel_groups_selected.remove(shift_pos);
                 }
             }
-            // else {
-            //     let last_index = *(self
-            //         .current_voxel_groups_selected
-            //         .iter()
-            //         .max()
-            //         .unwrap_or(&0));
-            //     let last_index_id = self.voxel_groups[last_index].id;
-            //     let mut insert_index_id = self.voxel_groups[(last_index - 1).max(0)].id;
-            //     if insert_index_id == last_index_id {
-            //         insert_index_id =
-            //             self.voxel_groups[(last_index + 1).min(self.voxel_groups.len())].id;
-            //     }
-            //     let mut last_group = self.voxel_groups.remove(last_index);
-            //     let selected_ids: Vec<VoxelGroupId> = self
-            //         .voxel_groups
-            //         .iter()
-            //         .enumerate()
-            //         .filter(|(index, _)| self.current_voxel_groups_selected.contains(index))
-            //         .map(|(_, group)| group.id)
-            //         .collect();
-            //     let groups_to_merge = self
-            //         .voxel_groups
-            //         .extract_if(.., |group| {
-            //             selected_ids.contains(&group.id) && group.id != last_index_id
-            //         })
-            //         .collect::<Vec<VoxelGroup>>();
-            //     for group in groups_to_merge {
-            //         last_group.merge_with(group);
-            //     }
-            //     let insert_index_opt = self
-            //         .voxel_groups
-            //         .iter()
-            //         .position(|group| group.id == insert_index_id);
-            //     if let Some(insert_index) = insert_index_opt {
-            //         self.voxel_groups.insert(insert_index, last_group);
-            //         self.current_voxel_groups_selected = vec![0];
-            //     }
-            // }
             self.voxels_changed = true;
             self.saved = false;
         }
@@ -1515,12 +1452,47 @@ impl VoxelScene {
         }
         to_ret
     }
+    pub fn color_of_top_current_selection_voxel_at_pos(
+        &self,
+        position: VoxelScenePosition,
+    ) -> Option<VoxelColor> {
+        let mut sorted_index_vector = self.current_voxel_groups_selected.clone();
+        sorted_index_vector.sort();
+        for i in sorted_index_vector.iter() {
+            if let Some(voxel) = self.voxel_groups[*i].position_to_voxel.get(&position) {
+                return Some(voxel.get_color());
+            }
+        }
+        None
+    }
 }
 #[derive(Eq, PartialEq, PartialOrd, Ord, Hash, Clone, Copy)]
 pub struct VoxelScenePosition {
     pub x: i32,
     pub y: i32,
     pub z: i32,
+}
+impl Add for VoxelScenePosition {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        VoxelScenePosition {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+        }
+    }
+}
+impl Sub for VoxelScenePosition {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        VoxelScenePosition {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+        }
+    }
 }
 impl VoxelScenePosition {
     pub fn from_voxel_position(position: Vector3<f32>) -> Self {

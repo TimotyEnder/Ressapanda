@@ -1500,7 +1500,7 @@ impl State {
             .collapsible(false)
             .auto_sized()
             .show(ui, |ui| {
-                ["Single", "Area", "Extended", "Laser", "Line"]
+                ["Single", "Area", "Extended", "Laser", "Line", "Wand"]
                     .iter()
                     .for_each(|name| self.selection_mode_toggle_button(ui, *name));
             });

@@ -40,6 +40,12 @@ const XLN_DEL: &[u8] = include_bytes!("../Assets/Cursors/xlndel.png");
 const XLN_CUT: &[u8] = include_bytes!("../Assets/Cursors/xlncut.png");
 const XLN_CPICK: &[u8] = include_bytes!("../Assets/Cursors/xlncpick.png");
 const XLN_GRASS: &[u8] = include_bytes!("../Assets/Cursors/xlngrss.png");
+const XM_ADD: &[u8] = include_bytes!("../Assets/Cursors/xmadd.png");
+const XM_STYLE: &[u8] = include_bytes!("../Assets/Cursors/xmstyle.png");
+const XM_DEL: &[u8] = include_bytes!("../Assets/Cursors/xmdel.png");
+const XM_CUT: &[u8] = include_bytes!("../Assets/Cursors/xmcut.png");
+const XM_CPICK: &[u8] = include_bytes!("../Assets/Cursors/xmcpick.png");
+const XM_GRASS: &[u8] = include_bytes!("../Assets/Cursors/xmgrss.png");
 
 pub struct CursorLoader {
     cursors: HashMap<String, CustomCursor>,
@@ -84,6 +90,12 @@ impl CursorLoader {
             (XLN_CUT, "xln_cut"),
             (XLN_CPICK, "xln_cpick"),
             (XLN_GRASS, "xln_grss"),
+            (XM_ADD, "xm_add"),
+            (XM_DEL, "xm_del"),
+            (XM_STYLE, "xm_style"),
+            (XM_CUT, "xm_cut"),
+            (XM_CPICK, "xm_cpick"),
+            (XM_GRASS, "xm_grss"),
         ]
         .iter()
         .for_each(|(cursor_const, name)| {

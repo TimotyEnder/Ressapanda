@@ -68,6 +68,8 @@ impl KeyInputManager {
         ret.keycode_to_flag.insert(KeyCode::KeyR, false);
         ret.keycode_to_mapping.insert(KeyCode::KeyT, "Line");
         ret.keycode_to_flag.insert(KeyCode::KeyT, false);
+        ret.keycode_to_mapping.insert(KeyCode::KeyY, "Wand");
+        ret.keycode_to_flag.insert(KeyCode::KeyY, false);
         ret
     }
     pub fn modifier_inputs(&mut self, key: KeyCode, pressed: bool) -> bool {

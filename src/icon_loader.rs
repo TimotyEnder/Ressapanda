@@ -6,6 +6,8 @@ const SINGLE_SELECT: &[u8] = include_bytes!("../Assets/Icons/single_select.png")
 const AREA_SELECT: &[u8] = include_bytes!("../Assets/Icons/area_select.png");
 const EX_AREA_SELECT: &[u8] = include_bytes!("../Assets/Icons/extended_area_select.png");
 const LASER_SELECT: &[u8] = include_bytes!("../Assets/Icons/laser_select.png");
+const LINE_SELECT: &[u8] = include_bytes!("../Assets/Icons/line_select.png");
+const MAGIC_WAND_SELECT: &[u8] = include_bytes!("../Assets/Icons/magic_wand.png");
 const DEL: &[u8] = include_bytes!("../Assets/Icons/del.png");
 const ADD: &[u8] = include_bytes!("../Assets/Icons/add.png");
 const STYLE: &[u8] = include_bytes!("../Assets/Icons/style.png");
@@ -23,7 +25,6 @@ const UNDO: &[u8] = include_bytes!("../Assets/Icons/undo.png");
 const CUT: &[u8] = include_bytes!("../Assets/Icons/cut.png");
 const GRASS: &[u8] = include_bytes!("../Assets/Icons/grass.png");
 const COLOR_PICKER: &[u8] = include_bytes!("../Assets/Icons/color_picker.png");
-const LINE_SELECT: &[u8] = include_bytes!("../Assets/Icons/line_select.png");
 const SKEWED_MODE_ON: &[u8] = include_bytes!("../Assets/Icons/skewed_mode_on.png");
 const SKEWED_MODE_OFF: &[u8] = include_bytes!("../Assets/Icons/skewed_mode_off.png");
 
@@ -39,6 +40,7 @@ impl IconLoader {
             (EX_AREA_SELECT, "Extended"),
             (LASER_SELECT, "Laser"),
             (LINE_SELECT, "Line"),
+            (MAGIC_WAND_SELECT, "Wand"),
             (DEL, "Del"),
             (ADD, "Add"),
             (STYLE, "Style"),
