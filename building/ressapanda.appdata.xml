@@ -16,7 +16,7 @@
     </p>
     <p>Selection modes and tools are separate, in the spirit of Vim: select, then edit.</p>
     <ul>
-      <li>Single, Area, Extended Area, Laser and Line selection modes</li>
+      <li>Single, Area, Extended Area, Laser, Line and Magic Wand selection modes</li>
       <li>Add, Style, Delete, Cut and Color Picker tools</li>
       <li>Voxel Groups act as layers-like semantic term, and can be moved, rotated, duplicated and recentered independently. Voxels can be moved from one voxel group to another. Group Visibility can be toggled. Invisible groups are omitted on export.</li>
       <li>For now, Export to Wavefront OBJ, with or without a material library</li>

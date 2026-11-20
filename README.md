@@ -47,6 +47,7 @@ The selection mode decides how a click is turned into voxels to operate on.
 | <img src="Assets/Icons/extended_area_select.png" width="32" /> | Extended Area Select | Drag to fill an initial face, then a second click to extrude a box out through the nearest face. Hold Shift to constrain the initial face to a square/cube. | E |
 | <img src="Assets/Icons/laser_select.png" width="32" /> | Laser Select | Applies the tool to every voxel the cursor ray passes through (except Add). | R |
 | <img src="Assets/Icons/line_select.png" width="32" /> | Line Select | Applies the tool to every voxel that forms a straight line from one voxel to another. | T |
+| <img src="Assets/Icons/magic_wand.png" width="32" /> | Magic Wand | Applies the tool to adjacent voxels that share the clicked voxel's color (except Add). | Y |
 
 ## Tools
 
