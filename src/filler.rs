@@ -1,4 +1,8 @@
-use cgmath::Vector3;
+use std::collections::HashSet;
+
+use cgmath::{Vector3, vec3};
+
+use crate::voxel_scene::{VoxelScene, VoxelScenePosition};
 
 pub fn fill_positions_from_a_to_b(
     a_op_pos: Vector3<f32>,
@@ -69,4 +73,65 @@ pub fn fill_line_from_a_to_b(a_op_pos: Vector3<f32>, b_op_pos: Vector3<f32>) -> 
         err[1] += 2 * abs_delta[v];
     }
     filled_operating_positions
+}
+pub fn magic_fill_from_a(a: Vector3<f32>, scene: &VoxelScene) -> Vec<Vector3<f32>> {
+    let Some(base_color_to_match) = scene
+        .color_of_top_current_selection_voxel_at_pos(VoxelScenePosition::from_voxel_position(a))
+    else {
+        return Vec::new();
+    };
+    let mut selected_positions: HashSet<VoxelScenePosition> = HashSet::new();
+    let mut directions: Vec<Vector3<f32>> = vec![
+        Vector3::new(-1.0, 0.0, 0.0),
+        Vector3::new(1.0, 0.0, 0.0),
+        Vector3::new(0.0, -1.0, 0.0),
+        Vector3::new(0.0, 1.0, 0.0),
+        Vector3::new(0.0, 0.0, -1.0),
+        Vector3::new(0.0, 0.0, 1.0),
+    ];
+
+    if scene.get_skewed_mode_status() {
+        directions.extend([
+            Vector3::new(-1.0, -1.0, 0.0),
+            Vector3::new(-1.0, 1.0, 0.0),
+            Vector3::new(1.0, -1.0, 0.0),
+            Vector3::new(1.0, 1.0, 0.0),
+            Vector3::new(-1.0, 0.0, -1.0),
+            Vector3::new(-1.0, 0.0, 1.0),
+            Vector3::new(1.0, 0.0, -1.0),
+            Vector3::new(1.0, 0.0, 1.0),
+            Vector3::new(0.0, -1.0, -1.0),
+            Vector3::new(0.0, -1.0, 1.0),
+            Vector3::new(0.0, 1.0, -1.0),
+            Vector3::new(0.0, 1.0, 1.0),
+            Vector3::new(-1.0, -1.0, -1.0),
+            Vector3::new(-1.0, -1.0, 1.0),
+            Vector3::new(-1.0, 1.0, -1.0),
+            Vector3::new(-1.0, 1.0, 1.0),
+            Vector3::new(1.0, -1.0, -1.0),
+            Vector3::new(1.0, -1.0, 1.0),
+            Vector3::new(1.0, 1.0, -1.0),
+            Vector3::new(1.0, 1.0, 1.0),
+        ]);
+    }
+    let mut queue = Vec::new();
+    queue.push(VoxelScenePosition::from_voxel_position(a));
+    while let Some(poped) = queue.pop() {
+        if let Some(voxel_color) = scene.color_of_top_current_selection_voxel_at_pos(poped) {
+            if base_color_to_match == voxel_color {
+                selected_positions.insert(poped);
+                for dir in directions.iter() {
+                    let new_pos = poped + VoxelScenePosition::from_voxel_position(*dir);
+                    if !selected_positions.contains(&new_pos) {
+                        queue.push(new_pos);
+                    }
+                }
+            }
+        }
+    }
+    selected_positions
+        .to_owned()
+        .into_iter()
+        .map(|scene_pos| vec3(scene_pos.x as f32, scene_pos.y as f32, scene_pos.z as f32))
+        .collect::<Vec<Vector3<f32>>>()
 }

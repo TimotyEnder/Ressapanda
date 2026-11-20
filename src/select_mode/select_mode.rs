@@ -6,7 +6,7 @@ use crate::{
     select_mode::{
         area_select_mode::AreaSelectMode, extended_area_select::ExtendedAreaSelectMode,
         laser_select_mode::LaserSelectMode, line_select::LineSelectMode,
-        single_select_mode::SingleSelectMode,
+        magic_wand_select_mode::MagicWandSelectMode, single_select_mode::SingleSelectMode,
     },
     tools::{key_input_manager::ModifierKeysStatus, tool::Tool},
     voxel_scene::VoxelScene,
@@ -58,6 +58,7 @@ pub fn select_mode_from_name(name: &'static str) -> Option<Box<dyn SelectMode>> 
         "Extended" => return Some(Box::new(ExtendedAreaSelectMode::new())),
         "Laser" => return Some(Box::new(LaserSelectMode::new())),
         "Line" => return Some(Box::new(LineSelectMode::new())),
+        "Wand" => return Some(Box::new(MagicWandSelectMode::new())),
         _ => return None,
     };
 }
@@ -76,6 +77,11 @@ pub fn select_mode_tooltip_from_name(name: &str) -> Option<&str> {
         "Line" => {
             return Some(
                 "Line Select Mode: drag to form uniform line between two voxels. Selects the voxels in between (Shortcut:T)",
+            );
+        }
+        "Wand" => {
+            return Some(
+                "Magic Wand. Selects adjacent voxels with a color difference based on the tolerance setting.(Shortcut:Y)",
             );
         }
         _ => return None,
